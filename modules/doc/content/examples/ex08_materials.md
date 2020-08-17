@@ -1,6 +1,6 @@
 # Example 8 : Material Properties
 
-MOOSE includes built-in support for creating and sharing material properties thorughout your
+MOOSE includes built-in support for creating and sharing material properties throughout your
 simulation calculations. Material property calculations are run/updated by MOOSE automatically for
 every quadrature point. Kernels, Postprocessors, and other objects all have convenient access to
 these properties.  This example demonstrates a convection-diffusion problem with kernels that
@@ -14,13 +14,13 @@ This problem considers the same coupled system from [Example 3](examples/ex03_co
 
 !equation
 \begin{aligned}
--\nabla \cdot \nabla u + \nabla\vec{v} \cdot \nabla u = 0 \\
+-\nabla \cdot \nabla u + \nabla v \cdot \nabla u = 0 \\
 -\alpha \nabla \cdot \nabla v = 0
 \end{aligned}
 
 but with slightly different boundary conditions: $u=v=0$ on the bottom boundary and $u=5$ and
 $\nabla v=1$ on the top boundary. The remaining boundaries taking the natural boundary condition.
-$\alpha$ is a diffusivity coefficient and $\nabla\vec{v}$ is a convection coefficient derived from
+$\alpha$ is a diffusivity coefficient and $\nabla v$ is a convection coefficient derived from
 the coupled $v$ diffusion equation.
 
 ## Creating Material Objects
@@ -95,7 +95,7 @@ looking something like this:
 
 Material properties now give us the flexibility to change/tweak our problem details without
 requiring code modifications and compiling every time.  Changing how the convection velocity term
-is computed requires nothing more than changing Material objects we are using. Different materials
+is computed requires nothing more than changing the Material objects we are using. Different materials
 can also be applied to different subdomains/blocks in your mesh. Let's see how we can use our
 material properties in an input file:
 

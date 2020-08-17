@@ -4,9 +4,9 @@
 
 This example builds on Example 1 and introduces how to create a custom `Kernel`, which is the
 mechanism for adding your physics into `MOOSE`.  You can either follow along with the files in
-`examples` directory in the MOOSE repository or you can create your own app as explained
+the `examples` directory in the MOOSE repository or you can create your own app as explained
 [here](getting_started/index.md#create-an-app). When you are ready to build custom physics and
-code for you own physics/problems, you should work in your own MOOSE-based application.
+code for your own physics/problems, you should work in your own MOOSE-based application.
 
 ## Problem Statement
 
@@ -17,7 +17,7 @@ velocity, $\vec{v}$ is a known constant (1 in the vertical z-direction and zero 
 
 The weak form of this equation, in inner-product notation, is given by:
 
-$(\nabla \phi_i, \nabla u_h) + (\vec{v} \cdot \nabla u, \phi_i)= 0 \quad \forall  \phi_i$,
+$(\nabla \phi_i, \nabla u_h) + (\vec{v} \cdot \nabla u_h, \phi_i)= 0 \quad \forall  \phi_i$,
 
 where $\phi_i$ are the test functions and $u_h$ is the finite element solution.
 
@@ -69,10 +69,8 @@ make -j8
 ./ex02-opt -i ex02.i
 ```
 
-This will generate the results file, out.e, as shown in Figure 2. This file may be viewed using
+This will generate the results file, ex02_out.e, as shown in Figure 2. This file may be viewed using
 Peacock or an external application that supports the Exodus II format (e.g., Paraview).
-
-<br>
 
 !media large_media/examples/ex02_out.png
        caption=Example 02 Results

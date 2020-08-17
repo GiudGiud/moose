@@ -7,13 +7,13 @@ $-\nabla \cdot \nabla u = 20\frac{\partial u}{\partial t} \in \Omega$, $u = 0$ o
 1$ on the top and with $\nabla u \cdot \hat{n} = 0$ on the remaining boundaries.  The initial
 condition is $u(t_0) = 0$ everywhere except on the top boundary where $u = 1$.
 
-The weak form of this equation, in inner-product notation, is given by: $\nabla \phi_i, \nabla u_h
-= \phi_i, 20 \frac{\partial u_h}{\partial t} \quad \forall  \phi_i$, where $\phi_i$ are the
+The weak form of this equation, in inner-product notation, is given by: $(\nabla \phi_i, \nabla u_h)
+= (\phi_i, 20 \frac{\partial u_h}{\partial t}) \quad \forall  \phi_i$, where $\phi_i$ are the
 test functions and $u_h$ is the finite element solution.
 
 ## Constructing the Problem
 
-First, we need a transient term to for our residual.  We can create a time-dependent residual term
+First, we need a transient term for our residual.  We can create a time-dependent residual term
 by inheriting from the [`TimeDerivative`](/TimeDerivative.md) class.  For this example, we create
 a constant-scalable time-dependent residual along the lines of kernels created in the earlier
 examples:
@@ -53,4 +53,3 @@ Here are solution snapshots from the beginning and end times from running `ex06-
 - [examples/ex06_transient/include/kernels/ExampleTimeDerivative.h]
 - [examples/ex06_transient/src/kernels/ExampleTimeDerivative.C]
 - [examples/ex06_transient/src/base/ExampleApp.C]
-

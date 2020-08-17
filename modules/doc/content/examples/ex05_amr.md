@@ -10,7 +10,8 @@ file:
 
 More details about this functionality are provided on the [Adaptivity](syntax/Adaptivity/index.md)
 page.  MOOSE includes multiple [Indicators](Indicators/index.md) you can use to compute different
-error estimates in addition to a few [Markers](Markers/index.md).
+error estimates in addition to a few [Markers](Markers/index.md) to select the desired refining
+behavior.
 
 ## Results
 
@@ -24,7 +25,7 @@ each of the 6 refinement steps are shown below:
 
 !media large_media/examples/ex5-mesh-1.png
        style=width:50%;margin-left:0%;
-       caption=Adaptivity Step 1 
+       caption=Adaptivity Step 1
 
 !media large_media/examples/ex5-mesh-2.png
        caption=Adaptivity Step 2

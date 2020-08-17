@@ -27,8 +27,8 @@ inner-product notation, is given by:
 
 \begin{equation}
 \begin{aligned}
-(\nabla u_h, \nabla \phi_i) + (\nabla v \cdot \nabla u, \phi_i)= 0 \quad \forall  \phi_i \\
-(\nabla\vec{v}, \nabla\phi_i)= 0 \quad \forall  \phi_i
+(\nabla u_h, \nabla \phi_i) + (\nabla v_h \cdot \nabla u_h, \phi_i)= 0 \quad \forall  \phi_i \\
+(\nabla v_h, \nabla\phi_i)= 0 \quad \forall  \phi_i
 \end{aligned}
 \end{equation}
 
@@ -56,7 +56,7 @@ First, the mesh is defined by loading a file "mug.e".
 
 !listing examples/ex03_coupling/ex03.i block=Mesh
 
-Then, the two variables are defined: "diffused" and "convected", which refer to $$u$$ and $$v$$
+Then, the two variables are defined: "diffused" and "convected", which refer to $$v$$ and $$u$$
 from the problem statement, respectively. Both variables in this case are assigned to utilize
 linear Lagrange shape functions, but they could each use different shape functions and/or orders.
 
@@ -94,7 +94,7 @@ make -j8
 This will generate the results file, out.e, as shown in Figure 1 and 2. This file may be viewed
 using Peacock or an external application that supports the Exodus II format (e.g., Paraview).
 
-<div style="width:100%">
+<span style="width:100%">
 
 !media large_media/examples/ex03_out_diffused.png
        caption=Figure 1: example 3 Results, "diffused variable"
@@ -104,7 +104,7 @@ using Peacock or an external application that supports the Exodus II format (e.g
        caption=Figure 2: example 3 Results, "convected variable"
        style=width:40%;display:inline-flex;margin-left:7%;
 
-</div><br>
+</span><br>
 
 # 1D exact solution
 

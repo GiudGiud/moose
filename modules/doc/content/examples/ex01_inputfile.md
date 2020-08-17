@@ -10,7 +10,7 @@ $-\nabla \cdot \nabla u = 0 \in \Omega$, $u = 1$ on the bottom, $u = 0$ on the t
 $\nabla u \cdot \hat{n} = 0$ on the remaining boundaries.
 
 The weak form ([see Finite Elements Principles](finite_element_concepts/fem_principles.md)) of
-this equation, in inner-product notation, is given by: $\nabla \phi_i, \nabla u_h = 0 \quad
+this equation, in inner-product notation, is given by: $(\nabla \phi_i, \nabla u_h) = 0 \quad
 \forall  \phi_i$, where $\phi_i$ are the test functions and $u_h$ is the finite element solution.
 
 ## Input File Syntax
@@ -62,15 +62,15 @@ utilizes the `Diffusion` `Kernel` and acts on the previously defined variable "d
 
 ### Boundary Conditions (BCs)
 
-Boundary conditions are defined in a manner similar to `Kernels`.  For this problem two Dirichlet
+Boundary conditions are defined in a manner similar to `Kernels`.  For this problem, two Dirichlet
 boundary conditions are required.  In the input file the two boundary conditions are specified
 each using the `DirichletBC` object provided by MOOSE.
 
 !listing examples/ex01_inputfile/ex01.i block=BCs
 
-Within each of the two sub-section, named "top" and "bottom" by the user, the boundary conditions
+Within each of the two sub-sections, named "top" and "bottom" by the user, the boundary conditions
 are linked to their associated variable(s) (i.e. "diffused" in this case) and boundaries.  In this
-case, the mesh file `mug.e` defines labeled the boundaries "top" and "bottom" which we can refer
+case, the mesh file `mug.e` labeled the boundaries "top" and "bottom" which we can refer
 to. Boundaries will also often be specified by number IDs - depending on how your mesh file was
 generated.
 
@@ -82,8 +82,8 @@ custom boundary conditions derived from the existing objects within MOOSE.
 ### Executioner
 
 The type of problem to solve and the method for solving it is defined within the `Executioner`
-block.  This problem is steady-state and will use the `Steady` Executioner and will use the
-default solving method Preconditioned Jacobain Free Newton Krylov.
+block. This problem is steady-state and will use the `Steady` Executioner and the
+default solving method: Preconditioned Jacobian Free Newton Krylov.
 
 !listing examples/ex01_inputfile/ex01.i block=Executioner
 
@@ -105,10 +105,8 @@ make -j8
 ./ex01-opt -i ex01.i
 ```
 
-This will generate the results file, out.e, as shown in [example-1-results]. This file may be viewed using
-Peacock or an external application that supports the Exodus II format (e.g., Paraview).
+This will generate the results file, out.e, as shown in [example-1-results]. This file may be viewed using Peacock or an external application that supports the Exodus II format (e.g., Paraview).
 
-<br>
 
 !media large_media/examples/ex01_results.png
        id=example-1-results
@@ -121,8 +119,8 @@ Although the Diffusion kernel is the only "physics" in the MOOSE framework, a la
 is included in the MOOSE [modules](http://mooseframework.org/wiki/PhysicsModules/).  In order to
 implement your own physics, you will need to understand the following:
 
-- [Finite Element Methods](http://mooseframework.org/wiki/MooseTraining/FEM/) and the generating
-  the "weak" form of for PDEs
+- [Finite Element Methods](http://mooseframework.org/wiki/MooseTraining/FEM/) and generating
+  the "weak" form of PDEs
 - [C++](help/c++/index.md) and object-oriented design
 - [The Anatomy of a MOOSE Object](http://mooseframework.org/wiki/MooseTraining/MooseObject/)
 - Check out more [examples](examples/index.md)
@@ -135,4 +133,3 @@ implement your own physics, you will need to understand the following:
 - [ExampleApp.C](https://github.com/idaholab/moose/blob/devel/examples/ex01_inputfile/src/base/ExampleApp.C)
 - [Diffusion.h](https://github.com/idaholab/moose/blob/devel/framework/include/kernels/Diffusion.h)
 - [Diffusion.C](https://github.com/idaholab/moose/blob/devel/framework/src/kernels/Diffusion.C)
-
