@@ -169,7 +169,7 @@ def run_executable(app_path, args, mpi=None, suppress_output=False):
         cmd = [app_path]
     cmd += args
 
-    if not suppress_output:
+    if suppress_output:
         return subprocess.check_output(cmd, encoding='utf-8')
     else:
         return subprocess.call(cmd)
