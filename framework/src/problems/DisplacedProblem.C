@@ -1062,3 +1062,9 @@ DisplacedProblem::computingScalingJacobian() const
 {
   return _mproblem.computingScalingJacobian();
 }
+
+bool
+DisplacedProblem::computingScalingResidual() const
+{
+  return _mproblem.computingScalingResidual();
+}
