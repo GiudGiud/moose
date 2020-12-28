@@ -1,0 +1,11 @@
+[Tests]
+  [./test]
+    type = 'Exodiff'
+    input = 'side_diffusive_flux_average.i'
+    exodiff = 'side_diffusive_flux_average_out.e'
+
+    design = 'SideDiffusiveFluxAverage.md'
+    issues = '#2201'
+    requirement = 'The system shall be capable of computing the average diffusive flux through a specified boundary on the mesh.'
+  [../]
+[]

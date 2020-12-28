@@ -14,23 +14,23 @@
 
 // Forward Declarations
 template <bool>
-class SideFluxIntegralTempl;
-typedef SideFluxIntegralTempl<false> SideFluxIntegral;
-typedef SideFluxIntegralTempl<true> ADSideFluxIntegral;
+class SideDiffusiveFluxIntegralTempl;
+typedef SideDiffusiveFluxIntegralTempl<false> SideDiffusiveFluxIntegral;
+typedef SideDiffusiveFluxIntegralTempl<true> ADSideDiffusiveFluxIntegral;
 
 template <>
-InputParameters validParams<SideFluxIntegral>();
+InputParameters validParams<SideDiffusiveFluxIntegral>();
 
 /**
  * This postprocessor computes a side integral of the mass flux.
  */
 template <bool is_ad>
-class SideFluxIntegralTempl : public SideIntegralVariablePostprocessor
+class SideDiffusiveFluxIntegralTempl : public SideIntegralVariablePostprocessor
 {
 public:
   static InputParameters validParams();
 
-  SideFluxIntegralTempl(const InputParameters & parameters);
+  SideDiffusiveFluxIntegralTempl(const InputParameters & parameters);
 
 protected:
   virtual Real computeQpIntegral() override;
