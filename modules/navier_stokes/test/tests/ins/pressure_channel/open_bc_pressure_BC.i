@@ -113,6 +113,23 @@
   l_max_its = 300
 []
 
+[Postprocessors]
+  [inlet_mass]
+    type = MassFlowRate
+    boundary = left
+    vel_x = vel_x
+    vel_y = vel_y
+    rho = 1
+  []
+  [outlet_mass]
+    type = MassFlowRate
+    boundary = right
+    vel_x = vel_x
+    vel_y = vel_y
+    rho = 1
+  []
+[]
+
 [Outputs]
   file_base = open_bc_out_pressure_BC
   exodus = true

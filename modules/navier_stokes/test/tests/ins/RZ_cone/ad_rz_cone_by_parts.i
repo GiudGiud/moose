@@ -168,4 +168,18 @@
     outputs = 'console csv'
     execute_on = 'timestep_end'
   [../]
+  [inlet_mass]
+    type = MassFlowRate
+    boundary = left
+    vel_x = vel_x
+    vel_y = vel_y
+    rho = 1
+  []
+  [outlet_mass]
+    type = MassFlowRate
+    boundary = right
+    vel_x = vel_x
+    vel_y = vel_y
+    rho = 1
+  []
 []
