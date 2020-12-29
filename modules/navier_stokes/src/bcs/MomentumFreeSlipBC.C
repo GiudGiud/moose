@@ -20,9 +20,9 @@ InputParameters
 MomentumFreeSlipBC::validParams()
 {
   InputParameters params = NodalNormalBC::validParams();
-  params.addRequiredCoupledVar("rho_u", "x-component of velocity");
-  params.addCoupledVar("rho_v", "y-component of velocity");
-  params.addCoupledVar("rho_w", "z-component of velocity");
+  params.addRequiredCoupledVar("rho_u", "x-component of momentum");
+  params.addCoupledVar("rho_v", "y-component of momentum");
+  params.addCoupledVar("rho_w", "z-component of momentum");
 
   return params;
 }
