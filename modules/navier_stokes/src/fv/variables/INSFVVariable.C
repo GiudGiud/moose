@@ -54,7 +54,6 @@ INSFVVariable::isFullyDevelopedFlowFace(const FaceInfo & fi) const
       .theWarehouse()
       .query()
       .template condition<AttribSystem>("INSFVFullyDevelopedFlowBC")
-      .template condition<AttribThread>(_tid)
       .template condition<AttribBoundaries>(fi.boundaryIDs())
       .queryInto(bcs);
 
