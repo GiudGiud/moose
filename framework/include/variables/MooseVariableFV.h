@@ -47,7 +47,7 @@ class NumericVector;
 /// ----------------------------------------------------
 /// Real                Real                  Real
 /// RealVectorValue     RealVectorValue       Real
-/// RealEigenVector      Real                  RealEigenVector
+/// RealEigenVector     Real                  RealEigenVector
 template <typename OutputType>
 class MooseVariableFV : public MooseVariableField<OutputType>
 {
@@ -486,11 +486,15 @@ protected:
    */
   bool isExtrapolatedBoundaryFace(const FaceInfo & fi) const;
 
+  const ADReal &
+  getFaceValue(const Elem * const neighbor, const FaceInfo & fi, const ADReal & elem_value) const;
+
 private:
   /**
    * @return the extrapolated value on the boundary face associated with \p fi
    */
   const ADReal & getExtrapolatedBoundaryFaceValue(const FaceInfo & fi) const;
+
 
   /**
    * Get the finite volume solution interpolated to \p vertex. This interpolation is done doing a
