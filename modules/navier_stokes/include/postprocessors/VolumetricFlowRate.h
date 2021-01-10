@@ -10,14 +10,14 @@
 #pragma once
 
 // MOOSE includes
-#include "SideIntegralPostprocessor.h"
+#include "InterfaceIntegralPostprocessor.h"
 
 // Forward Declarations
 
 /**
  * This postprocessor computes the volumetric flow rate through a boundary.
  */
-class VolumetricFlowRate : public SideIntegralPostprocessor
+class VolumetricFlowRate : public InterfaceIntegralPostprocessor
 {
 public:
   static InputParameters validParams();
@@ -25,9 +25,19 @@ public:
   VolumetricFlowRate(const InputParameters & parameters);
 
 protected:
+
   virtual Real computeQpIntegral() override;
 
+  /// Whether FV variables are used, for all variables
+  bool _fv;
+
+  /// Velocity components
   const VariableValue & _vel_x;
   const VariableValue & _vel_y;
   const VariableValue & _vel_z;
+
+  /// Advected quantities
+  const VariableValue & _advected_variable;
+  const ADMaterialProperty<Real> & _advected_material_property;
+  const ADMaterialProperty<Real> & _advected_material_property_neighbor;
 };
