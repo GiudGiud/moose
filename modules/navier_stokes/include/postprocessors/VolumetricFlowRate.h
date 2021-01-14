@@ -11,6 +11,7 @@
 
 // MOOSE includes
 #include "InterfaceIntegralPostprocessor.h"
+#include "FVUtils.h"
 
 // Forward Declarations
 
@@ -38,6 +39,10 @@ protected:
 
   /// Advected quantities
   const VariableValue & _advected_variable;
+  const VariableValue & _advected_variable_neighbor;
   const ADMaterialProperty<Real> & _advected_material_property;
   const ADMaterialProperty<Real> & _advected_material_property_neighbor;
+
+  /// The interpolation method to use for the advected quantity
+  Moose::FV::InterpMethod _advected_interp_method;
 };

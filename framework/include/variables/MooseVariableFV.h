@@ -456,18 +456,18 @@ public:
                           const FaceInfo & fi,
                           const ADReal & elem_value) const;
 
-protected:
-  /**
-   * @return whether \p fi is an internal face for this variable
-   */
-  bool isInternalFace(const FaceInfo & fi) const;
-
   /**
    * @return the face value on the internal face associated with \p fi
    */
   const ADReal & getInternalFaceValue(const Elem * const neighbor,
                                       const FaceInfo & fi,
                                       const ADReal & elem_value) const;
+
+protected:
+  /**
+   * @return whether \p fi is an internal face for this variable
+   */
+  bool isInternalFace(const FaceInfo & fi) const;
 
   /**
    * @return whether \p fi is a Dirichlet boundary face for this variable
@@ -486,8 +486,6 @@ protected:
    */
   bool isExtrapolatedBoundaryFace(const FaceInfo & fi) const;
 
-  const ADReal &
-  getFaceValue(const Elem * const neighbor, const FaceInfo & fi, const ADReal & elem_value) const;
 
 private:
   /**

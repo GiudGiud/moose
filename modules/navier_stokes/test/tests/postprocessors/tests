@@ -23,6 +23,7 @@
     abs_zero = 1e-8
     requirement = 'The system shall be able to compute flow rates and prove mass, momentum and energy conservation at internal and external boundaries of a frictionless heated straight channel with a finite volume incompressible Navier Stokes model.'
     cli_args = "Mesh/inactive='diverging_mesh'"
+    ad_indexing_type = 'global'
   []
   [fv_diverging]
     requirement = 'The system shall be able to compute flow rates and prove mass, momentum and energy conservation at internal and external boundaries of a frictionless heated diverging channel with a finite volume incompressible Navier Stokes model,'
@@ -32,6 +33,7 @@
       csvdiff = INSFV_quad_xy_out.e
       abs_zero = 1e-8
       detail = 'with a quadrilateral mesh in XY geometry, with mass flow measured using either a variable or material property.'
+      ad_indexing_type = 'global'
     []
     [fv_quad_rz]
       type = CSVDiff
@@ -40,6 +42,7 @@
       abs_zero = 1e-8
       detail = 'with a quadrilateral mesh in RZ geometry.'
       cli_args = "Problem/coord_type=RZ"
+      ad_indexing_type = 'global'
     []
     [fv_tri_xy]
       type = CSVDiff
@@ -48,6 +51,7 @@
       abs_zero = 1e-8
       detail = 'with a triangular mesh in XY geometry.'
       cli_args = "Mesh/diverging_mesh/file='expansion_tri.e'"
+      ad_indexing_type = 'global'
     []
     [fv_quad_xy_rc]
       type = CSVDiff
@@ -56,6 +60,7 @@
       abs_zero = 1e-8
       detail = 'with Rhie Chow velocity interpolation.'
       cli_args = "velocity_interp_method='rc'"
+      ad_indexing_type = 'global'
     []
     [fv_quad_xy_upwind]
       type = CSVDiff
@@ -64,6 +69,7 @@
       abs_zero = 1e-8
       detail = 'with upwind interpolation of advected quantities.'
       cli_args = "advected_interp_method='updwind'"
+      ad_indexing_type = 'global'
     []
     [fv_quad_xy_noslip]
       type = CSVDiff
@@ -72,6 +78,7 @@
       abs_zero = 1e-8
       detail = 'with no-slip boundary conditions, for which momentum and energy will be dissipated at the wall.'
       cli_args = "FVBCs/inactive=''"
+      ad_indexing_type = 'global'
     []
   []
 []

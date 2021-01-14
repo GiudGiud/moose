@@ -22,6 +22,11 @@ VolumetricFlowRate::validParams()
   params.addRequiredCoupledVar("vel_x", "The x-axis velocity");
   params.addCoupledVar("vel_y", 0, "The y-axis velocity");
   params.addCoupledVar("vel_z", 0, "The z-axis velocity");
+  MooseEnum advected_interp_method("average upwind", "upwind");
+  params.addParam<MooseEnum>("advected_interp_method",
+                             advected_interp_method,
+                             "The interpolation to use for the advected quantity. Options are "
+                             "'upwind' and 'average', with the default being 'upwind'.");
   params.addCoupledVar("advected_variable", 0, "The advected variable quantity of which to study the flow");
   params.addParam<MaterialPropertyName>("advected_mat_prop", 0,
                                         "The advected material property of which to study the flow");
@@ -35,12 +40,26 @@ VolumetricFlowRate::VolumetricFlowRate(const InputParameters & parameters)
     _vel_y(coupledValue("vel_y")),
     _vel_z(coupledValue("vel_z")),
     _advected_variable(coupledValue("advected_variable")),
+    _advected_variable_neighbor(_fv == true ? coupledNeighborValue("advected_variable") : coupledValue("advected_variable")),
+    //FIXME Find issue with using coupledNeighborValue in FE
     _advected_material_property(getADMaterialProperty<Real>("advected_mat_prop")),
     _advected_material_property_neighbor(getNeighborADMaterialProperty<Real>("advected_mat_prop"))
 {
   /// Check that at most one advected quantity has been provided
-  mooseAssert(!isParamSetByUser("advected_variable") || !isParamSetByUser("advected_mat_prop"),
+  mooseAssert(!parameters.isParamSetByUser("advected_variable") ||
+              !parameters.isParamSetByUser("advected_mat_prop"),
       "VolumetricFlowRatePostprocessor should be provided either an advected variable or an advected material property");
+
+  using namespace Moose::FV;
+
+  const auto & advected_interp_method = getParam<MooseEnum>("advected_interp_method");
+  if (advected_interp_method == "average")
+    _advected_interp_method = InterpMethod::Average;
+  else if (advected_interp_method == "upwind")
+    _advected_interp_method = InterpMethod::Upwind;
+  else
+    mooseError("Unrecognized interpolation type ",
+               static_cast<std::string>(advected_interp_method));
 }
 
 Real
@@ -68,30 +87,44 @@ VolumetricFlowRate::computeQpIntegral()
     /// Get face value for velocity, using the variable's interpolation method
     const auto & vx_face = velx_name.empty() ? _vel_x[_qp] :
         MetaPhysicL::raw_value(dynamic_cast<const MooseVariableFV<Real> *>(
-        &_subproblem.getVariable(_tid, velx_name[0]))->getFaceValue(neighbor, *fi, _vel_x[_qp]));
+        &_subproblem.getVariable(_tid, velx_name[0]))->getInternalFaceValue(neighbor, *fi, _vel_x[_qp]));
 
     const auto & vy_face = vely_name.empty() ? _vel_y[_qp] :
         MetaPhysicL::raw_value(dynamic_cast<const MooseVariableFV<Real> *>(
-        &_subproblem.getVariable(_tid, vely_name[0]))->getFaceValue(neighbor, *fi, _vel_y[_qp]));
+        &_subproblem.getVariable(_tid, vely_name[0]))->getInternalFaceValue(neighbor, *fi, _vel_y[_qp]));
 
     const auto & vz_face = velz_name.empty() ? _vel_z[_qp] :
         MetaPhysicL::raw_value(dynamic_cast<const MooseVariableFV<Real> *>(
-        &_subproblem.getVariable(_tid, velz_name[0]))->getFaceValue(neighbor, *fi, _vel_z[_qp]));
+        &_subproblem.getVariable(_tid, velz_name[0]))->getInternalFaceValue(neighbor, *fi, _vel_z[_qp]));
 
     /// Compute the advected quantity on the face
     Real advected_quantity;
     if (parameters().isParamSetByUser("advected_variable"))
     {
-      const auto & advected_name = parameters().getParamHelper("advected_variable", parameters(),
-          static_cast<std::vector<VariableName, std::allocator<VariableName> > *>(0));
-      advected_quantity = advected_name.empty() ? _advected_variable[_qp] :
-          MetaPhysicL::raw_value(dynamic_cast<const MooseVariableFV<Real> *>(
-          &_subproblem.getVariable(_tid, advected_name[0]))->getFaceValue(neighbor, *fi, _advected_variable[_qp]));
+      // If user did not request an interpolation method, use what the kernels are most likely to use
+      if (!parameters().isParamSetByUser("advected_interp_method"))
+      {
+        const auto & advected_name = parameters().getParamHelper("advected_variable", parameters(),
+            static_cast<std::vector<VariableName, std::allocator<VariableName> > *>(0));
+        advected_quantity = advected_name.empty() ? _advected_variable[_qp] :
+            MetaPhysicL::raw_value(dynamic_cast<const MooseVariableFV<Real> *>(
+            &_subproblem.getVariable(_tid, advected_name[0]))->getInternalFaceValue(neighbor, *fi, _advected_variable[_qp]));
+      }
+      else
+      {
+        Moose::FV::interpolate(_advected_interp_method,
+                               advected_quantity,
+                               MetaPhysicL::raw_value(_advected_variable[_qp]),
+                               MetaPhysicL::raw_value(_advected_variable_neighbor[_qp]),
+                               RealVectorValue(vx_face, vy_face, vz_face),
+                               *fi,
+                               true);
+      }
     }
     else if (parameters().isParamSetByUser("advected_mat_prop"))
     {
       /// The material property needs to be interpolated since we are on an internal face
-      Moose::FV::interpolate(Moose::FV::InterpMethod::Average,
+      Moose::FV::interpolate(_advected_interp_method,
                              advected_quantity,
                              MetaPhysicL::raw_value(_advected_material_property[_qp]),
                              MetaPhysicL::raw_value(_advected_material_property_neighbor[_qp]),

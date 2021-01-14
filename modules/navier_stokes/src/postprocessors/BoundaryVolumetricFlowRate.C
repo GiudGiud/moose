@@ -37,7 +37,7 @@ BoundaryVolumetricFlowRate::BoundaryVolumetricFlowRate(const InputParameters & p
     _advected_material_property(getADMaterialProperty<Real>("advected_mat_prop"))
 {
   /// Check that at most one advected quantity has been provided
-  mooseAssert(!isParamSetByUser("advected_variable") || !isParamSetByUser("advected_mat_prop"),
+  mooseAssert(!parameters.isParamSetByUser("advected_variable") || !parameters.isParamSetByUser("advected_mat_prop"),
       "VolumetricFlowRatePostprocessor should be provided either an advected variable or an advected material property");
 }
 

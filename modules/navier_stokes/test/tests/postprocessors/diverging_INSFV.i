@@ -4,7 +4,7 @@ advected_interp_method='average'
 velocity_interp_method='average'
 
 [Mesh]
-  inactive = 'mesh internal_boundary_bot internal_boundary_top'
+  # inactive = 'mesh internal_boundary_bot internal_boundary_top'
   [mesh]
     type = CartesianMeshGenerator
     dim = 2
@@ -30,10 +30,10 @@ velocity_interp_method='average'
     primary_block = 1
     paired_block = 2
   []
-  [diverging_mesh]
-    type = FileMeshGenerator
-    file = 'expansion_quad.e'
-  []
+  # [diverging_mesh]
+  #   type = FileMeshGenerator
+  #   file = 'expansion_quad.e'
+  # []
 []
 
 [Problem]
@@ -43,26 +43,18 @@ velocity_interp_method='average'
 
 [Variables]
   [u]
-    order = CONSTANT
-    family = MONOMIAL
-    fv = true
+    type = INSFVVelocityVariable
     initial_condition = 1
   []
   [v]
-    order = CONSTANT
-    family = MONOMIAL
-    fv = true
+    type = INSFVVelocityVariable
     initial_condition = 1
   []
   [pressure]
-    order = CONSTANT
-    family = MONOMIAL
-    fv = true
+    type = INSFVPressureVariable
   []
   [temperature]
-    order = CONSTANT
-    family = MONOMIAL
-    fv = true
+    type = INSFVEnergyVariable
   []
 []
 
@@ -168,30 +160,67 @@ velocity_interp_method='average'
 []
 
 [FVBCs]
-  inactive = 'noslip'
+  inactive = 'noslip-u noslip-v'
+  [inlet-u]
+    type = INSFVInletVelocityBC
+    boundary = 'bottom'
+    variable = u
+    function = 0
+  []
   [inlet-v]
-    type = FVDirichletBC
+    type = INSFVInletVelocityBC
     boundary = 'bottom'
     variable = v
-    value = 1
+    function = 1
   []
-  [noslip]  #bad noslip
-    type = FVDirichletBC
-    boundary = 'left right'
-    variable = v
-    value = 0
-  []
-  [inlet-and-walls-u]
-    type = FVDirichletBC
-    boundary = 'bottom left right'
+  [noslip-u]
+    type = INSFVNoSlipWallBC
+    boundary = 'right'
     variable = u
-    value = 0
+  []
+  [noslip-v]
+    type = INSFVNoSlipWallBC
+    boundary = 'right'
+    variable = v
+  []
+  [free-slip-u]
+    type = INSFVNaturalFreeSlipBC
+    boundary = 'right'
+    variable = u
+  []
+  [free-slip-v]
+    type = INSFVNaturalFreeSlipBC
+    boundary = 'right'
+    variable = v
+  []
+  [axis-u]
+    type = INSFVSymmetryVelocityBC
+    boundary = 'left'
+    variable = u
+    u = u
+    v = v
+    mu = ${mu}
+    momentum_component = x
+  []
+  [axis-v]
+    type = INSFVSymmetryVelocityBC
+    boundary = 'left'
+    variable = v
+    u = u
+    v = v
+    mu = ${mu}
+    momentum_component = y
+  []
+  [axis-p]
+    type = INSFVSymmetryPressureBC
+    boundary = 'left'
+    variable = pressure
   []
   [outlet_p]
-    type = FVDirichletBC
+    type = INSFVOutletPressureBC
     boundary = 'top'
     variable = pressure
-    value = 0
+    function = 0
   []
   [inlet_temp]
     type = FVDirichletBC
@@ -391,9 +420,9 @@ velocity_interp_method='average'
   #   start_step = 1
   #   show = 'inlet_momentum_y mid1_momentum_y mid2_momentum_y outlet_momentum_y'
   # []
-  [console_energy]
-    type = Console
-    start_step = 1
-    show = 'inlet_advected_energy mid1_advected_energy mid2_advected_energy outlet_advected_energy'
-  []
+  # [console_energy]
+  #   type = Console
+  #   start_step = 1
+  #   show = 'inlet_advected_energy mid1_advected_energy mid2_advected_energy outlet_advected_energy'
+  # []
 []
