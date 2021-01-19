@@ -40,8 +40,6 @@ VolumetricFlowRate::VolumetricFlowRate(const InputParameters & parameters)
     _vel_y(coupledValue("vel_y")),
     _vel_z(coupledValue("vel_z")),
     _advected_variable(coupledValue("advected_variable")),
-    _advected_variable_neighbor(_fv == true ? coupledNeighborValue("advected_variable") : coupledValue("advected_variable")),
-    //FIXME Find issue with using coupledNeighborValue in FE
     _advected_material_property(getADMaterialProperty<Real>("advected_mat_prop")),
     _advected_material_property_neighbor(getNeighborADMaterialProperty<Real>("advected_mat_prop"))
 {
@@ -101,21 +99,27 @@ VolumetricFlowRate::computeQpIntegral()
     Real advected_quantity;
     if (parameters().isParamSetByUser("advected_variable"))
     {
+      const auto & advected_name = parameters().getParamHelper("advected_variable", parameters(),
+          static_cast<std::vector<VariableName, std::allocator<VariableName> > *>(0));
+
       // If user did not request an interpolation method, use what the kernels are most likely to use
       if (!parameters().isParamSetByUser("advected_interp_method"))
       {
-        const auto & advected_name = parameters().getParamHelper("advected_variable", parameters(),
-            static_cast<std::vector<VariableName, std::allocator<VariableName> > *>(0));
         advected_quantity = advected_name.empty() ? _advected_variable[_qp] :
             MetaPhysicL::raw_value(dynamic_cast<const MooseVariableFV<Real> *>(
             &_subproblem.getVariable(_tid, advected_name[0]))->getInternalFaceValue(neighbor, *fi, _advected_variable[_qp]));
       }
       else
       {
+        /// Get neighbor value
+        const auto & advected_variable_neighbor = advected_name.empty() ? _advected_variable[_qp] :
+            MetaPhysicL::raw_value(dynamic_cast<const MooseVariableFV<Real> *>(
+            &_subproblem.getVariable(_tid, advected_name[0]))->getNeighborValue(neighbor, *fi, _advected_variable[_qp]));
+
         Moose::FV::interpolate(_advected_interp_method,
                                advected_quantity,
                                MetaPhysicL::raw_value(_advected_variable[_qp]),
-                               MetaPhysicL::raw_value(_advected_variable_neighbor[_qp]),
+                               MetaPhysicL::raw_value(advected_variable_neighbor),
                                RealVectorValue(vx_face, vy_face, vz_face),
                                *fi,
                                true);

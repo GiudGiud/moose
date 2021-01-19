@@ -4,7 +4,7 @@ advected_interp_method='average'
 velocity_interp_method='average'
 
 [Mesh]
-  # inactive = 'mesh internal_boundary_bot internal_boundary_top'
+  inactive = 'mesh internal_boundary_bot internal_boundary_top'
   [mesh]
     type = CartesianMeshGenerator
     dim = 2
@@ -30,10 +30,10 @@ velocity_interp_method='average'
     primary_block = 1
     paired_block = 2
   []
-  # [diverging_mesh]
-  #   type = FileMeshGenerator
-  #   file = 'expansion_quad.e'
-  # []
+  [diverging_mesh]
+    type = FileMeshGenerator
+    file = 'expansion_quad.e'
+  []
 []
 
 [Problem]
@@ -79,8 +79,6 @@ velocity_interp_method='average'
     v = v
     mu = ${mu}
     rho = ${rho}
-    flow_boundaries = 'bottom top'
-    no_slip_wall_boundaries = 'left right'
   []
 
   [u_advection]
@@ -95,13 +93,12 @@ velocity_interp_method='average'
     v = v
     mu = ${mu}
     rho = ${rho}
-    flow_boundaries = 'bottom top'
-    no_slip_wall_boundaries = 'left right'
   []
   [u_viscosity]
     type = FVDiffusion
     variable = u
     coeff = ${mu}
+    force_boundary_execution = true
   []
   [u_pressure]
     type = INSFVMomentumPressure
@@ -122,13 +119,12 @@ velocity_interp_method='average'
     v = v
     mu = ${mu}
     rho = ${rho}
-    flow_boundaries = 'bottom top'
-    no_slip_wall_boundaries = 'left right'
   []
   [v_viscosity]
     type = FVDiffusion
     variable = v
     coeff = ${mu}
+    force_boundary_execution = true
   []
   [v_pressure]
     type = INSFVMomentumPressure
@@ -148,8 +144,6 @@ velocity_interp_method='average'
     v = v
     mu = ${mu}
     rho = ${rho}
-    flow_boundaries = 'bottom top'
-    no_slip_wall_boundaries = 'left right'
   []
   [temp_source]
     type = FVBodyForce
@@ -160,7 +154,7 @@ velocity_interp_method='average'
 []
 
 [FVBCs]
-  inactive = 'noslip-u noslip-v'
+  # inactive = 'noslip-u noslip-v'
   [inlet-u]
     type = INSFVInletVelocityBC
     boundary = 'bottom'
@@ -175,47 +169,49 @@ velocity_interp_method='average'
   []
   [noslip-u]
     type = INSFVNoSlipWallBC
-    boundary = 'right'
+    boundary = 'right left'
     variable = u
+    function = 0
   []
   [noslip-v]
     type = INSFVNoSlipWallBC
-    boundary = 'right'
+    boundary = 'right left'
     variable = v
+    function = 0
   []
-  [free-slip-u]
-    type = INSFVNaturalFreeSlipBC
-    boundary = 'right'
-    variable = u
-  []
-  [free-slip-v]
-    type = INSFVNaturalFreeSlipBC
-    boundary = 'right'
-    variable = v
-  []
-  [axis-u]
-    type = INSFVSymmetryVelocityBC
-    boundary = 'left'
-    variable = u
-    u = u
-    v = v
-    mu = ${mu}
-    momentum_component = x
-  []
-  [axis-v]
-    type = INSFVSymmetryVelocityBC
-    boundary = 'left'
-    variable = v
-    u = u
-    v = v
-    mu = ${mu}
-    momentum_component = y
-  []
-  [axis-p]
-    type = INSFVSymmetryPressureBC
-    boundary = 'left'
-    variable = pressure
-  []
+  # [free-slip-u]
+  #   type = INSFVNaturalFreeSlipBC
+  #   boundary = 'right left'
+  #   variable = u
+  # []
+  # [free-slip-v]
+  #   type = INSFVNaturalFreeSlipBC
+  #   boundary = 'right left'
+  #   variable = v
+  # []
+  # [axis-u]
+  #   type = INSFVSymmetryVelocityBC
+  #   boundary = 'left'
+  #   variable = u
+  #   u = u
+  #   v = v
+  #   mu = ${mu}
+  #   momentum_component = x
+  # []
+  # [axis-v]
+  #   type = INSFVSymmetryVelocityBC
+  #   boundary = 'left'
+  #   variable = v
+  #   u = u
+  #   v = v
+  #   mu = ${mu}
+  #   momentum_component = y
+  # []
+  # [axis-p]
+  #   type = INSFVSymmetryPressureBC
+  #   boundary = 'left'
+  #   variable = pressure
+  # []
   [outlet_p]
     type = INSFVOutletPressureBC
     boundary = 'top'
@@ -405,11 +401,11 @@ velocity_interp_method='average'
 [Outputs]
   exodus = true  #change this
   csv = true
-  # [console_mass]
-  #   type = Console
-  #   start_step = 1
-  #   show = 'inlet_mass_variable inlet_mass_constant inlet_mass_matprop mid1_mass mid2_mass outlet_mass'
-  # []
+  [console_mass]
+    type = Console
+    start_step = 1
+    show = 'inlet_mass_variable inlet_mass_constant inlet_mass_matprop mid1_mass mid2_mass outlet_mass'
+  []
   # [console_momentum_x]
   #   type = Console
   #   start_step = 1

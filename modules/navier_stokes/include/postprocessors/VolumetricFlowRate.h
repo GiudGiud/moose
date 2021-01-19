@@ -39,7 +39,6 @@ protected:
 
   /// Advected quantities
   const VariableValue & _advected_variable;
-  const VariableValue & _advected_variable_neighbor;
   const ADMaterialProperty<Real> & _advected_material_property;
   const ADMaterialProperty<Real> & _advected_material_property_neighbor;
 

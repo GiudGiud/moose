@@ -119,6 +119,25 @@ velocity_interp_method='rc'
     boundary = 'right'
     variable = v
   []
+  # [free-slip-wall-u]
+  #   type = INSFVPenaltyFreeSlipBC
+  #   boundary = 'right'
+  #   variable = u
+  #   momentum_component = x
+  #   u = u
+  #   v = v
+  #   penalty = 1e8
+  # []
+  # [free-slip-wall-v]
+  #   type = INSFVPenaltyFreeSlipBC
+  #   boundary = 'right'
+  #   variable = v
+  #   momentum_component = y
+  #   u = u
+  #   v = v
+  #   penalty = 1e8
+  # []
+
   [no-slip-wall-u]
     type = INSFVNoSlipWallBC
     boundary = 'right'

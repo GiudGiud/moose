@@ -42,5 +42,28 @@ INSFVPenaltyFreeSlipBC::INSFVPenaltyFreeSlipBC(const InputParameters & params)
 ADReal
 INSFVPenaltyFreeSlipBC::computeQpResidual()
 {
-  return _p * _normal(_comp) * (_normal * ADRealVectorValue(_u[_qp], _v[_qp], _w[_qp]));
+  const FaceInfo * const fi = _face_info;
+
+  /// Obtain the variable names from the parameters
+  const auto & velx_name = parameters().getParamHelper("u", parameters(),
+      static_cast<std::vector<VariableName, std::allocator<VariableName> > *>(0));
+  const auto & vely_name = parameters().getParamHelper("v", parameters(),
+      static_cast<std::vector<VariableName, std::allocator<VariableName> > *>(0));
+  const auto & velz_name = parameters().getParamHelper("w", parameters(),
+      static_cast<std::vector<VariableName, std::allocator<VariableName> > *>(0));
+
+  /// Get face value for velocity, using the variable's interpolation method
+  const auto & vx_face = velx_name.empty() ? _u[_qp] :
+      dynamic_cast<const MooseVariableFV<Real> *>(
+      &_subproblem.getVariable(_tid, velx_name[0]))->getBoundaryFaceValue(*fi);
+
+  const auto & vy_face = vely_name.empty() ? _v[_qp] :
+      dynamic_cast<const MooseVariableFV<Real> *>(
+      &_subproblem.getVariable(_tid, vely_name[0]))->getBoundaryFaceValue(*fi);
+
+  const auto & vz_face = velz_name.empty() ? _w[_qp] :
+      MetaPhysicL::raw_value(dynamic_cast<const MooseVariableFV<Real> *>(
+      &_subproblem.getVariable(_tid, velz_name[0]))->getBoundaryFaceValue(*fi));
+
+  return _p * _normal(_comp) * (_normal * ADRealVectorValue(vx_face, vy_face, vz_face));
 }
