@@ -1,7 +1,7 @@
-!syntax description /Postprocessors/BoundaryVolumetricFlowRate
+!syntax description /Postprocessors/VolumetricFlowRate
 
-!syntax parameters /Postprocessors/BoundaryVolumetricFlowRate
+!syntax parameters /Postprocessors/VolumetricFlowRate
 
-!syntax inputs /Postprocessors/BoundaryVolumetricFlowRate
+!syntax inputs /Postprocessors/VolumetricFlowRate
 
-!syntax children /Postprocessors/BoundaryVolumetricFlowRate
+!syntax children /Postprocessors/VolumetricFlowRate
