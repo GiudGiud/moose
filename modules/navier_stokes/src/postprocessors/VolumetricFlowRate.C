@@ -35,7 +35,12 @@ VolumetricFlowRate::VolumetricFlowRate(const InputParameters & parameters)
     _vel_x(coupledValue("vel_x")),
     _vel_y(coupledValue("vel_y")),
     _vel_z(coupledValue("vel_z")),
+    _fv_vel_x(dynamic_cast<const MooseVariableFV<Real> *>(getFieldVar("vel_x", 0))),
+    _fv_vel_y(dynamic_cast<const MooseVariableFV<Real> *>(getFieldVar("vel_y", 0))),
+    _fv_vel_z(dynamic_cast<const MooseVariableFV<Real> *>(getFieldVar("vel_z", 0))),
     _advected_variable(coupledValue("advected_variable")),
+    _fv_advected_variable(
+        dynamic_cast<const MooseVariableFV<Real> *>(getFieldVar("advected_variable", 0))),
     _advected_material_property(getADMaterialProperty<Real>("advected_mat_prop"))
 {
   /// Check that at most one advected quantity has been provided
@@ -54,42 +59,33 @@ VolumetricFlowRate::computeQpIntegral()
     /// We should be at the edge of the domain
     const FaceInfo * const fi = _mesh.faceInfo(_current_elem, _current_side);
     mooseAssert(fi, "We should have a face info");
-    if (!fi->isBoundary())
-      mooseError("VolumetricFlowRate should only be used at boundaries");
+    mooseAssert(fi->isBoundary(), "VolumetricFlowRate should only be used at boundaries");
 
     /// Get face value for velocity
     const auto & vx_face = !getFieldVar("vel_x", 0)
                                ? _vel_x[_qp]
-                               : MetaPhysicL::raw_value(dynamic_cast<const MooseVariableFV<Real> *>(
-                                                            getFieldVar("vel_x", 0))
-                                                            ->getBoundaryFaceValue(*fi));
+                               : MetaPhysicL::raw_value(_fv_vel_x->getBoundaryFaceValue(*fi));
 
     const auto & vy_face = !getFieldVar("vel_y", 0)
                                ? _vel_y[_qp]
-                               : MetaPhysicL::raw_value(dynamic_cast<const MooseVariableFV<Real> *>(
-                                                            getFieldVar("vel_y", 0))
-                                                            ->getBoundaryFaceValue(*fi));
+                               : MetaPhysicL::raw_value(_fv_vel_y->getBoundaryFaceValue(*fi));
 
     const auto & vz_face = !getFieldVar("vel_z", 0)
                                ? _vel_z[_qp]
-                               : MetaPhysicL::raw_value(dynamic_cast<const MooseVariableFV<Real> *>(
-                                                            getFieldVar("vel_z", 0))
-                                                            ->getBoundaryFaceValue(*fi));
+                               : MetaPhysicL::raw_value(_fv_vel_z->getBoundaryFaceValue(*fi));
 
     /// Compute the advected quantity on the face
     Real advected_quantity;
     if (parameters().isParamSetByUser("advected_variable"))
     {
-      advected_quantity = !getFieldVar("advected_variable", 0)
-                              ? _advected_variable[_qp]
-                              : MetaPhysicL::raw_value(dynamic_cast<const MooseVariableFV<Real> *>(
-                                                           getFieldVar("advected_variable", 0))
-                                                           ->getBoundaryFaceValue(*fi));
+      advected_quantity =
+          !getFieldVar("advected_variable", 0)
+              ? _advected_variable[_qp]
+              : MetaPhysicL::raw_value(_fv_advected_variable->getBoundaryFaceValue(*fi));
     }
     else if (parameters().isParamSetByUser("advected_mat_prop"))
     {
-      /// The material property would not need to be interpolated since we are at
-      /// an external boundary
+      /// FIXME The material property would need to be computed on the face #16809
       advected_quantity = MetaPhysicL::raw_value(_advected_material_property[_qp]);
     }
     else
