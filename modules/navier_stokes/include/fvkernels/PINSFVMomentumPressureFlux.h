@@ -25,6 +25,8 @@ protected:
 
   /// the current element porosity
   const VariableValue & _eps;
+  /// the current element porosity
+  const VariableValue & _eps_neighbor;
   /// the current element pressure
   const ADVariableValue & _p_elem;
   /// the neighbor element pressure

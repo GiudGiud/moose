@@ -9,8 +9,8 @@
 
 // The following can be uncommented for detailed output for
 // the trace of a Ray or multiple Rays
-// #define DEBUG_RAY_IF (*_current_ray)->id() == 0
-// #define DEBUG_RAY_MESH_IF (*_current_ray)->id() == 0
+#define DEBUG_RAY_IF (*_current_ray)->id() == 0
+#define DEBUG_RAY_MESH_IF (*_current_ray)->id() == 0
 // #define DEBUG_RAY_INTERSECTIONS
 
 #include "MooseError.h"
