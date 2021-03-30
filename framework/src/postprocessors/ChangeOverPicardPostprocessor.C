@@ -78,13 +78,21 @@ ChangeOverPicardPostprocessor::getValue()
   // detect the beginning of a new Picard iteration process
   // it can either a new time step or a failed time step
   bool new_time_step = false;
-  if (dynamic_cast<Transient *>(_app.getExecutioner())->picardSolve().numPicardIts() == 0)
+  if (dynamic_cast<Transient *>(_app.getExecutioner())->picardSolve().numPicardIts() == 1)
   {
-    new_time_step = true;
-    _t_step_old = _t_step;
+    // new time step
+    if (_t_step != _t_step_old)
+    {
+      new_time_step = true;
+      _t_step_old = _t_step;
 
-    // copy initial value in case difference is measured against initial value
-    _pps_value_initial = _pps_value;
+      // copy initial value in case difference is measured against initial value
+      // or for a reset if the time step fails
+      _pps_value_initial = _pps_value;
+    }
+    // failed time step
+    // else
+    //   _pps_value_old = _pps_value_initial;
   }
 
   // determine value which change is measured against
@@ -105,7 +113,8 @@ ChangeOverPicardPostprocessor::getValue()
         base_value = _pps_value_old;
     }
   }
-  std::cout << "Change over Picard " << _t_step << " : " << base_value << " -> " << _pps_value << std::endl;
+  std::cout << "Change over Picard " << _t_step << " " << dynamic_cast<Transient *>(_app.getExecutioner())->picardSolve().numPicardIts()
+            << " : " << base_value << " -> " << _pps_value << " (" << (_pps_value - base_value) / base_value << ")" << std::endl;
 
   // compute change in value
   Real change;

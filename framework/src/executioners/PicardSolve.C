@@ -247,7 +247,32 @@ PicardSolve::solve()
       pp_old = *_picard_custom_pp;
 
     // FIXME Better to relax postprocessors here??
+    // Relax postprocessors before the solve?
+    if (_relax_factor != 1)
+    {
+      // Other potential location for relaxation of PPs
+      // Relax postprocessors for the main application
+      std::cout << "Picard iteration: " << _picard_it << std::endl;
+      for (size_t i=0; i<_relaxed_pps.size(); i++)
+      {
+        // Get new postprocessor value
+        const Real current_value = getPostprocessorValueByName(_relaxed_pps[i]);
+        const Real old_value = _problem.getPostprocessorValueByName(_relaxed_pps[i], 1);
 
+        // Compute and set relaxed value
+        Real new_value;
+        const Real factor = _relax_factor;
+        if (_picard_it > 0)
+          new_value = factor * current_value + (1 - factor) * old_value;
+        else
+          new_value = current_value;
+        _problem.setPostprocessorValueByName(_relaxed_pps[i], new_value);
+        _problem.setPostprocessorValueByName(_relaxed_pps[i], new_value, 1);
+
+        // Save new value
+        std::cout << _relaxed_pps[i] << " " << current_value << " & " << old_value << " -> " << new_value << std::endl;
+      }
+    }
 
     Real begin_norm_old = (_picard_it > 0 ? _picard_timestep_begin_norm[_picard_it - 1]
                                           : std::numeric_limits<Real>::max());
@@ -293,7 +318,7 @@ PicardSolve::solve()
                      << '\n';
           }
 
-          if  (_picard_it > _picard_min_its)
+          if  (_picard_it + 2 > _picard_min_its)
           {
             Real max_norm = std::max(_picard_timestep_begin_norm[_picard_it],
                                      _picard_timestep_end_norm[_picard_it]);
@@ -517,29 +542,6 @@ PicardSolve::solveStep(Real begin_norm_old,
       solution.set(dof, (relax_previous(dof) * (1.0 - factor)) + (solution(dof) * factor));
     solution.close();
     _nl.update();
-
-    // Other potential location for relaxation of PPs
-    // Relax postprocessors for the main application
-    std::cout << "Picard iteration: " << _picard_it << std::endl;
-    for (size_t i=0; i<_relaxed_pps.size(); i++)
-    {
-      // Get new postprocessor value
-      const Real current_value = getPostprocessorValueByName(_relaxed_pps[i]);
-      const Real old_value = _problem.getPostprocessorValueByName(_relaxed_pps[i], 1);
-
-      // Compute and set relaxed value
-      Real new_value;
-      const Real factor = _relax_factor;
-      if (_picard_it > 0)
-        new_value = factor * current_value + (1 - factor) * old_value;
-      else
-        new_value = current_value;
-      _problem.setPostprocessorValueByName(_relaxed_pps[i], new_value);
-      _problem.setPostprocessorValueByName(_relaxed_pps[i], new_value, 1);
-
-      // Save new value
-      std::cout << _relaxed_pps[i] << " " << current_value << " & " << old_value << " -> " << new_value << std::endl;
-    }
   }
 
   if (_problem.haveXFEM() && (_xfem_update_count < _max_xfem_update) && _problem.updateMeshXFEM())

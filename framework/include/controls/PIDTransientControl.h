@@ -12,14 +12,8 @@
 // MOOSE includes
 #include "Control.h"
 
-// Forward declarations
-class PIDTransientControl;
-
-template <>
-InputParameters validParams<PIDTransientControl>();
-
 /**
- * An time-dependent control for changing an input parameter to make a target
+ * A time-dependent control for changing an input parameter to make a target
  * postprocessor match a desired value.
  */
 class PIDTransientControl : public Control
@@ -52,9 +46,16 @@ private:
   const Real _start_time;
   /// The time to stop using the PID controller on
   const Real _stop_time;
-  /// Whether to reset reset the PID error when changing timestep, for a 'Picard' PID
+  /// Whether to reset the PID integral error when changing timestep, for a 'Picard' PID
   const bool _reset_every_timestep;
+  /// Whether to reset the PID integral error when the error crosses 0, to avoid windup
+  const bool _reset_integral_windup;
   /// Data to save to be able to recover from failed Picard solves
   Real _integral_old;
   Real _value_old;
+  /// the previous time step
+  int _t_step_old;
+  /// the previous value of the controlled parameter
+  Real _previous_value;
+  Real _old_delta;
 };

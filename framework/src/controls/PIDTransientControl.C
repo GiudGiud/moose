@@ -14,8 +14,6 @@
 
 registerMooseObject("MooseApp", PIDTransientControl);
 
-defineLegacyParams(PIDTransientControl);
-
 InputParameters
 PIDTransientControl::validParams()
 {
@@ -29,15 +27,19 @@ PIDTransientControl::validParams()
   params.addParam<Real>("K_integral", 1, "The coefficient multiplying the integral term");
   params.addParam<Real>("K_proportional", 1, "The coefficient multiplying the difference term");
   params.addParam<Real>("K_derivative", 0.1, "The coefficient multiplying the derivative term");
-  params.addRequiredParam<std::string>(
+  params.addParam<std::string>(
       "parameter",
       "The input parameter(s) to control. Specify a single parameter name and all "
       "parameters in all objects matching the name will be updated");
+  params.addParam<std::string>("parameter_pp", "The postprocessor parameter(s) to control.");
   params.addParam<Real>("start_time", -std::numeric_limits<Real>::max(), "The time to start the PID controller at");
   params.addParam<Real>("stop_time", std::numeric_limits<Real>::max(), "The time to stop the PID controller at");
   params.addParam<bool>("reset_every_timestep",
       false,
       "Reset the PID integral when changing timestep, to keep the PID within Picard iterations");
+  params.addParam<bool>("reset_integral_windup",
+      true,
+      "Reset the PID integral when the error crosses zero and the integral is larger than the error.");
 
   return params;
 }
@@ -51,13 +53,21 @@ PIDTransientControl::PIDTransientControl(const InputParameters & parameters)
   _Kder(getParam<Real>("K_derivative")),
   _start_time(getParam<Real>("start_time")),
   _stop_time(getParam<Real>("stop_time")),
-  _reset_every_timestep(getParam<bool>("reset_every_timestep"))
+  _reset_every_timestep(getParam<bool>("reset_every_timestep")),
+  _reset_integral_windup(getParam<bool>("reset_integral_windup"))
 {
   _integral = 0;
+  _previous_value = 0;
 
   // For Picard iteration resets
   _value_old = 0;
   _integral_old = 0;
+
+  if (isParamValid("parameter") && isParamValid("parameter_pp"))
+    paramError("parameter_pp",
+               "Either a controllable parameter or a postprocessor to control should be specified, not both.");
+  if (!isParamValid("parameter") && !isParamValid("parameter_pp"))
+    mooseError("A parameter or a postprocessor to control should be specified.");
 }
 
 void
@@ -67,38 +77,80 @@ PIDTransientControl::execute()
 
   if (_t >= _start_time && _t < _stop_time)
   {
-    // Compute the new parameter based on the PID control of the postprocessor
-    Real value = getControllableValue<Real>("parameter");
+    std::cout << _t << " " << _t_step << " " << dynamic_cast<Transient *>(_app.getExecutioner())->picardSolve().numPicardIts() << std::endl;
+    // Get current value of the controllable parameter
+    Real value;
+    if (isParamValid("parameter"))
+      value = getControllableValue<Real>("parameter");
+    else
+      value = getPostprocessorValueByName(getParam<std::string>("parameter_pp"));
 
     // Save integral and controlled value for the first Picard iteration
-    if (dynamic_cast<Transient *>(_app.getExecutioner())->picardSolve().numPicardIts() == 0)
+    // if the Picard iteration fails, a smaller time step will be used but _t_step is unchanged
+    if (_t_step != _t_step_old)
     {
+      // Reset the error integral if PID is used only within each timestep
+      if (_reset_every_timestep)
+        _integral = 0;
+
       _integral_old = _integral;
       _value_old = value;
+      _t_step_old = _t_step;
+      _old_delta = 0;
     }
 
     // If there were Picard iterations during the transient and they failed,
     // need to reset the controlled value and the error integral
-    if (dynamic_cast<Transient *>(_app.getExecutioner())->picardSolve().numPicardIts() == 0)
+    if (dynamic_cast<Transient *>(_app.getExecutioner())->picardSolve().numPicardIts() == 1)
     {
       _integral = _integral_old;
+      std::cout << "Resetting integral" << std::endl;
       value = _value_old;
     }
 
-    // Reset the error integral if PID is used only within each timestep
-    if (_reset_every_timestep)
+    // If there are Picard iterations, dont use the current received postprocessor value,
+    // use the value from the previous iteration
+    if (dynamic_cast<Transient *>(_app.getExecutioner())->picardSolve().numPicardIts() > 1)
+    {
+      value = _previous_value;
+    }
+
+    // Compute the delta between the current value of the postprocessor and the desired value
+    Real delta = _current - _target.value(_t, dummy);
+
+    // Reset integral of error if error crosses zero
+    if (_reset_integral_windup && delta * _old_delta < 0) // && std::abs(_Kint *_integral) > std::abs(_Kpro * delta))
+    { //std::cout << "Integral reset " <<  _Kint *_integral << " " << _Kpro * delta << std::endl;
       _integral = 0;
+    }
 
     // Compute the three error terms and add them to the controlled value
-    _integral += (_current - _target.value(_t, dummy)) * _dt;
-    value += _Kint * _integral + _Kpro * (_current- _target.value(_t, dummy));
+    _integral += delta * _dt;
+    value += _Kint * _integral + _Kpro * delta;
     if (_dt > 0)
-      value += _Kder * (_current- _target.value(_t, dummy)) / _dt;
+      value += _Kder * delta / _dt;
 
-    std::cout << "PID "<<getControllableValue<Real>("parameter")<< " (" << _Kint * _integral<<" " << _Kpro * (_current- _target.value(_t, dummy)) << " " <<
-       _Kder * (_current- _target.value(_t, dummy)) / _dt << ") -> " << value << std::endl;
+    std::cout << "PID "<< value - _Kder * (_current- _target.value(_t, dummy)) / _dt-(_Kint * _integral + _Kpro * (_current- _target.value(_t, dummy)))
+       << " (" << _Kint * _integral<<" " << _Kpro * delta << " " <<
+       _Kder * delta / _dt << ") -> " << value << std::endl;
 
-    // Set the new value using the Controllable system
-    setControllableValue<Real>("parameter", value);
+    if (isParamValid("parameter"))
+      // Set the new value using the Controllable system
+      setControllableValue<Real>("parameter", value);
+    else
+    {
+      // Set the new postprocessor value
+      _fe_problem.setPostprocessorValueByName(getParam<std::string>("parameter_pp"), value);
+
+      if (dynamic_cast<Transient *>(_app.getExecutioner())->picardSolve().numPicardIts() > 1)
+        // Set the previous postprocessor value, to have ChangeOverPicardPostprocessor correct
+        _fe_problem.setPostprocessorValueByName(getParam<std::string>("parameter_pp"), value, 1);
+    }
+
+    // Save value for Picard iteration purposes
+    _previous_value = value;
+
+    // Keep track of previous delta to avoid integral windup
+    _old_delta = delta;
   }
 }
