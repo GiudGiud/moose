@@ -25,6 +25,10 @@ PicardSolve::validParams()
   InputParameters params = emptyInputParameters();
 
   params.addParam<unsigned int>(
+      "picard_min_its",
+      1,
+      "Specifies the minimum number of Picard iterations.");
+  params.addParam<unsigned int>(
       "picard_max_its",
       1,
       "Specifies the maximum number of Picard iterations.  Mainly used when "
@@ -89,7 +93,7 @@ PicardSolve::validParams()
                                             std::vector<std::string>(),
                                             "List of master app postprocessors to relax during Picard Iteration");
 
-  params.addParamNamesToGroup("picard_max_its accept_on_max_picard_iteration "
+  params.addParamNamesToGroup("picard_min_its picard_max_its accept_on_max_picard_iteration "
                               "disable_picard_residual_norm_check picard_rel_tol "
                               "picard_abs_tol picard_custom_pp picard_force_norms "
                               "relaxation_factor relaxed_variables relaxed_postprocessors",
@@ -111,6 +115,7 @@ PicardSolve::validParams()
 
 PicardSolve::PicardSolve(Executioner * ex)
   : SolveObject(ex),
+    _picard_min_its(getParam<unsigned int>("picard_min_its")),
     _picard_max_its(getParam<unsigned int>("picard_max_its")),
     _has_picard_its(_picard_max_its > 1),
     _accept_max_it(getParam<bool>("accept_on_max_picard_iteration")),
@@ -140,6 +145,9 @@ PicardSolve::PicardSolve(Executioner * ex)
     _auto_advance_user_value(_auto_advance_set_by_user ? getParam<bool>("auto_advance") : true),
     _fail_step(false)
 {
+  if (_picard_min_its > _picard_max_its)
+    paramError("picard_min_its", "The minimum number of Picard iterations may not exceed the maximum.");
+
   if (_relax_factor != 1.0)
     // Store a copy of the previous solution here
     _problem.getNonlinearSystemBase().addVector("relax_previous", false, PARALLEL);
@@ -147,8 +155,6 @@ PicardSolve::PicardSolve(Executioner * ex)
   if (_relaxed_vars.size() > 0 && _relaxed_pps.size() > 0)
     mooseWarning("Both variable and postprocessor relaxation are active. If the two share dofs, the "
                  "relaxation will not be correct.");
-
-  std::cout << "Constructing picard solve " << std::endl;
 }
 
 bool
@@ -287,50 +293,53 @@ PicardSolve::solve()
                      << '\n';
           }
 
-          Real max_norm = std::max(_picard_timestep_begin_norm[_picard_it],
-                                   _picard_timestep_end_norm[_picard_it]);
-
-          Real max_relative_drop = max_norm / _picard_initial_norm;
-
-          if (max_norm < _picard_abs_tol)
+          if  (_picard_it > _picard_min_its)
           {
-            _picard_status = MoosePicardConvergenceReason::CONVERGED_ABS;
+            Real max_norm = std::max(_picard_timestep_begin_norm[_picard_it],
+                                     _picard_timestep_end_norm[_picard_it]);
+
+            Real max_relative_drop = max_norm / _picard_initial_norm;
+
+            if (max_norm < _picard_abs_tol)
+            {
+              _picard_status = MoosePicardConvergenceReason::CONVERGED_ABS;
+              break;
+            }
+            if (max_relative_drop < _picard_rel_tol)
+            {
+              _picard_status = MoosePicardConvergenceReason::CONVERGED_RELATIVE;
+              break;
+            }
+          }
+          if (_executioner.augmentedPicardConvergenceCheck())
+          {
+            _picard_status = MoosePicardConvergenceReason::CONVERGED_CUSTOM;
             break;
           }
-          if (max_relative_drop < _picard_rel_tol)
+          if (std::abs(pp_new - pp_old) < _custom_abs_tol)
           {
-            _picard_status = MoosePicardConvergenceReason::CONVERGED_RELATIVE;
+            _picard_status = MoosePicardConvergenceReason::CONVERGED_CUSTOM;
             break;
           }
-        }
-        if (_executioner.augmentedPicardConvergenceCheck())
-        {
-          _picard_status = MoosePicardConvergenceReason::CONVERGED_CUSTOM;
-          break;
-        }
-        if (std::abs(pp_new - pp_old) < _custom_abs_tol)
-        {
-          _picard_status = MoosePicardConvergenceReason::CONVERGED_CUSTOM;
-          break;
-        }
-        if (std::abs((pp_new - pp_old) / pp_scaling) < _custom_rel_tol)
-        {
-          _picard_status = MoosePicardConvergenceReason::CONVERGED_CUSTOM;
-          break;
-        }
-        if (_picard_it + 1 == _picard_max_its)
-        {
-          if (_accept_max_it)
+          if (std::abs((pp_new - pp_old) / pp_scaling) < _custom_rel_tol)
           {
-            _picard_status = MoosePicardConvergenceReason::REACH_MAX_ITS;
-            converged = true;
+            _picard_status = MoosePicardConvergenceReason::CONVERGED_CUSTOM;
+            break;
           }
-          else
+          if (_picard_it + 1 == _picard_max_its)
           {
-            _picard_status = MoosePicardConvergenceReason::DIVERGED_MAX_ITS;
-            converged = false;
+            if (_accept_max_it)
+            {
+              _picard_status = MoosePicardConvergenceReason::REACH_MAX_ITS;
+              converged = true;
+            }
+            else
+            {
+              _picard_status = MoosePicardConvergenceReason::DIVERGED_MAX_ITS;
+              converged = false;
+            }
+            break;
           }
-          break;
         }
       }
     }

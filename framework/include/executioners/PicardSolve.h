@@ -115,6 +115,8 @@ protected:
                  bool relax,
                  const std::set<dof_id_type> & relaxed_dofs);
 
+   /// Miniumum Picard iterations
+   unsigned int _picard_min_its;
   /// Maximum Picard iterations
   unsigned int _picard_max_its;
   /// Whether or not we activate Picard iteration
