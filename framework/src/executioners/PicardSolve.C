@@ -42,13 +42,13 @@ PicardSolve::validParams()
   params.addParam<Real>("picard_rel_tol",
                         1e-8,
                         "The relative nonlinear residual drop to shoot for "
-                        "during Picard iterations.  This check is "
+                        "during Picard iterations. This check is "
                         "performed based on the Master app's nonlinear "
                         "residual.");
   params.addParam<Real>("picard_abs_tol",
                         1e-50,
                         "The absolute nonlinear residual to shoot for "
-                        "during Picard iterations.  This check is "
+                        "during Picard iterations. This check is "
                         "performed based on the Master app's nonlinear "
                         "residual.");
   params.addParam<PostprocessorName>("picard_custom_pp",
@@ -56,13 +56,13 @@ PicardSolve::validParams()
   params.addParam<Real>("custom_rel_tol",
                         1e-8,
                         "The relative nonlinear residual drop to shoot for "
-                        "during Picard iterations.  This check is "
-                        "performed based on postprocessor defined by "
+                        "during Picard iterations. This check is "
+                        "performed based on the postprocessor defined by "
                         "picard_custom_pp residual.");
   params.addParam<Real>("custom_abs_tol",
                         1e-50,
                         "The absolute nonlinear residual to shoot for "
-                        "during Picard iterations.  This check is "
+                        "during Picard iterations. This check is "
                         "performed based on postprocessor defined by "
                         "picard_custom_pp residual.");
   params.addParam<bool>("direct_pp_value",
@@ -75,7 +75,7 @@ PicardSolve::validParams()
       "picard_force_norms",
       false,
       "Force the evaluation of both the TIMESTEP_BEGIN and TIMESTEP_END norms regardless of the "
-      "existance of active MultiApps with those execute_on flags, default: false.");
+      "existence of active MultiApps with those execute_on flags, default: false.");
 
   params.addRangeCheckedParam<Real>("relaxation_factor",
                                     1.0,
@@ -84,12 +84,15 @@ PicardSolve::validParams()
                                     "Set between 0 and 2.");
   params.addParam<std::vector<std::string>>("relaxed_variables",
                                             std::vector<std::string>(),
-                                            "List of variables to relax during Picard Iteration");
+                                            "List of master app variables to relax during Picard Iteration");
+  params.addParam<std::vector<std::string>>("relaxed_postprocessors",
+                                            std::vector<std::string>(),
+                                            "List of master app postprocessors to relax during Picard Iteration");
 
   params.addParamNamesToGroup("picard_max_its accept_on_max_picard_iteration "
                               "disable_picard_residual_norm_check picard_rel_tol "
                               "picard_abs_tol picard_custom_pp picard_force_norms "
-                              "relaxation_factor relaxed_variables",
+                              "relaxation_factor relaxed_variables relaxed_postprocessors",
                               "Picard");
 
   params.addParam<unsigned int>(
@@ -121,6 +124,7 @@ PicardSolve::PicardSolve(Executioner * ex)
     _picard_force_norms(getParam<bool>("picard_force_norms")),
     _relax_factor(getParam<Real>("relaxation_factor")),
     _relaxed_vars(getParam<std::vector<std::string>>("relaxed_variables")),
+    _relaxed_pps(getParam<std::vector<std::string>>("relaxed_postprocessors")),
     // this value will be set by MultiApp
     _picard_self_relaxation_factor(1.0),
     _max_xfem_update(getParam<unsigned int>("max_xfem_update")),
@@ -139,6 +143,12 @@ PicardSolve::PicardSolve(Executioner * ex)
   if (_relax_factor != 1.0)
     // Store a copy of the previous solution here
     _problem.getNonlinearSystemBase().addVector("relax_previous", false, PARALLEL);
+
+  if (_relaxed_vars.size() > 0 && _relaxed_pps.size() > 0)
+    mooseWarning("Both variable and postprocessor relaxation are active. If the two share dofs, the "
+                 "relaxation will not be correct.");
+
+  std::cout << "Constructing picard solve " << std::endl;
 }
 
 bool
@@ -229,6 +239,9 @@ PicardSolve::solve()
     Real pp_old = 0.0;
     if (_picard_custom_pp && _picard_it > 0 && !getParam<bool>("direct_pp_value"))
       pp_old = *_picard_custom_pp;
+
+    // FIXME Better to relax postprocessors here??
+
 
     Real begin_norm_old = (_picard_it > 0 ? _picard_timestep_begin_norm[_picard_it - 1]
                                           : std::numeric_limits<Real>::max());
@@ -335,15 +348,36 @@ PicardSolve::solve()
 
   if (converged && _picard_self_relaxation_factor != 1.0)
   {
+    std::cout << "RELAXING POST PICARD" << std::endl;
     if (_previous_entering_time == _problem.time())
     {
       NumericVector<Number> & solution = _nl.solution();
       NumericVector<Number> & relax_previous = _nl.getVector("self_relax_previous");
-      Real factor = _picard_self_relaxation_factor;
+      const Real factor = _picard_self_relaxation_factor;
       for (const auto & dof : self_relaxed_dofs)
         solution.set(dof, (relax_previous(dof) * (1.0 - factor)) + (solution(dof) * factor));
       solution.close();
       _nl.update();
+
+
+      // Relax the postprocessors
+      std::cout << "Sub-Picard iteration: " << _picard_it << std::endl;
+      for (size_t i=0; i<_picard_self_relaxed_pps.size(); i++)
+      {
+        // Get new postprocessor value
+        const Real current_value = getPostprocessorValueByName(_picard_self_relaxed_pps[i]);
+        const Real old_value = _problem.getPostprocessorValueByName(_picard_self_relaxed_pps[i], 1);
+
+        // Compute and set relaxed value
+        Real new_value;
+        const Real factor = _picard_self_relaxation_factor;
+        new_value = factor * current_value + (1 - factor) * old_value;
+        _problem.setPostprocessorValueByName(_picard_self_relaxed_pps[i], new_value);
+        _problem.setPostprocessorValueByName(_picard_self_relaxed_pps[i], new_value, 1);
+        // _problem.setPostprocessorValueByName(_picard_self_relaxed_pps[i], new_value, 2);
+
+        std::cout << _picard_self_relaxed_pps[i] << " " << current_value << " & " << old_value  << " " << _problem.getPostprocessorValueByName(_picard_self_relaxed_pps[i], 1) << " -> " << new_value << std::endl;
+      }
     }
     _previous_entering_time = _problem.time();
   }
@@ -463,9 +497,10 @@ PicardSolve::solveStep(Real begin_norm_old,
 
   _console << COLOR_GREEN << ' ' << _solve_message << COLOR_DEFAULT << std::endl;
 
-  // Relax the "relaxed_variables"
+  // Relax the "relaxed_variables" and "relaxed_postprocessors"
   if (relax)
   {
+    std::cout << "Relaxing IN STEP " << std::endl;
     NumericVector<Number> & solution = _nl.solution();
     NumericVector<Number> & relax_previous = _nl.getVector("relax_previous");
     Real factor = _relax_factor;
@@ -473,6 +508,29 @@ PicardSolve::solveStep(Real begin_norm_old,
       solution.set(dof, (relax_previous(dof) * (1.0 - factor)) + (solution(dof) * factor));
     solution.close();
     _nl.update();
+
+    // Other potential location for relaxation of PPs
+    // Relax postprocessors for the main application
+    std::cout << "Picard iteration: " << _picard_it << std::endl;
+    for (size_t i=0; i<_relaxed_pps.size(); i++)
+    {
+      // Get new postprocessor value
+      const Real current_value = getPostprocessorValueByName(_relaxed_pps[i]);
+      const Real old_value = _problem.getPostprocessorValueByName(_relaxed_pps[i], 1);
+
+      // Compute and set relaxed value
+      Real new_value;
+      const Real factor = _relax_factor;
+      if (_picard_it > 0)
+        new_value = factor * current_value + (1 - factor) * old_value;
+      else
+        new_value = current_value;
+      _problem.setPostprocessorValueByName(_relaxed_pps[i], new_value);
+      _problem.setPostprocessorValueByName(_relaxed_pps[i], new_value, 1);
+
+      // Save new value
+      std::cout << _relaxed_pps[i] << " " << current_value << " & " << old_value << " -> " << new_value << std::endl;
+    }
   }
 
   if (_problem.haveXFEM() && (_xfem_update_count < _max_xfem_update) && _problem.updateMeshXFEM())

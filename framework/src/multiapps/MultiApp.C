@@ -160,7 +160,10 @@ MultiApp::validParams()
                                     "Set between 0 and 2.");
   params.addParam<std::vector<std::string>>("relaxed_variables",
                                             std::vector<std::string>(),
-                                            "List of variables to relax during Picard Iteration");
+                                            "List of subapp variables to relax during Picard Iteration");
+  params.addParam<std::vector<std::string>>("relaxed_postprocessors",
+                                            std::vector<std::string>(),
+                                            "List of subapp postprocessors to relax during Picard Iteration");
 
   params.addParam<bool>(
       "clone_master_mesh", false, "True to clone master mesh and use it for this MultiApp.");
@@ -773,10 +776,13 @@ MultiApp::createApp(unsigned int i, Real start_time)
   preRunInputFile();
   app->runInputFile();
 
+  // Transfer picard relaxation information to the subapps
   auto & picard_solve = _apps[i]->getExecutioner()->picardSolve();
   picard_solve.setMultiAppRelaxationFactor(getParam<Real>("relaxation_factor"));
   picard_solve.setMultiAppRelaxationVariables(
       getParam<std::vector<std::string>>("relaxed_variables"));
+  picard_solve.setMultiAppRelaxationPostprocessors(
+      getParam<std::vector<std::string>>("relaxed_postprocessors"));
   if (getParam<Real>("relaxation_factor") != 1.0)
   {
     // Store a copy of the previous solution here

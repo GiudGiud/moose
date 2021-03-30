@@ -76,6 +76,12 @@ public:
     _picard_self_relaxed_variables = vars;
   }
 
+  /// Set relaxation postprocessors for the current solve as a MultiApp
+  void setMultiAppRelaxationPostprocessors(const std::vector<std::string> & pps)
+  {
+    _picard_self_relaxed_pps = pps;
+  }
+
   /**
    * Whether sub-applications are automatically advanced no matter what happens during their solves
    */
@@ -131,13 +137,17 @@ protected:
   bool _picard_force_norms;
   /// Relaxation factor for Picard Iteration
   Real _relax_factor;
-  /// The transferred variables that are going to be relaxed
+  /// The variables (transferred or not) that are going to be relaxed
   std::vector<std::string> _relaxed_vars;
+  /// The postprocessors (transferred or not) that are going to be relaxed
+  std::vector<std::string> _relaxed_pps;
 
   /// Relaxation factor outside of Picard iteration (used as a subapp)
   Real _picard_self_relaxation_factor;
   /// Variables to be relaxed outside of Picard iteration (used as a subapp)
   std::vector<std::string> _picard_self_relaxed_variables;
+  /// Postprocessors to be relaxed outside of Picard iteration (used as a subapp)
+  std::vector<std::string> _picard_self_relaxed_pps;
 
   /// Maximum number of xfem updates per step
   unsigned int _max_xfem_update;
