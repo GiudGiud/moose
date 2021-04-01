@@ -14,26 +14,26 @@
 // System includes
 #include <string>
 
-class PicardSolve;
+class SecantSolve;
 
 template <>
-InputParameters validParams<PicardSolve>();
+InputParameters validParams<SecantSolve>();
 
-class PicardSolve : public SolveObject
+class SecantSolve : public SolveObject
 {
 public:
-  PicardSolve(Executioner * ex);
+  SecantSolve(Executioner * ex);
 
   static InputParameters validParams();
 
   /**
-   * Picard solve the FEProblem.
+   * Secant solve the FEProblem.
    * @return True if solver is converged.
    */
   virtual bool solve() override;
 
-  /// Enumeration for Picard convergence reasons
-  enum class MoosePicardConvergenceReason
+  /// Enumeration for Secant convergence reasons
+  enum class MooseSecantConvergenceReason
   {
     UNSOLVED = 0,
     CONVERGED_NONLINEAR = 1,
@@ -47,40 +47,39 @@ public:
   };
 
   /**
-   * Get the number of Picard iterations performed
-   * Because this returns the number of Picard iterations, rather than the current
+   * Get the number of Secant iterations performed
+   * Because this returns the number of Secant iterations, rather than the current
    * iteration count (which starts at 0), increment by 1.
    *
-   * @return Number of Picard iterations performed
+   * @return Number of Secant iterations performed
    */
-  unsigned int numPicardIts() const { return _picard_it + 1; }
+  unsigned int numSecantIts() const { return _secant_it + 1; }
 
   /// Check the solver status
-  MoosePicardConvergenceReason checkConvergence() const { return _picard_status; }
+  MooseSecantConvergenceReason checkConvergence() const { return _secant_status; }
 
   /// This function checks the _xfem_repeat_step flag set by solve.
   bool XFEMRepeatStep() const { return _xfem_repeat_step; }
 
-  /// Clear Picard status
-  void clearPicardStatus() { _picard_status = MoosePicardConvergenceReason::UNSOLVED; }
+  /// Clear Secant status
+  void clearSecantStatus() { _secant_status = MooseSecantConvergenceReason::UNSOLVED; }
 
-  /// Whether or not this has Picard iterations
-  bool hasPicardIteration() { return _has_picard_its; }
+  /// Whether or not this has Secant iterations
+  bool hasSecantIteration() { return _has_secant_its; }
 
   /// Set relaxation factor for the current solve as a MultiApp
-  void setMultiAppRelaxationFactor(Real factor) { _picard_self_relaxation_factor = factor; }
+  void setMultiAppRelaxationFactor(Real factor) { _secant_self_relaxation_factor = factor; }
 
   /// Set relaxation variables for the current solve as a MultiApp
   void setMultiAppRelaxationVariables(const std::vector<std::string> & vars)
   {
-    _picard_self_relaxed_variables = vars;
+    _secant_self_relaxed_variables = vars;
   }
 
   /// Set relaxation postprocessors for the current solve as a MultiApp
   void setMultiAppRelaxationPostprocessors(const std::vector<std::string> & pps)
   {
-    _picard_self_relaxed_pps = pps;
-    _previous_self_relaxed_pps_values.resize(pps.size());
+    _secant_self_relaxed_pps = pps;
   }
 
   /**
@@ -93,12 +92,12 @@ public:
 
 protected:
   /**
-   * Perform one Picard iteration or a full solve.
+   * Perform one Secant iteration or a full solve.
    *
-   * @param begin_norm_old Residual norm after timestep_begin execution of previous Picard
+   * @param begin_norm_old Residual norm after timestep_begin execution of previous Secant
    * iteration
    * @param begin_norm     Residual norm after timestep_begin execution
-   * @param end_norm_old   Residual norm after timestep_end execution of previous Picard iteration
+   * @param end_norm_old   Residual norm after timestep_end execution of previous Secant iteration
    * @param end_norm       Residual norm after timestep_end execution
    * @param relax          Whether or not we do relaxation in this iteration
    * @param relaxed_dofs   DoFs to be relaxed
@@ -107,7 +106,7 @@ protected:
    *
    * Note: this function also set _xfem_repeat_step flag for XFEM. It tracks _xfem_update_count
    * state.
-   * FIXME: The proper design will be to let XFEM use Picard iteration to control the execution.
+   * FIXME: The proper design will be to let XFEM use Secant iteration to control the execution.
    */
   bool solveStep(Real begin_norm_old,
                  Real & begin_norm,
@@ -116,47 +115,47 @@ protected:
                  bool relax,
                  const std::set<dof_id_type> & relaxed_dofs);
 
-   /// Miniumum Picard iterations
-   unsigned int _picard_min_its;
-  /// Maximum Picard iterations
-  unsigned int _picard_max_its;
-  /// Whether or not we activate Picard iteration
-  bool _has_picard_its;
-  /// Whether or not to treat reaching maximum number of Picard iteration as converged
+   /// Miniumum Secant iterations
+   unsigned int _secant_min_its;
+  /// Maximum Secant iterations
+  unsigned int _secant_max_its;
+  /// Whether or not we activate Secant iteration
+  bool _has_secant_its;
+  /// Whether or not to treat reaching maximum number of Secant iteration as converged
   bool _accept_max_it;
-  /// Whether or not to use residual norm to check the Picard convergence
-  bool _has_picard_norm;
+  /// Whether or not to use residual norm to check the Secant convergence
+  bool _has_secant_norm;
   /// Relative tolerance on residual norm
-  Real _picard_rel_tol;
+  Real _secant_rel_tol;
   /// Absolute tolerance on residual norm
-  Real _picard_abs_tol;
-  /// Postprocessor value for user-defined picard convergence check
-  const PostprocessorValue * const _picard_custom_pp;
+  Real _secant_abs_tol;
+  /// Postprocessor value for user-defined secant convergence check
+  const PostprocessorValue * const _secant_custom_pp;
   /// Relative tolerance on postprocessor value
   Real _custom_rel_tol;
   /// Absolute tolerance on postprocessor value
   Real _custom_abs_tol;
   /// Whether or not we force evaluation of residual norms even without multiapps
-  bool _picard_force_norms;
-  /// Relaxation factor for Picard Iteration
-  Real _relax_factor;
+  bool _secant_force_norms;
+  const Real _max_change_fraction;
+
+  /// Relaxation factor for Secant Iteration
+  const Real _relax_factor;
   /// The variables (transferred or not) that are going to be relaxed
   std::vector<std::string> _relaxed_vars;
   /// The postprocessors (transferred or not) that are going to be relaxed
   std::vector<std::string> _relaxed_pps;
-  /// Previous values of the relaxed postprocessors
-  std::vector<PostprocessorValue> _previous_relaxed_pps_values;
+  /// The relaxed postprocessors value at the previous iteration
+  std::vector<PostprocessorValue> _old_relaxed_pps_values;
+  /// The relaxed postprocessors value from two iterations before
+  std::vector<PostprocessorValue> _older_relaxed_pps_values;
 
-  /// Relaxation factor outside of Picard iteration (used as a subapp)
-  Real _picard_self_relaxation_factor;
-  /// Variables to be relaxed outside of Picard iteration (used as a subapp)
-  std::vector<std::string> _picard_self_relaxed_variables;
-  /// Postprocessors to be relaxed outside of Picard iteration (used as a subapp)
-  std::vector<std::string> _picard_self_relaxed_pps;
-  /// Previous values of the postprocessors relaxed outside of the Picard iteration (used as a subapp)
-  std::vector<PostprocessorValue> _previous_self_relaxed_pps_values;
-  /// Whether previous self relaxed postprocessors have been stored
-  bool _has_old_pp_values;
+  /// Relaxation factor outside of Secant iteration (used as a subapp)
+  Real _secant_self_relaxation_factor;
+  /// Variables to be relaxed outside of Secant iteration (used as a subapp)
+  std::vector<std::string> _secant_self_relaxed_variables;
+  /// Postprocessors to be relaxed outside of Secant iteration (used as a subapp)
+  std::vector<std::string> _secant_self_relaxed_pps;
 
   /// Maximum number of xfem updates per step
   unsigned int _max_xfem_update;
@@ -164,20 +163,20 @@ protected:
   bool _update_xfem_at_timestep_begin;
 
 private:
-  /// Timer for Picard iteration
-  const PerfID _picard_timer;
+  /// Timer for Secant iteration
+  const PerfID _secant_timer;
 
-  ///@{ Variables used by the Picard iteration
-  /// Picard iteration counter
-  unsigned int _picard_it;
+  ///@{ Variables used by the Secant iteration
+  /// Secant iteration counter
+  unsigned int _secant_it;
   /// Initial residual norm
-  Real _picard_initial_norm;
+  Real _secant_initial_norm;
   /// Full history of residual norm after evaluation of timestep_begin
-  std::vector<Real> _picard_timestep_begin_norm;
+  std::vector<Real> _secant_timestep_begin_norm;
   /// Full history of residual norm after evaluation of timestep_end
-  std::vector<Real> _picard_timestep_end_norm;
-  /// Status of Picard solve
-  MoosePicardConvergenceReason _picard_status;
+  std::vector<Real> _secant_timestep_end_norm;
+  /// Status of Secant solve
+  MooseSecantConvergenceReason _secant_status;
   ///@}
 
   /// Counter for number of xfem updates that have been performed in the current step
@@ -185,7 +184,7 @@ private:
   /// Whether step should be repeated due to xfem modifying the mesh
   bool _xfem_repeat_step;
 
-  /// Time of previous Picard solve as a subapp
+  /// Time of previous Secant solve as a subapp
   Real _previous_entering_time;
 
   const std::string _solve_message;

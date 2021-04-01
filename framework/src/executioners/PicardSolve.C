@@ -155,6 +155,9 @@ PicardSolve::PicardSolve(Executioner * ex)
   if (_relaxed_vars.size() > 0 && _relaxed_pps.size() > 0)
     mooseWarning("Both variable and postprocessor relaxation are active. If the two share dofs, the "
                  "relaxation will not be correct.");
+
+  _previous_relaxed_pps_values.resize(_relaxed_pps.size());
+  _has_old_pp_values = false;
 }
 
 bool
@@ -257,17 +260,16 @@ PicardSolve::solve()
       {
         // Get new postprocessor value
         const Real current_value = getPostprocessorValueByName(_relaxed_pps[i]);
-        const Real old_value = _problem.getPostprocessorValueByName(_relaxed_pps[i], 1);
+        const Real old_value = _previous_relaxed_pps_values[i];
 
         // Compute and set relaxed value
-        Real new_value;
+        Real new_value = current_value;
         const Real factor = _relax_factor;
         if (_picard_it > 0)
           new_value = factor * current_value + (1 - factor) * old_value;
-        else
-          new_value = current_value;
+
         _problem.setPostprocessorValueByName(_relaxed_pps[i], new_value);
-        _problem.setPostprocessorValueByName(_relaxed_pps[i], new_value, 1);
+        _previous_relaxed_pps_values[i] = current_value;
 
         // Save new value
         std::cout << _relaxed_pps[i] << " " << current_value << " & " << old_value << " -> " << new_value << std::endl;
@@ -400,18 +402,20 @@ PicardSolve::solve()
       {
         // Get new postprocessor value
         const Real current_value = getPostprocessorValueByName(_picard_self_relaxed_pps[i]);
-        const Real old_value = _problem.getPostprocessorValueByName(_picard_self_relaxed_pps[i], 1);
+        const Real old_value = _previous_self_relaxed_pps_values[i];
 
         // Compute and set relaxed value
-        Real new_value;
+        Real new_value = current_value;
         const Real factor = _picard_self_relaxation_factor;
-        new_value = factor * current_value + (1 - factor) * old_value;
-        _problem.setPostprocessorValueByName(_picard_self_relaxed_pps[i], new_value);
-        _problem.setPostprocessorValueByName(_picard_self_relaxed_pps[i], new_value, 1);
-        // _problem.setPostprocessorValueByName(_picard_self_relaxed_pps[i], new_value, 2);
 
-        std::cout << _picard_self_relaxed_pps[i] << " " << current_value << " & " << old_value  << " " << _problem.getPostprocessorValueByName(_picard_self_relaxed_pps[i], 1) << " -> " << new_value << std::endl;
+        if (_has_old_pp_values)
+          new_value = factor * current_value + (1 - factor) * old_value;
+        _problem.setPostprocessorValueByName(_picard_self_relaxed_pps[i], new_value);
+        _previous_self_relaxed_pps_values[i] = current_value;
+
+        std::cout << _picard_self_relaxed_pps[i] << " " << current_value << " & " << old_value  << " -> " << new_value << std::endl;
       }
+      _has_old_pp_values = true;
     }
     _previous_entering_time = _problem.time();
   }
@@ -450,6 +454,9 @@ PicardSolve::solve()
     }
     _console << std::endl;
   }
+
+  // Invalidate the relaxed postprocessor values
+
   return converged;
 }
 
@@ -531,7 +538,7 @@ PicardSolve::solveStep(Real begin_norm_old,
 
   _console << COLOR_GREEN << ' ' << _solve_message << COLOR_DEFAULT << std::endl;
 
-  // Relax the "relaxed_variables" and "relaxed_postprocessors"
+  // Relax the "relaxed_variables"
   if (relax)
   {
     std::cout << "Relaxing IN STEP " << std::endl;

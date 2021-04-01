@@ -777,7 +777,7 @@ MultiApp::createApp(unsigned int i, Real start_time)
   app->runInputFile();
 
   // Transfer picard relaxation information to the subapps
-  auto & picard_solve = _apps[i]->getExecutioner()->picardSolve();
+  auto & picard_solve = _apps[i]->getExecutioner()->picardSolve();   // FIXME For secant solve, pass the 'relaxed' too
   picard_solve.setMultiAppRelaxationFactor(getParam<Real>("relaxation_factor"));
   picard_solve.setMultiAppRelaxationVariables(
       getParam<std::vector<std::string>>("relaxed_variables"));

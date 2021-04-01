@@ -167,6 +167,7 @@ Transient::Transient(const InputParameters & parameters)
     _final_timer(registerTimedSection("final", 1))
 {
   _picard_solve.setInnerSolve(_feproblem_solve);
+  _secant_solve.setInnerSolve(_feproblem_solve);
 
   // Handle deprecated parameters
   if (!parameters.isParamSetByAddParam("trans_ss_check"))

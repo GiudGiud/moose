@@ -16,6 +16,7 @@
 #include "PerfGraphInterface.h"
 #include "FEProblemSolve.h"
 #include "PicardSolve.h"
+#include "SecantSolve.h"
 #include "Reporter.h"
 #include "ReporterInterface.h"
 
@@ -113,8 +114,11 @@ public:
   /// Return the underlining FEProblemSolve object.
   FEProblemSolve & feProblemSolve() { return _feproblem_solve; }
 
-  /// Return underlining PicardSolve object.
+  /// Return underlying PicardSolve object.
   PicardSolve & picardSolve() { return _picard_solve; }
+
+  /// Return underlying SecantSolve object.
+  SecantSolve & secantSolve() { return _secant_solve; }
 
   /// Augmented Picard convergence check that to be called by PicardSolve and can be overridden by derived executioners
   virtual bool augmentedPicardConvergenceCheck() const { return false; }
@@ -144,6 +148,7 @@ protected:
 
   FEProblemSolve _feproblem_solve;
   PicardSolve _picard_solve;
+  SecantSolve _secant_solve;
 
   // Restart
   std::string _restart_file_base;

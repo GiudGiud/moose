@@ -160,7 +160,8 @@ TimeStepper::constrainStep(Real & dt)
 void
 TimeStepper::step()
 {
-  _converged = _executioner.picardSolve().solve();
+  // _converged = _executioner.picardSolve().solve();
+  _converged = _executioner.secantSolve().solve();
 }
 
 void
