@@ -169,8 +169,8 @@ MaterialOutputAction::act()
           material_names.insert(curr_material_names.begin(), curr_material_names.end());
         }
 
-        // If the material object has limited outputs, store the variables associated with the output
-        // objects
+        // If the material object has limited outputs, store the variables associated with the
+        // output objects
         if (!outputs.empty())
           for (const auto & output_name : outputs)
             _material_variable_names_map[output_name].insert(_material_variable_names.begin(),
@@ -208,7 +208,8 @@ MaterialOutputAction::act()
       if (!_problem->hasVariable(var_name))
         _problem->addAuxVariable("MooseVariableConstMonomial", var_name, params);
       else
-        mooseError("The material property output " + var_name + " has the same name as an existing"
+        mooseError("The material property output " + var_name +
+                   " has the same name as an existing"
                    " variable, use the material material_output_suffix parameter to disambiguate");
     }
     if (material_names.size() > 0)
@@ -266,9 +267,10 @@ MaterialOutputAction::materialOutput(const std::string & property_name,
     names = materialOutputHelper<RankFourTensor>(property_name, material, get_names_only);
 
   // Use a suffix to disambiguate variables and material properties with the same name
-  const auto output_suffix = material.isParamValid("material_output_suffix") ?
-      material.getParam<std::string>("material_output_suffix") : "";
-  for (auto & name:names)
+  const auto output_suffix = material.isParamValid("material_output_suffix")
+                                 ? material.getParam<std::string>("material_output_suffix")
+                                 : "";
+  for (auto & name : names)
     name += output_suffix;
 
   return names;
@@ -281,8 +283,9 @@ MaterialOutputAction::getParams(const std::string & type,
                                 const MaterialBase & material)
 {
   // Use a suffix to disambiguate variables and material properties with the same name
-  const auto output_suffix = material.isParamValid("material_output_suffix") ?
-      material.getParam<std::string>("material_output_suffix") : "";
+  const auto output_suffix = material.isParamValid("material_output_suffix")
+                                 ? material.getParam<std::string>("material_output_suffix")
+                                 : "";
 
   // Append the list of output variables for the current material
   _material_variable_names.insert(variable_name + output_suffix);
