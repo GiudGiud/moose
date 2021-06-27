@@ -52,6 +52,8 @@ MaterialBase::validParams()
       "output_properties",
       "List of material properties, from this material, to output (outputs "
       "must also be defined to an output type)");
+  params.addParam<std::string>("material_output_suffix", "A suffix to disambiguate variables and "
+                               "material properties of the same name during output");
 
   params.addParamNamesToGroup("outputs output_properties", "Outputs");
   params.addParamNamesToGroup("use_displaced_mesh", "Advanced");

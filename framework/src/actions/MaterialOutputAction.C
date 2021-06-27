@@ -199,17 +199,13 @@ MaterialOutputAction::act()
     std::ostringstream oss;
     for (const auto & var_name : material_names)
     {
+      oss << "\n  " << var_name;
       // Avoid adding material properties auxiliary variables with the same name as a variable
-      if (!_problem->getNonlinearSystemBase().hasVariable(var_name))
-      {
-        oss << "\n  " << var_name;
+      if (!_problem->hasVariable(var_name))
         _problem->addAuxVariable("MooseVariableConstMonomial", var_name, params);
-      }
       else
-      {
-        oss << "\n  " << var_name + "_mat";
-        _problem->addAuxVariable("MooseVariableConstMonomial", var_name + "_mat", params);
-      }
+        mooseError("The material property output " + var_name + " has the same name as an existing"
+                   " variable, use the material material_output_suffix parameter to disambiguate");
     }
     if (material_names.size() > 0)
       _console << COLOR_CYAN << "The following total " << material_names.size()
@@ -262,6 +258,12 @@ MaterialOutputAction::materialOutput(const std::string & property_name,
   else if (hasProperty<RankFourTensor>(property_name))
     names = materialOutputHelper<RankFourTensor>(property_name, material, get_names_only);
 
+  // Use a suffix to disambiguate variables and material properties with the same name
+  const auto output_suffix = material.isParamValid("material_output_suffix") ?
+      material.getParam<std::string>("material_output_suffix") : "";
+  for (auto & name:names)
+    name += output_suffix;
+
   return names;
 }
 
@@ -271,19 +273,18 @@ MaterialOutputAction::getParams(const std::string & type,
                                 const std::string & variable_name,
                                 const MaterialBase & material)
 {
-  // Avoid conflicts on variable names
-  string suffix = "";
-  if (_problem->getNonlinearSystemBase().hasVariable(property_name))
-    suffix += "_mat";
+  // Use a suffix to disambiguate variables and material properties with the same name
+  const auto output_suffix = material.isParamValid("material_output_suffix") ?
+      material.getParam<std::string>("material_output_suffix") : "";
 
   // Append the list of output variables for the current material
-  _material_variable_names.insert(variable_name + suffix);
+  _material_variable_names.insert(variable_name + output_suffix);
 
   // Set the action parameters
   InputParameters params = _factory.getValidParams(type);
 
   params.set<MaterialPropertyName>("property") = property_name;
-  params.set<AuxVariableName>("variable") = variable_name + suffix;
+  params.set<AuxVariableName>("variable") = variable_name + output_suffix;
   if (_output_only_on_timestep_end)
     params.set<ExecFlagEnum>("execute_on") = EXEC_TIMESTEP_END;
   else
