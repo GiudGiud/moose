@@ -34,6 +34,10 @@ std::vector<std::string> MaterialOutputAction::materialOutputHelper<RealVectorVa
     const std::string & material_name, const MaterialBase & material, bool get_names_only);
 
 template <>
+std::vector<std::string> MaterialOutputAction::materialOutputHelper<ADRealVectorValue>(
+    const std::string & material_name, const MaterialBase & material, bool get_names_only);
+
+template <>
 std::vector<std::string> MaterialOutputAction::materialOutputHelper<RealTensorValue>(
     const std::string & material_name, const MaterialBase & material, bool get_names_only);
 
@@ -191,7 +195,7 @@ MaterialOutputAction::act()
   if (_current_task == "add_output_aux_variables")
   {
     auto params = _factory.getValidParams("MooseVariableConstMonomial");
-    // currently only elemental variables are support for material property output
+    // currently only elemental variables are supported for material property output
     params.set<MooseEnum>("order") = "CONSTANT";
     params.set<MooseEnum>("family") = "MONOMIAL";
 
@@ -245,6 +249,9 @@ MaterialOutputAction::materialOutput(const std::string & property_name,
 
   else if (hasProperty<RealVectorValue>(property_name))
     names = materialOutputHelper<RealVectorValue>(property_name, material, get_names_only);
+
+  else if (hasADProperty<RealVectorValue>(property_name))
+    names = materialOutputHelper<ADRealVectorValue>(property_name, material, get_names_only);
 
   else if (hasProperty<RealTensorValue>(property_name))
     names = materialOutputHelper<RealTensorValue>(property_name, material, get_names_only);
@@ -349,6 +356,31 @@ MaterialOutputAction::materialOutputHelper<RealVectorValue>(const std::string & 
       auto params = getParams("MaterialRealVectorValueAux", property_name, oss.str(), material);
       params.set<unsigned int>("component") = i;
       _problem->addAuxKernel("MaterialRealVectorValueAux", material.name() + oss.str(), params);
+    }
+  }
+
+  return names;
+}
+
+template <>
+std::vector<std::string>
+MaterialOutputAction::materialOutputHelper<ADRealVectorValue>(const std::string & property_name,
+                                                              const MaterialBase & material,
+                                                              bool get_names_only)
+{
+  std::array<char, 3> suffix = {{'x', 'y', 'z'}};
+  std::vector<std::string> names(3);
+  for (unsigned int i = 0; i < LIBMESH_DIM; ++i)
+  {
+    std::ostringstream oss;
+    oss << property_name << "_" << suffix[i];
+    names[i] = oss.str();
+
+    if (!get_names_only)
+    {
+      auto params = getParams("ADMaterialRealVectorValueAux", property_name, oss.str(), material);
+      params.set<unsigned int>("component") = i;
+      _problem->addAuxKernel("ADMaterialRealVectorValueAux", material.name() + oss.str(), params);
     }
   }
 
