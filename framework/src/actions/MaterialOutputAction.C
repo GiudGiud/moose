@@ -165,7 +165,7 @@ MaterialOutputAction::act()
           material_names.insert(curr_material_names.begin(), curr_material_names.end());
         }
 
-        // If the material object as limited outputs, store the variables associated with the output
+        // If the material object has limited outputs, store the variables associated with the output
         // objects
         if (!outputs.empty())
           for (const auto & output_name : outputs)
@@ -199,8 +199,17 @@ MaterialOutputAction::act()
     std::ostringstream oss;
     for (const auto & var_name : material_names)
     {
-      oss << "\n  " << var_name;
-      _problem->addAuxVariable("MooseVariableConstMonomial", var_name, params);
+      // Avoid adding material properties auxiliary variables with the same name as a variable
+      if (!_problem->getNonlinearSystemBase().hasVariable(var_name))
+      {
+        oss << "\n  " << var_name;
+        _problem->addAuxVariable("MooseVariableConstMonomial", var_name, params);
+      }
+      else
+      {
+        oss << "\n  " << var_name + "_mat";
+        _problem->addAuxVariable("MooseVariableConstMonomial", var_name + "_mat", params);
+      }
     }
     if (material_names.size() > 0)
       _console << COLOR_CYAN << "The following total " << material_names.size()
@@ -262,14 +271,19 @@ MaterialOutputAction::getParams(const std::string & type,
                                 const std::string & variable_name,
                                 const MaterialBase & material)
 {
+  // Avoid conflicts on variable names
+  string suffix = "";
+  if (_problem->getNonlinearSystemBase().hasVariable(property_name))
+    suffix += "_mat";
+
   // Append the list of output variables for the current material
-  _material_variable_names.insert(variable_name);
+  _material_variable_names.insert(variable_name + suffix);
 
   // Set the action parameters
   InputParameters params = _factory.getValidParams(type);
 
   params.set<MaterialPropertyName>("property") = property_name;
-  params.set<AuxVariableName>("variable") = variable_name;
+  params.set<AuxVariableName>("variable") = variable_name + suffix;
   if (_output_only_on_timestep_end)
     params.set<ExecFlagEnum>("execute_on") = EXEC_TIMESTEP_END;
   else
