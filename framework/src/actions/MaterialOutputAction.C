@@ -267,9 +267,7 @@ MaterialOutputAction::materialOutput(const std::string & property_name,
     names = materialOutputHelper<RankFourTensor>(property_name, material, get_names_only);
 
   // Use a suffix to disambiguate variables and material properties with the same name
-  const auto output_suffix = material.isParamValid("material_output_suffix")
-                                 ? material.getParam<std::string>("material_output_suffix")
-                                 : "";
+  const auto output_suffix = material.getParam<std::string>("material_output_suffix");
   for (auto & name : names)
     name += output_suffix;
 
@@ -283,9 +281,7 @@ MaterialOutputAction::getParams(const std::string & type,
                                 const MaterialBase & material)
 {
   // Use a suffix to disambiguate variables and material properties with the same name
-  const auto output_suffix = material.isParamValid("material_output_suffix")
-                                 ? material.getParam<std::string>("material_output_suffix")
-                                 : "";
+  const auto output_suffix = material.getParam<std::string>("material_output_suffix");
 
   // Append the list of output variables for the current material
   _material_variable_names.insert(variable_name + output_suffix);
@@ -379,9 +375,9 @@ MaterialOutputAction::materialOutputHelper<ADRealVectorValue>(const std::string 
 
     if (!get_names_only)
     {
-      auto params = getParams("ADMaterialRealVectorValueAux", property_name, oss.str(), material);
+      auto params = getParams("ADMaterialRealVectorValueAux", property_name, names[i], material);
       params.set<unsigned int>("component") = i;
-      _problem->addAuxKernel("ADMaterialRealVectorValueAux", material.name() + oss.str(), params);
+      _problem->addAuxKernel("ADMaterialRealVectorValueAux", material.name() + names[i], params);
     }
   }
 

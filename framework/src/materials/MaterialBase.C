@@ -53,6 +53,7 @@ MaterialBase::validParams()
       "List of material properties, from this material, to output (outputs "
       "must also be defined to an output type)");
   params.addParam<std::string>("material_output_suffix",
+                               "",
                                "A suffix for the property names to disambiguate variables and "
                                "material properties of the same name during output");
 
