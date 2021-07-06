@@ -17,7 +17,7 @@
 []
 
 [AuxVariables]
- [./axial_stress]
+  [./axial_stress]
     order = CONSTANT
     family = MONOMIAL
   [../]
@@ -124,6 +124,7 @@
     youngs_modulus = 2.0e11
     yield_stress = 500e5
     outputs = exodus
+    material_output_suffix = '_mat'
   [../]
 []
 
