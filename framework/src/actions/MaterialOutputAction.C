@@ -375,9 +375,7 @@ MaterialOutputAction::materialOutputHelper<ADRealVectorValue>(const std::string 
   std::vector<std::string> names(3);
   for (unsigned int i = 0; i < LIBMESH_DIM; ++i)
   {
-    std::ostringstream oss;
-    oss << property_name << "_" << suffix[i];
-    names[i] = oss.str();
+    names[i] = property_name + '_' + suffix[i];
 
     if (!get_names_only)
     {
