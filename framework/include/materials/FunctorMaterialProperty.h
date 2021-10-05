@@ -309,22 +309,22 @@ FunctorMaterialPropertyImpl<T>::evaluateGradient(
 }
 
 template <typename T>
-typename FunctorMaterialProperty<T>::DotType
-FunctorMaterialProperty<T>::evaluateDot(const Elem * const &, unsigned int) const
+typename FunctorMaterialPropertyImpl<T>::DotType
+FunctorMaterialPropertyImpl<T>::evaluateDot(const Elem * const &, unsigned int) const
 {
   mooseError("Time derivatives of functor material properties not implemented");
 }
 
 template <typename T>
-typename FunctorMaterialProperty<T>::DotType
-FunctorMaterialProperty<T>::evaluateDot(const ElemFromFaceArg &, unsigned int) const
+typename FunctorMaterialPropertyImpl<T>::DotType
+FunctorMaterialPropertyImpl<T>::evaluateDot(const ElemFromFaceArg &, unsigned int) const
 {
   mooseError("Time derivatives of functor material properties not implemented");
 }
 
 template <typename T>
-typename FunctorMaterialProperty<T>::DotType
-FunctorMaterialProperty<T>::evaluateDot(const FaceArg &, unsigned int) const
+typename FunctorMaterialPropertyImpl<T>::DotType
+FunctorMaterialPropertyImpl<T>::evaluateDot(const FaceArg &, unsigned int) const
 {
   mooseError("Time derivatives of functor material properties not implemented");
 }
@@ -337,15 +337,22 @@ FunctorMaterialProperty<T>::evaluateDot(const ElemQpArg &, unsigned int) const
 }
 
 template <typename T>
-typename FunctorMaterialProperty<T>::DotType
-FunctorMaterialProperty<T>::evaluateDot(const ElemSideQpArg &, unsigned int) const
+typename FunctorMaterialPropertyImpl<T>::DotType
+FunctorMaterialPropertyImpl<T>::evaluateDot(const ElemQpArg &, unsigned int) const
 {
   mooseError("Time derivatives of functor material properties not implemented");
 }
 
 template <typename T>
-typename FunctorMaterialProperty<T>::DotType
-FunctorMaterialProperty<T>::evaluateDot(
+typename FunctorMaterialPropertyImpl<T>::DotType
+FunctorMaterialPropertyImpl<T>::evaluateDot(const ElemSideQpArg &, unsigned int) const
+{
+  mooseError("Time derivatives of functor material properties not implemented");
+}
+
+template <typename T>
+typename FunctorMaterialPropertyImpl<T>::DotType
+FunctorMaterialPropertyImpl<T>::evaluateDot(
     const std::tuple<Moose::ElementType, unsigned int, SubdomainID> &, unsigned int) const
 {
   mooseError("Time derivatives of functor material properties not implemented");
