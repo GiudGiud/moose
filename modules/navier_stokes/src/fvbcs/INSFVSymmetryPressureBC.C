@@ -18,8 +18,8 @@ INSFVSymmetryPressureBC::validParams()
 {
   auto params = INSFVSymmetryBC::validParams();
   params.addClassDescription("Though not applied to velocity, this object ensures that the "
-                             "velocity perpendicular to a symmetry bounadry is zero by setting the "
-                             "mass flow rate across the symmetry boundary to zero.");
+                             "velocity perpendicular to a symmetry boundary is zero by setting "
+                             "the mass/scalar flow rate across the symmetry boundary to zero.");
   return params;
 }
 
