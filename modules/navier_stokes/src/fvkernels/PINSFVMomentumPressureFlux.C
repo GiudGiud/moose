@@ -29,6 +29,7 @@ PINSFVMomentumPressureFlux::validParams()
                                      momentum_component,
                                      "The component of the momentum equation that this kernel "
                                      "applies to.");
+  params.addParam<BoundaryName>("boundary_to_skip", "Porosity boundary, to be handled by an interface kernel");
   params.set<bool>("force_boundary_execution") = true;
   return params;
 }
@@ -49,6 +50,10 @@ PINSFVMomentumPressureFlux::PINSFVMomentumPressureFlux(const InputParameters & p
   if (!dynamic_cast<PINSFVSuperficialVelocityVariable *>(&_var))
     mooseError("PINSFVMomentumPressureFlux may only be used with a superficial velocity, "
                "of variable type PINSFVSuperficialVelocityVariable.");
+
+  if (isParamValid("boundary_to_skip"))
+    _skip_boundaries.push_back(
+        _subproblem.mesh().getBoundaryID(getParam<BoundaryName>("boundary_to_skip")));
 }
 
 ADReal
@@ -62,5 +67,13 @@ PINSFVMomentumPressureFlux::computeQpResidual()
                          _eps_neighbor[_qp] * _p_neighbor[_qp],
                          *_face_info,
                          true);
+  // Skip if boundary is a porosity interface
+  for (const auto bc_id : _face_info->boundaryIDs())
+    if (std::find(_skip_boundaries.begin(), _skip_boundaries.end(), bc_id) != _skip_boundaries.end())
+      _console << "Skipping " << std::endl;
+  for (const auto bc_id : _face_info->boundaryIDs())
+    if (std::find(_skip_boundaries.begin(), _skip_boundaries.end(), bc_id) != _skip_boundaries.end())
+      return 0;
+
   return eps_p_interface * _normal(_index);
 }

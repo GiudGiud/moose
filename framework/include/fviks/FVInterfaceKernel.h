@@ -179,11 +179,13 @@ protected:
   /// The Assembly object
   Assembly & _assembly;
 
-private:
   SystemBase & _sys;
 
   MooseVariableFV<Real> & _var1;
   MooseVariableFV<Real> & _var2;
+private:
+
+
 
   std::set<SubdomainID> _subdomain1;
   std::set<SubdomainID> _subdomain2;

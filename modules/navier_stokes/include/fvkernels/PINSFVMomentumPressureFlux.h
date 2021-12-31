@@ -34,4 +34,6 @@ protected:
   const ADVariableValue & _p_neighbor;
   /// which momentum component this kernel applies to
   const int _index;
+  /// Boundaries to not execute this kernel on
+  std::vector<BoundaryID> _skip_boundaries;
 };
