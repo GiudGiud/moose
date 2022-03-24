@@ -21,7 +21,12 @@ The csv file `data_file` may be substituted by specifying the `x`, `y` and `z` p
 
 ## Example Input Syntax
 
-!listing test/tests/utils/2d_linear_interpolation/xyz_error.i block=Functions
+In this example, the csv file below `fred.csv` is read with different parameters to achieve
+different function definitions. Explanations are provided in the input file snippet.
+
+!listing test/tests/utils/2d_linear_interpolation/fred.csv
+
+!listing test/tests/utils/2d_linear_interpolation/2d_linear_interpolation_test.i block=Functions
 
 !syntax parameters /Functions/PiecewiseBilinear
 

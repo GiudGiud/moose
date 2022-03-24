@@ -154,7 +154,7 @@ In addition, many methods are available for additional matrix operations:
 - `rotate(Real)`
 - `rotate(RealTensorValue)`
 - `rotate(RankTwoTensor)`
-- fillFromInputVector(TypeVector<Real>)
+- `fillFromInputVector(TypeVector<Real>)`
 - `fillFromPlaneNormal(TypeVector<Real>)`
 - `mixedProjectRankFour(RankTwoTensor)` creates a Rank-4 tensor from the contraction $D_{ijkl} = T_{mij}b_{mn}T_{nkl}$
 - `doubleContraction(RankTwoTensor)` creates a vector from the contraction $v_i = T_{ijk}b_{jk}$

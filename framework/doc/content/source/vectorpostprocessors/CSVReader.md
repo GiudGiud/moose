@@ -6,6 +6,11 @@ converts each column into a VectorPostprocessor vector. This object uses the
 
 ## Example Input Syntax
 
+This example shows how the following CSV file containing dates can be loaded into
+a simulation using a `CSVReader`.
+
+!listing test/tests/vectorpostprocessors/csv_reader/example.csv
+
 !listing test/tests/vectorpostprocessors/csv_reader/read.i block=VectorPostprocessors
 
 !syntax parameters /VectorPostprocessors/CSVReader

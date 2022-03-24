@@ -1,5 +1,7 @@
 # PiecewiseMultilinear
 
+!syntax description /Functions/PiecewiseMultilinear
+
 The `PiecewiseMultilinear` function provides the capability of multi-dimensional
 piecewise linear interpolation. The data is read from file provided in the
 `data_file` argument. Interpolation axes can be a selection of one or multiple of
@@ -20,7 +22,10 @@ corresponds to the i + j*Ni + k*Ni*Nj + l*Ni*Nj*Nk data value.  Here i>=0 corres
 the index along the first AXIS, j>=0 corresponding to the index along the second AXIS, etc,
 and Ni = number of grid points along the first AXIS, etc.
 
-!syntax description /Functions/PiecewiseMultilinear
+An example of a formatted `data_file` input is shown below. We can see the AXIS X and AXIS Y
+lines describing the axis and the data below the DATA line.
+
+!listing test/tests/functions/piecewise_multilinear/twoD1.txt
 
 !syntax parameters /Functions/PiecewiseMultilinear
 
