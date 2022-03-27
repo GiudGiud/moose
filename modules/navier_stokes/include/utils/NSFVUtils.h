@@ -14,6 +14,9 @@
 #include <vector>
 #include <array>
 
+class MooseObject;
+class InputParameters;
+
 namespace Moose
 {
 namespace FV
@@ -77,5 +80,22 @@ interpolate(const Limiter & limiter,
 
   return ret;
 }
+
+/**
+ * Sets the advection and velocity interpolation methods
+ * @param obj The \p MooseObject with input parameters to query
+ * @param advected_interp_method The advected interpolation method we will set
+ * @param velocity_interp_method The velocity interpolation method we will set
+ * @return Whether the interpolation methods have indicated that we will need more than our base
+ * level of ghosting
+ */
+bool setInterpolationMethods(const MooseObject & obj,
+                             Moose::FV::InterpMethod & advected_interp_method,
+                             Moose::FV::InterpMethod & velocity_interp_method);
+
+/**
+ * @return interpolation parameters for use in advection object input parameters
+ */
+InputParameters interpolationParameters();
 }
 }

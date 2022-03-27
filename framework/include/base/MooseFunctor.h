@@ -206,6 +206,25 @@ struct SingleSidedFaceArg
   SubdomainID sub_id;
 
   /**
+   * Make an element argument corresponding to the subdomain ID on which we are defined
+   */
+  ElemArg makeSidedElem() const
+  {
+    mooseAssert(fi, "The face must be non-null");
+#ifndef NDEBUG
+    const unsigned short matches = (sub_id == fi->elem().subdomain_id()) +
+                                   (fi->neighborPtr() && (sub_id == fi->neighbor().subdomain_id()));
+    mooseAssert(matches == 1,
+                "We should only have on match. If we have more or less, then this is not an "
+                "appropriate use of SingleSidedFaceArg");
+#endif
+
+    const Elem * const ret_elem =
+        sub_id == fi->elem().subdomain_id() ? &fi->elem() : fi->neighborPtr();
+    return {ret_elem, correct_skewness, apply_gradient_to_skewness};
+  }
+
+  /**
    * Make a \p ElemArg from our data using the face information element
    */
   ElemArg makeElem() const { return {&fi->elem(), correct_skewness, apply_gradient_to_skewness}; }
