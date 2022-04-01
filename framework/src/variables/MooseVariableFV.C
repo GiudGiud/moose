@@ -637,12 +637,7 @@ MooseVariableFV<OutputType>::getInternalFaceValue(const FaceInfo & fi,
     value = numerator / denominator;
   }
   else
-    value = Moose::FV::linearInterpolation(
-        *this,
-        Moose::FV::makeCDFace(
-            fi,
-            (_face_interp_method == Moose::FV::InterpMethod::SkewCorrectedAverage),
-            correct_skewness));
+    value = Moose::FV::linearInterpolation(*this, Moose::FV::makeCDFace(fi, correct_skewness));
 
   return value;
 }
@@ -807,13 +802,11 @@ MooseVariableFV<OutputType>::adGradSln(const Elem * const elem, const bool corre
       return it->second;
   }
 
-  auto grad = FV::greenGaussGradient(
-      ElemArg(
-          {elem, _face_interp_method == FV::InterpMethod::SkewCorrectedAverage, correct_skewness}),
-      *this,
-      _two_term_boundary_expansion,
-      this->_mesh,
-      &_face_to_value);
+  auto grad = FV::greenGaussGradient(ElemArg({elem, correct_skewness}),
+                                     *this,
+                                     _two_term_boundary_expansion,
+                                     this->_mesh,
+                                     &_face_to_value);
 
   if (_cache_cell_gradients && !correct_skewness)
   {
@@ -880,15 +873,9 @@ MooseVariableFV<OutputType>::uncorrectedAdGradSln(const FaceInfo & fi,
   {
     const VectorValue<ADReal> & elem_two_grad = adGradSln(elem_two, correct_skewness);
 
-    const auto interp_method =
-        (_face_interp_method == Moose::FV::InterpMethod::Average ||
-         _face_interp_method == Moose::FV::InterpMethod::SkewCorrectedAverage)
-            ? _face_interp_method
-            : Moose::FV::InterpMethod::Average;
-
     // Uncorrected gradient value
-    unc_face_grad = Moose::FV::linearInterpolation(
-        elem_one_grad, elem_two_grad, fi, elem_one_is_fi_elem, interp_method);
+    unc_face_grad =
+        Moose::FV::linearInterpolation(elem_one_grad, elem_two_grad, fi, elem_one_is_fi_elem);
   }
 
   return unc_face_grad;

@@ -42,13 +42,13 @@ makeSidedFace(const SubdomainRestrictable & obj,
               const bool correct_skewness = false)
 {
   if (elem && obj.hasBlocks(elem->subdomain_id()))
-    return {elem, &fi, correct_skewness, correct_skewness, elem->subdomain_id()};
+    return {elem, &fi, correct_skewness, elem->subdomain_id()};
   else
   {
     const Elem * const elem_across = (elem == &fi.elem()) ? fi.neighborPtr() : &fi.elem();
     mooseAssert(elem_across && obj.hasBlocks(elem_across->subdomain_id()),
                 "How are there no elements with subs on here!");
-    return {elem, &fi, correct_skewness, correct_skewness, elem_across->subdomain_id()};
+    return {elem, &fi, correct_skewness, elem_across->subdomain_id()};
   }
 }
 
@@ -95,45 +95,29 @@ makeFace(const FaceInfo & fi,
          const LimiterType limiter_type,
          const bool elem_is_upwind,
          const std::pair<SubdomainID, SubdomainID> & subs,
-         const bool skewness_correction = false,
-         const bool apply_gradient_correction = false)
+         const bool apply_gradient_to_skewness = false)
 {
-  return {&fi,
-          limiter_type,
-          elem_is_upwind,
-          skewness_correction,
-          apply_gradient_correction,
-          subs.first,
-          subs.second};
+  return {&fi, limiter_type, elem_is_upwind, apply_gradient_to_skewness, subs.first, subs.second};
 }
 
 /**
  * Make a functor face argument with a central differencing limiter, e.g. compose a face argument
- * that will tell functors to perform (possibly skew-corrected) linear interpolations from cell
+ * that will tell functors to perform linear interpolations from cell
  * center values to faces
  * @param fi the face information
  * @param subs the two subdomains that should go into the face argument. The first member of this
  * pair will be the "element" subdomain id and the second member of the pair will be the "neighbor"
  * subdomain id
- * @param skewness_correction whether to apply skew correction weights
- * @param Whether to apply the face gradient when computing a skew corrected face value. A true
- * value for this parameter in conjunction with a false value for \p skewness_correction parameter
- * does not make sense. A false value for this parameter in conjunction with a true value for \p
- * skewness_correction should only be set by someone who really knows what they're doing
+ * @param apply_gradient_to_skewness Whether to apply the face gradient when computing a skew
+ * corrected face value
  * @return a face argument for functors
  */
 inline FaceArg
 makeCDFace(const FaceInfo & fi,
            const std::pair<SubdomainID, SubdomainID> & subs,
-           const bool skewness_correction = false,
-           const bool apply_gradient_correction = false)
+           const bool apply_gradient_to_skewness = false)
 {
-  return makeFace(fi,
-                  LimiterType::CentralDifference,
-                  true,
-                  subs,
-                  skewness_correction,
-                  apply_gradient_correction);
+  return makeFace(fi, LimiterType::CentralDifference, true, subs, apply_gradient_to_skewness);
 }
 
 /**
@@ -143,24 +127,18 @@ makeCDFace(const FaceInfo & fi,
  * information object's \p elem() and \p neighbor() subdomain ids. If the latter is null, then an
  * invalid subdomain ID will be used
  * @param fi the face information
- * @param skewness_correction whether to apply skew correction weights
- * @param Whether to apply the face gradient when computing a skew corrected face value. A true
- * value for this parameter in conjunction with a false value for \p skewness_correction parameter
- * does not make sense. A false value for this parameter in conjunction with a true value for \p
- * skewness_correction should only be set by someone who really knows what they're doing
+ * @param apply_gradient_so_skewness Whether to apply the face gradient when computing a skew
+ * corrected face value
  * @return a face argument for functors
  */
 inline FaceArg
-makeCDFace(const FaceInfo & fi,
-           const bool skewness_correction = false,
-           const bool apply_gradient_correction = false)
+makeCDFace(const FaceInfo & fi, const bool apply_gradient_to_skewness = false)
 {
   return makeCDFace(
       fi,
       std::make_pair(fi.elem().subdomain_id(),
                      fi.neighborPtr() ? fi.neighbor().subdomain_id() : Moose::INVALID_BLOCK_ID),
-      skewness_correction,
-      apply_gradient_correction);
+      apply_gradient_to_skewness);
 }
 
 /// This codifies a set of available ways to interpolate with elem+neighbor
@@ -213,19 +191,12 @@ interpCoeffs(const InterpMethod m,
   switch (m)
   {
     case InterpMethod::Average:
+    case InterpMethod::SkewCorrectedAverage:
     {
       if (one_is_elem)
         return std::make_pair(fi.gC(), 1. - fi.gC());
       else
         return std::make_pair(1. - fi.gC(), fi.gC());
-    }
-
-    case InterpMethod::SkewCorrectedAverage:
-    {
-      if (one_is_elem)
-        return std::make_pair(fi.gCSkewed(), 1. - fi.gCSkewed());
-      else
-        return std::make_pair(1. - fi.gCSkewed(), fi.gCSkewed());
     }
 
     case InterpMethod::Upwind:
@@ -301,17 +272,9 @@ interpolate(InterpMethod m,
   switch (m)
   {
     case InterpMethod::Average:
+    case InterpMethod::SkewCorrectedAverage:
       result = linearInterpolation(value1, value2, fi, one_is_elem);
       break;
-    case InterpMethod::SkewCorrectedAverage:
-    {
-      // We create a zero gradient to ensure that the skewness-corrected
-      // weights are used, but no correction is applied. This will change when the
-      // old weights are replaced by the ones used with skewness-correction
-      typename TensorTools::IncrementRank<T2>::type surface_gradient;
-      result = skewCorrectedLinearInterpolation(value1, value2, surface_gradient, fi, one_is_elem);
-      break;
-    }
     default:
       mooseError("unsupported interpolation method for FVFaceInterface::interpolate");
   }
@@ -334,17 +297,15 @@ linearInterpolation(const FunctorBase<T> & functor, const FaceArg & face)
   const auto elem_from_face = face.elemFromFace();
   const auto neighbor_from_face = face.neighborFromFace();
 
-  if (face.correct_skewness)
+  if (face.apply_gradient_to_skewness)
   {
-    typedef typename TensorTools::IncrementRank<T>::type GradientType;
     // This condition ensures that the recursive algorithm (face_center->
     // face_gradient -> cell_gradient -> face_center -> ...) terminates after
     // one loop. It is hardcoded to one loop at this point since it yields
     // 2nd order accuracy on skewed meshes with the minimum additional effort.
     FaceArg new_face(face);
     new_face.apply_gradient_to_skewness = false;
-    const auto surface_gradient =
-        face.apply_gradient_to_skewness ? functor.gradient(new_face) : GradientType(0);
+    const auto surface_gradient = functor.gradient(new_face);
 
     return skewCorrectedLinearInterpolation(
         functor(elem_from_face), functor(neighbor_from_face), surface_gradient, *face.fi, true);
@@ -483,8 +444,7 @@ interpCoeffs(const Limiter<T> & limiter,
              const T & phi_downwind,
              const VectorValue<T> * const grad_phi_upwind,
              const FaceInfo & fi,
-             const bool fi_elem_is_upwind,
-             const bool correct_skewness = false)
+             const bool fi_elem_is_upwind)
 {
   // Using beta, w_f, g nomenclature from Greenshields
   const auto beta = limiter(phi_upwind,
@@ -492,9 +452,7 @@ interpCoeffs(const Limiter<T> & limiter,
                             grad_phi_upwind,
                             fi_elem_is_upwind ? fi.dCF() : RealVectorValue(-fi.dCF()));
 
-  const auto gC = correct_skewness ? fi.gCSkewed() : fi.gC();
-
-  const auto w_f = fi_elem_is_upwind ? gC : (1. - gC);
+  const auto w_f = fi_elem_is_upwind ? fi.gC() : (1. - fi.gC());
 
   const auto g = beta * (1. - w_f);
 
@@ -577,23 +535,13 @@ interpCoeffsAndAdvected(const FunctorBase<T> & functor, const FaceArg & face)
   std::pair<T, T> interp_coeffs;
   if (face.limiter_type == LimiterType::Upwind ||
       face.limiter_type == LimiterType::CentralDifference)
-    interp_coeffs = interpCoeffs(*limiter,
-                                 phi_upwind,
-                                 phi_downwind,
-                                 &zero,
-                                 *face.fi,
-                                 face.elem_is_upwind,
-                                 face.correct_skewness);
+    interp_coeffs =
+        interpCoeffs(*limiter, phi_upwind, phi_downwind, &zero, *face.fi, face.elem_is_upwind);
   else
   {
     const auto grad_phi_upwind = functor.gradient(upwind_arg);
-    interp_coeffs = interpCoeffs(*limiter,
-                                 phi_upwind,
-                                 phi_downwind,
-                                 &grad_phi_upwind,
-                                 *face.fi,
-                                 face.elem_is_upwind,
-                                 face.correct_skewness);
+    interp_coeffs = interpCoeffs(
+        *limiter, phi_upwind, phi_downwind, &grad_phi_upwind, *face.fi, face.elem_is_upwind);
   }
 
   if (face.elem_is_upwind)

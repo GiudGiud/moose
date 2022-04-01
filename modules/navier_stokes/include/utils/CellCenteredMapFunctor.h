@@ -112,8 +112,7 @@ private:
     if (!elem)
       elem = &elem_from_face.fi->elem();
 
-    const auto elem_value = (*this)(ElemArg(
-        {elem, elem_from_face.correct_skewness, elem_from_face.apply_gradient_to_skewness}));
+    const auto elem_value = (*this)(ElemArg({elem, elem_from_face.apply_gradient_to_skewness}));
 
     // For the non-boundary elements
     if (elem_from_face.elem)
@@ -126,7 +125,6 @@ private:
     const auto boundary_face = SingleSidedFaceArg({elem_from_face.fi,
                                                    Moose::FV::LimiterType::CentralDifference,
                                                    true,
-                                                   elem_from_face.correct_skewness,
                                                    elem_from_face.apply_gradient_to_skewness,
                                                    elem_from_face.sub_id});
     const auto boundary_value = (*this)(boundary_face);

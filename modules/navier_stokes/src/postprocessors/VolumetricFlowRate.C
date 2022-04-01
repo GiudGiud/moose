@@ -101,7 +101,6 @@ VolumetricFlowRate::computeQpIntegral()
                                                 Moose::FV::LimiterType::CentralDifference,
                                                 true,
                                                 correct_skewness,
-                                                correct_skewness,
                                                 _current_elem->subdomain_id()});
 
     return fi->normal() * MetaPhysicL::raw_value((*_adv_quant)(ssf)) * vel;

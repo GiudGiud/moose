@@ -37,13 +37,12 @@ namespace Moose
 struct ElemArg
 {
   const libMesh::Elem * elem;
-  bool correct_skewness;
   bool apply_gradient_to_skewness;
 
   friend bool operator<(const ElemArg & l, const ElemArg & r)
   {
-    return std::make_tuple(l.elem, l.correct_skewness, l.apply_gradient_to_skewness) <
-           std::make_tuple(r.elem, r.correct_skewness, r.apply_gradient_to_skewness);
+    return std::make_tuple(l.elem, l.apply_gradient_to_skewness) <
+           std::make_tuple(r.elem, r.apply_gradient_to_skewness);
   }
 };
 
@@ -64,12 +63,7 @@ struct ElemFromFaceArg
   /// information object will be used to help construct a ghost value evaluation
   const FaceInfo * fi;
 
-  /// Whether to apply skew correction weights
-  bool correct_skewness;
-
-  /// Whether to apply the face gradient when computing a skew corrected face value. A true value
-  /// for this data member in conjunction with a false value for \p correct_skewness does not make
-  /// sense
+  /// Whether to apply the face gradient when computing a skew corrected face value
   bool apply_gradient_to_skewness;
 
   /// a subdomain ID. This is useful when the functor is a material property and the user wants
@@ -81,14 +75,12 @@ struct ElemFromFaceArg
   /**
    * Make a \p ElemArg from our data
    */
-  ElemArg makeElem() const { return {elem, correct_skewness, apply_gradient_to_skewness}; }
+  ElemArg makeElem() const { return {elem, apply_gradient_to_skewness}; }
 
   friend bool operator<(const ElemFromFaceArg & l, const ElemFromFaceArg & r)
   {
-    return std::make_tuple(
-               l.elem, l.fi, l.correct_skewness, l.apply_gradient_to_skewness, l.sub_id) <
-           std::make_tuple(
-               r.elem, r.fi, r.correct_skewness, r.apply_gradient_to_skewness, r.sub_id);
+    return std::make_tuple(l.elem, l.fi, l.apply_gradient_to_skewness, l.sub_id) <
+           std::make_tuple(r.elem, r.fi, r.apply_gradient_to_skewness, r.sub_id);
   }
 };
 
@@ -107,12 +99,7 @@ struct FaceArg
   /// a boolean which states whether the face information element is upwind of the face
   bool elem_is_upwind;
 
-  /// Whether to apply skew correction weights
-  bool correct_skewness;
-
-  /// Whether to apply the face gradient when computing a skew corrected face value. A true value
-  /// for this data member in conjunction with a false value for \p correct_skewness does not make
-  /// sense
+  /// Whether to apply the face gradient when computing a skew corrected face value
   bool apply_gradient_to_skewness;
 
   ///@{
@@ -130,22 +117,19 @@ struct FaceArg
   /**
    * Make a \p ElemArg from our data using the face information element
    */
-  ElemArg makeElem() const { return {&fi->elem(), correct_skewness, apply_gradient_to_skewness}; }
+  ElemArg makeElem() const { return {&fi->elem(), apply_gradient_to_skewness}; }
 
   /**
    * Make a \p ElemArg from our data using the face information neighbor
    */
-  ElemArg makeNeighbor() const
-  {
-    return {fi->neighborPtr(), correct_skewness, apply_gradient_to_skewness};
-  }
+  ElemArg makeNeighbor() const { return {fi->neighborPtr(), apply_gradient_to_skewness}; }
 
   /**
    * Make a \p ElemFromFaceArg from our data using the face information element
    */
   ElemFromFaceArg elemFromFace() const
   {
-    return {&fi->elem(), fi, correct_skewness, apply_gradient_to_skewness, elem_sub_id};
+    return {&fi->elem(), fi, apply_gradient_to_skewness, elem_sub_id};
   }
 
   /**
@@ -153,7 +137,7 @@ struct FaceArg
    */
   ElemFromFaceArg neighborFromFace() const
   {
-    return {fi->neighborPtr(), fi, correct_skewness, apply_gradient_to_skewness, neighbor_sub_id};
+    return {fi->neighborPtr(), fi, apply_gradient_to_skewness, neighbor_sub_id};
   }
 
   friend bool operator<(const FaceArg & l, const FaceArg & r)
@@ -161,13 +145,11 @@ struct FaceArg
     return std::make_tuple(l.fi,
                            l.limiter_type,
                            l.elem_is_upwind,
-                           l.correct_skewness,
                            l.apply_gradient_to_skewness,
                            l.elem_sub_id,
                            l.neighbor_sub_id) < std::make_tuple(r.fi,
                                                                 r.limiter_type,
                                                                 r.elem_is_upwind,
-                                                                r.correct_skewness,
                                                                 r.apply_gradient_to_skewness,
                                                                 r.elem_sub_id,
                                                                 l.neighbor_sub_id);
@@ -194,12 +176,7 @@ struct SingleSidedFaceArg
   /// a boolean which states whether the face information element is upwind of the face
   bool elem_is_upwind;
 
-  /// Whether to apply skew correction weights
-  bool correct_skewness;
-
-  /// Whether to apply the face gradient when computing a skew corrected face value. A true value
-  /// for this data member in conjunction with a false value for \p correct_skewness does not make
-  /// sense
+  /// Whether to apply the face gradient when computing a skew corrected face value
   bool apply_gradient_to_skewness;
 
   /// The subdomain ID which denotes the side of the face information we are evaluating on
@@ -221,35 +198,25 @@ struct SingleSidedFaceArg
 
     const Elem * const ret_elem =
         sub_id == fi->elem().subdomain_id() ? &fi->elem() : fi->neighborPtr();
-    return {ret_elem, correct_skewness, apply_gradient_to_skewness};
+    return {ret_elem, apply_gradient_to_skewness};
   }
 
   /**
    * Make a \p ElemArg from our data using the face information element
    */
-  ElemArg makeElem() const { return {&fi->elem(), correct_skewness, apply_gradient_to_skewness}; }
+  ElemArg makeElem() const { return {&fi->elem(), apply_gradient_to_skewness}; }
 
   /**
    * Make a \p ElemArg from our data using the face information neighbor
    */
-  ElemArg makeNeighbor() const
-  {
-    return {fi->neighborPtr(), correct_skewness, apply_gradient_to_skewness};
-  }
+  ElemArg makeNeighbor() const { return {fi->neighborPtr(), apply_gradient_to_skewness}; }
 
   friend bool operator<(const SingleSidedFaceArg & l, const SingleSidedFaceArg & r)
   {
-    return std::make_tuple(l.fi,
-                           l.limiter_type,
-                           l.elem_is_upwind,
-                           l.correct_skewness,
-                           l.apply_gradient_to_skewness,
-                           l.sub_id) < std::make_tuple(r.fi,
-                                                       r.limiter_type,
-                                                       r.elem_is_upwind,
-                                                       r.correct_skewness,
-                                                       r.apply_gradient_to_skewness,
-                                                       r.sub_id);
+    return std::make_tuple(
+               l.fi, l.limiter_type, l.elem_is_upwind, l.apply_gradient_to_skewness, l.sub_id) <
+           std::make_tuple(
+               r.fi, r.limiter_type, r.elem_is_upwind, r.apply_gradient_to_skewness, r.sub_id);
   }
 };
 

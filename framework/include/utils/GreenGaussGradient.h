@@ -130,9 +130,7 @@ greenGaussGradient(const ElemArg & elem_arg,
           grad_b += surface_vector * elem_value;
       }
       else
-        grad_b += surface_vector * functor(makeCDFace(*fi,
-                                                      elem_arg.correct_skewness,
-                                                      elem_arg.apply_gradient_to_skewness));
+        grad_b += surface_vector * functor(makeCDFace(*fi, elem_arg.apply_gradient_to_skewness));
 
       if (!volume_set)
       {

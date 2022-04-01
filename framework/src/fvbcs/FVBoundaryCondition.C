@@ -94,5 +94,5 @@ FVBoundaryCondition::singleSidedFaceArg(const FaceInfo * fi,
   const bool use_elem = fi->faceType(_var.name()) == FaceInfo::VarFaceNeighbors::ELEM;
   const auto sub_id = use_elem ? fi->elem().subdomain_id() : fi->neighborPtr()->subdomain_id();
 
-  return {fi, limiter_type, true, correct_skewness, correct_skewness, sub_id};
+  return {fi, limiter_type, true, correct_skewness, sub_id};
 }

@@ -84,7 +84,6 @@ INSFVMomentumAdvection::computeQpResidual()
                                          limiterType(_advected_interp_method),
                                          MetaPhysicL::raw_value(v) * _normal > 0,
                                          faceArgSubdomains(),
-                                         correct_skewness,
                                          correct_skewness));
 
     const auto elem_face = elemFromFace();
