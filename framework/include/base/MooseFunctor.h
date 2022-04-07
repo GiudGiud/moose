@@ -328,6 +328,15 @@ public:
   void setCacheClearanceSchedule(const std::set<ExecFlagType> & clearance_schedule);
 
   /**
+   * Returns whether the functor is defined on this block
+   */
+  virtual bool hasBlocks(const SubdomainID & /* id */) const
+  {
+    mooseError("Block restriction has not been implemented for functor "
+        + functorName());
+  }
+
+  /**
    * Returns whether this face is an extrapolated boundary face for this functor
    */
   virtual bool isExtrapolatedBoundaryFace(const FaceInfo &) const { mooseError("not implemented"); }
@@ -1010,6 +1019,11 @@ public:
   {
     if (_owned)
       _owned->jacobianSetup();
+  }
+
+  bool hasBlocks(const SubdomainID & id) const override
+  {
+    return _owned->hasBlocks(id);
   }
 
 protected:

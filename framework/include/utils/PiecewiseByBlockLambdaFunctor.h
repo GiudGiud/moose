@@ -54,6 +54,8 @@ public:
 
   bool isExtrapolatedBoundaryFace(const FaceInfo & fi) const override;
 
+  bool hasBlocks(const SubdomainID & id) const override;
+
   using typename Moose::FunctorBase<T>::FunctorType;
   using typename Moose::FunctorBase<T>::ValueType;
   using typename Moose::FunctorBase<T>::DotType;
@@ -169,6 +171,19 @@ PiecewiseByBlockLambdaFunctor<T>::isExtrapolatedBoundaryFace(const FaceInfo & fi
 
   return (_elem_functor.count(fi.elem().subdomain_id()) +
           _elem_functor.count(fi.neighbor().subdomain_id())) == 1;
+}
+
+template <typename T>
+bool
+PiecewiseByBlockLambdaFunctor<T>::hasBlocks(const SubdomainID & id) const
+{
+  // If any of the maps has a functor for that block, it has the block
+  if (_elem_functor.count(id) || _elem_from_face_functor.count(id) ||
+      _face_functor.count(id) || _elem_qp_functor.count(id) ||
+      _elem_side_qp_functor.count(id))
+    return true;
+  else
+    return false;
 }
 
 template <typename T>
