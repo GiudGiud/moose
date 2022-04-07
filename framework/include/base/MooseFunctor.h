@@ -254,6 +254,13 @@ public:
   using FunctorType = FunctorBase<T>;
   using FunctorReturnType = T;
   using ValueType = T;
+  /// This rigmarole makes it so that a user can create functors that return containers (std::vector,
+  /// std::array). This logic will make it such that if a user requests a functor type T that is a
+  /// container of algebraic types, for example Reals, then the GradientType will be a container of
+  /// the gradients of those algebraic types, in this example VectorValue<Reals>. So if T is
+  /// std::vector<Real>, then GradientType will be std::vector<VectorValue<Real>>. As another
+  /// example: T = std::array<VectorValue<Real>, 1> -> GradientType = std::array<TensorValue<Real>,
+  /// 1>
   using GradientType = typename MetaPhysicL::ReplaceAlgebraicType<
       T,
       typename TensorTools::IncrementRank<typename MetaPhysicL::ValueType<T>::type>::type>::type;

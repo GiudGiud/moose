@@ -90,6 +90,19 @@ faceArgSubdomains(const SubdomainRestrictable & obj, const FaceInfo & fi)
                         makeSidedFace(obj, fi.neighborPtr(), fi).sub_id);
 }
 
+/**
+ * Create a functor face argument from provided component arguments
+ * @param fi the face information object
+ * @param limiter_type the limiter that defines how to perform interpolations to the faces
+ * @param elem_is_upwind whether the face information element is the upwind element (the value of
+ * this doesn't matter when the limiter type is CentralDifference)
+ * @param subs the two subdomain ids that should go into the face argument. These may not always
+ * correspond to the face information element and neighbor subdomain ids (for instance if we are on
+ * a boundary)
+ * @param apply_gradient_to_skewness whether to apply the face gradient when computing a skew
+ * corrected face value
+ * @return the functor face argument
+ */
 inline FaceArg
 makeFace(const FaceInfo & fi,
          const LimiterType limiter_type,
@@ -108,7 +121,7 @@ makeFace(const FaceInfo & fi,
  * @param subs the two subdomains that should go into the face argument. The first member of this
  * pair will be the "element" subdomain id and the second member of the pair will be the "neighbor"
  * subdomain id
- * @param apply_gradient_to_skewness Whether to apply the face gradient when computing a skew
+ * @param apply_gradient_to_skewness whether to apply the face gradient when computing a skew
  * corrected face value
  * @return a face argument for functors
  */
