@@ -34,6 +34,10 @@ FVFluxKernel::validParams()
       "boundaries_to_not_force",
       std::vector<BoundaryName>(),
       "The set of boundaries to not force execution of this FVFluxKernel on.");
+  params.addParam<std::vector<BoundaryName>>(
+      "boundaries_to_avoid",
+      std::vector<BoundaryName>(),
+      "The set of boundaries to not execute this FVFluxKernel on.");
   return params;
 }
 
@@ -70,6 +74,10 @@ FVFluxKernel::FVFluxKernel(const InputParameters & params)
   const auto & not_vec = getParam<std::vector<BoundaryName>>("boundaries_to_not_force");
   for (const auto & name : not_vec)
     _boundaries_to_not_force.insert(_mesh.getBoundaryID(name));
+
+  const auto & avoid_vec = getParam<std::vector<BoundaryName>>("boundaries_to_avoid");
+  for (const auto & name : avoid_vec)
+    _boundaries_to_avoid.insert(_mesh.getBoundaryID(name));
 }
 
 bool
@@ -86,6 +94,12 @@ FVFluxKernel::onBoundary(const FaceInfo & fi) const
 bool
 FVFluxKernel::skipForBoundary(const FaceInfo & fi) const
 {
+  for (const auto bnd_id : fi.boundaryIDs())
+    if (_boundaries_to_avoid.find(bnd_id) != _boundaries_to_avoid.end())
+    {
+      return true;
+    }
+
   if (!onBoundary(fi))
     return false;
 

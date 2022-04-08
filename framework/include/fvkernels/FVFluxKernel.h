@@ -114,6 +114,7 @@ protected:
 
   std::unordered_set<BoundaryID> _boundaries_to_force;
   std::unordered_set<BoundaryID> _boundaries_to_not_force;
+  std::unordered_set<BoundaryID> _boundaries_to_avoid;
 
 private:
   /// Computes the Jacobian contribution for every coupled variable.
