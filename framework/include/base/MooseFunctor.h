@@ -1023,7 +1023,7 @@ public:
 
   bool hasBlocks(const SubdomainID & id) const override
   {
-    return _owned->hasBlocks(id);
+    return _wrapped->hasBlocks(id);
   }
 
 protected:
@@ -1137,6 +1137,11 @@ public:
   ConstantFunctor(ValueType && value)
     : FunctorBase<T>("constant_" + std::to_string(MetaPhysicL::raw_value(value))), _value(value)
   {
+  }
+
+  bool hasBlocks(const SubdomainID & /* id */) const override
+  {
+    return true;
   }
 
 private:
