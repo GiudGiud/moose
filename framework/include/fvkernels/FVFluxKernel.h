@@ -110,10 +110,13 @@ protected:
    */
   std::pair<SubdomainID, SubdomainID> faceArgSubdomains(const FaceInfo * face_info = nullptr) const;
 
+  /// Whether to force execution of flux kernels on all external boundaries
   const bool _force_boundary_execution;
 
+  /// Which boundaries/sidesets to force the execution of flux kernels on
   std::unordered_set<BoundaryID> _boundaries_to_force;
-  std::unordered_set<BoundaryID> _boundaries_to_not_force;
+
+  /// Which boundaries/sidesets to prevent the execution of flux kernels on
   std::unordered_set<BoundaryID> _boundaries_to_avoid;
 
 private:
