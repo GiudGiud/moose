@@ -110,14 +110,17 @@ protected:
    */
   std::pair<SubdomainID, SubdomainID> faceArgSubdomains(const FaceInfo * face_info = nullptr) const;
 
-  /// Whether to force execution of flux kernels on all external boundaries
-  const bool _force_boundary_execution;
-
-  /// Which boundaries/sidesets to force the execution of flux kernels on
-  std::unordered_set<BoundaryID> _boundaries_to_force;
-
-  /// Which boundaries/sidesets to prevent the execution of flux kernels on
-  std::unordered_set<BoundaryID> _boundaries_to_avoid;
+  /**
+   * Returns whether to avoid execution on a boundary
+   * @param fi the FaceInformation currently considered
+   */
+  bool avoidBoundary(const FaceInfo & fi) const
+  {
+    for (const auto bnd_id : fi.boundaryIDs())
+      if (_boundaries_to_avoid.find(bnd_id) != _boundaries_to_avoid.end())
+        return true;
+    return false;
+  }
 
 private:
   /// Computes the Jacobian contribution for every coupled variable.
@@ -129,4 +132,13 @@ private:
   /// @param residual The already computed residual (probably done with \p computeQpResidual) that
   /// also holds derivative information for filling in the Jacobians.
   void computeJacobian(Moose::DGJacobianType type, const ADReal & residual);
+
+  /// Whether to force execution of flux kernels on all external boundaries
+  const bool _force_boundary_execution;
+
+  /// Which boundaries/sidesets to force the execution of flux kernels on
+  std::unordered_set<BoundaryID> _boundaries_to_force;
+
+  /// Which boundaries/sidesets to prevent the execution of flux kernels on
+  std::unordered_set<BoundaryID> _boundaries_to_avoid;
 };

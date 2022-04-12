@@ -92,7 +92,7 @@ bool
 INSFVAdvectionKernel::skipForBoundary(const FaceInfo & fi) const
 {
   // Boundaries to avoid come first, since they are always obeyed
-  if (avoidBoundary())
+  if (avoidBoundary(fi))
     return true;
 
   // If we have a flow boundary without a replacement flux BC, then we must not skip. Mass and

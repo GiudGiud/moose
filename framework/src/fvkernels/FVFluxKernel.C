@@ -89,9 +89,8 @@ bool
 FVFluxKernel::skipForBoundary(const FaceInfo & fi) const
 {
   // Boundaries to avoid come first, since they are always obeyed
-  for (const auto bnd_id : fi.boundaryIDs())
-    if (_boundaries_to_avoid.find(bnd_id) != _boundaries_to_avoid.end())
-      return true;
+  if (avoidBoundary(fi))
+    return true;
 
   // Blanket forcing on boundary
   if (_force_boundary_execution)
