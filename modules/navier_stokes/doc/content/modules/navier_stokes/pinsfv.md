@@ -3,8 +3,8 @@
 ## Equations
 
 This module implements the porous media Navier Stokes equations. They are expressed in terms of the superficial
-viscosity $\vec{v}_d = \epsilon \vec{V}$ where $\epsilon$ is the porosity and $\vec{V}$ the interstitial velocity. The
-superficial viscosity is also known as the extrinsic or Darcy velocity. The other non-linear variables used are
+velocity $\vec{v}_d = \epsilon \vec{V}$ where $\epsilon$ is the porosity and $\vec{V}$ the interstitial velocity. The
+superficial velocity is also known as the extrinsic or Darcy velocity. The other non-linear variables used are
 pressure and temperature. This is known as the primitive superficial set of variables.
 
 Mass equation:
