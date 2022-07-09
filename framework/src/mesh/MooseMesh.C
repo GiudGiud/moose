@@ -1361,9 +1361,32 @@ MooseMesh::setSubdomainName(MeshBase & mesh, SubdomainID subdomain_id, const Sub
 }
 
 const std::string &
-MooseMesh::getSubdomainName(SubdomainID subdomain_id)
+MooseMesh::getSubdomainName(SubdomainID subdomain_id) const
 {
   return getMesh().subdomain_name(subdomain_id);
+}
+
+std::vector<SubdomainName>
+MooseMesh::getSubdomainNames(const std::vector<SubdomainID> & subdomain_ids) const
+{
+  std::vector<SubdomainName> names(subdomain_ids.size());
+
+  for (unsigned int i = 0; i < subdomain_ids.size(); i++)
+  {
+    if (subdomain_ids[i] == Moose::ANY_BLOCK_ID)
+    {
+      for (unsigned int j = 0; j < _mesh_subdomains.size(); j++)
+        names[j] = getSubdomainName(_mesh_subdomains[j]);
+      if (i)
+        mooseWarning("You passed \"ANY_BLOCK_ID\" in addition to other block ids. This may be a "
+                     "logic error.");
+      break;
+    }
+
+    names[i] = getSubdomainName(subdomain_ids[i]);
+  }
+
+  return names;
 }
 
 void
