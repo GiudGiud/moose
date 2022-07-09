@@ -599,6 +599,7 @@ NSFVAction::NSFVAction(InputParameters parameters)
   // Running the general checks, the rest are run after we already know some
   // geometry-related parameters.
   checkGeneralControlErrors();
+  checkExternalVariablesBlocks();
 }
 
 void
@@ -2407,6 +2408,50 @@ NSFVAction::checkGeneralControlErrors()
                                   "passive_scalar_coupled_source_coeff",
                                   "passive_scalar_two_term_bc_expansion",
                                   "passive_scalar_advection_interpolation"});
+}
+
+void
+NSFVAction::checkExternalVariablesBlocks()
+{
+  std::copy(_blocks.begin(), _blocks.end(), std::ostream_iterator<std::string>(_blocks, " "));
+
+  if (!_create_velocity)
+    for (unsigned int d = 0; d < _dim; ++d)
+      if (_blocks != _problem.getVariable(_velocity_name[d]).blocks())
+        mooseError("Block restriction of NSFVAction (",
+                   to_string(_blocks),
+                   ") does not match velocity component ",
+                   _velocity_name[d],
+                   " block restriction (",
+                   to_string(_problem.getVariable(_velocity_name[d]).blocks()),
+                   ")");
+
+  if (!_create_pressure)
+    if (_blocks != _problem.getVariable(_pressure_name).blocks())
+      mooseError("Block restriction of NSFVAction (",
+                 to_string(_blocks),
+                 ") does not match pressure block restriction (",
+                 to_string(_problem.getVariable(_pressure_name).blocks()),
+                 ")");
+
+  if (!_create_fluid_temperature)
+    if (_blocks != _problem.getVariable(_fluid_temperature_name).blocks())
+      mooseWarning("Block restriction of NSFVAction (",
+                   to_string(_blocks),
+                   ") does not match fluid temperature block restriction (",
+                   to_string(_problem.getVariable(_fluid_temperature_name).blocks()),
+                   ")");
+
+  if (!_create_scalar_variable)
+    for (const auto & scalar_name : _passive_scalar_names)
+      if (_blocks != _problem.getVariable(scalar_name).blocks())
+        mooseError("Block restriction of NSFVAction (",
+                   to_string(_blocks),
+                   ") does not match scalar variable ",
+                   scalar_name,
+                   " block restriction (",
+                   to_string(_problem.getVariable(scalar_name).blocks()),
+                   ")");
 }
 
 void

@@ -293,6 +293,8 @@ private:
   bool processThermalConductivity();
   /// Check for general user errors in the parameters
   void checkGeneralControlErrors();
+  /// Check for block restriction issues in external variables
+  void checkExternalVariablesBlocks();
   /// Check errors regarding the user defined boundary treatments
   void checkICParameterErrors();
   /// Check errors regarding the user defined boundary treatments
