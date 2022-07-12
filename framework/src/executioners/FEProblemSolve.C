@@ -126,7 +126,8 @@ FEProblemSolve::validParams()
                         false,
                         "Whether to compute the residual and Jacobian together.");
 
-  params.addParamNamesToGroup("solve_type l_tol l_abs_tol l_max_its nl_max_its nl_max_funcs "
+  params.addParamNamesToGroup("l_tol l_abs_tol l_max_its", "Linear Solver");
+  params.addParamNamesToGroup("solve_type nl_max_its nl_forced_its nl_max_funcs "
                               "nl_abs_tol nl_rel_tol nl_abs_step_tol nl_rel_step_tol "
                               "snesmf_reuse_base compute_initial_residual_before_preset_bcs "
                               "num_grids nl_div_tol nl_abs_div_tol residual_and_jacobian_together "
