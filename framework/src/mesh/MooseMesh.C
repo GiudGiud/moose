@@ -1375,8 +1375,9 @@ MooseMesh::getSubdomainNames(const std::vector<SubdomainID> & subdomain_ids) con
   {
     if (subdomain_ids[i] == Moose::ANY_BLOCK_ID)
     {
-      for (unsigned int j = 0; j < _mesh_subdomains.size(); j++)
-        names[j] = getSubdomainName(_mesh_subdomains[j]);
+      unsigned int j = 0;
+      for (const auto & sub_id : _mesh_subdomains)
+        names[j++] = getSubdomainName(sub_id);
       if (i)
         mooseWarning("You passed \"ANY_BLOCK_ID\" in addition to other block ids. This may be a "
                      "logic error.");

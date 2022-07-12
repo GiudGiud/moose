@@ -3346,7 +3346,9 @@ NonlinearSystemBase::checkKernelCoverage(const std::set<SubdomainID> & mesh_subd
 
     if (!difference.empty())
     {
-      std::vector<SubdomainName> difference_names = _mesh.getSubdomainNames(difference);
+      std::vector<SubdomainID> difference_vec =
+          std::vector<SubdomainID>(difference.begin(), difference.end());
+      std::vector<SubdomainName> difference_names = _mesh.getSubdomainNames(difference_vec);
       std::stringstream missing_block_names;
       std::copy(difference_names.begin(),
                 difference_names.end(),
