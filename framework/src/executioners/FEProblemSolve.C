@@ -132,7 +132,7 @@ FEProblemSolve::validParams()
                               "snesmf_reuse_base compute_initial_residual_before_preset_bcs "
                               "num_grids nl_div_tol nl_abs_div_tol residual_and_jacobian_together "
                               "n_max_nonlinear_pingpong",
-                              "Solver");
+                              "Nonlinear Solver");
   params.addParamNamesToGroup(
       "automatic_scaling compute_scaling_once off_diagonals_in_auto_scaling "
       "scaling_group_variables resid_vs_jac_scaling_param ignore_variables_for_autoscaling",
