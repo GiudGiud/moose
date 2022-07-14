@@ -16,6 +16,7 @@
 #include "MooseObjectAction.h"
 #include "ActionFactory.h"
 #include "AddAuxVariableAction.h"
+#include "MooseUtils.h"
 
 registerMooseAction("MooseApp", SetupDebugAction, "add_output");
 
@@ -40,15 +41,18 @@ SetupDebugAction::validParams()
   params.addParam<bool>("show_mesh_meta_data", false, "Print out the available mesh meta data");
   params.addParam<bool>(
       "show_reporters", false, "Print out information about the declared and requested Reporters");
-  params.addParam<bool>(
-      "show_execution_order", true, "Print out information about the execution of each object");
+  const ExecFlagEnum print_on = MooseUtils::getDefaultExecFlagEnum();
+  params.addParam<ExecFlagEnum>(
+      "show_execution_order",
+      print_on,
+      "Print more information about the order of execution during calculations");
   params.addParam<bool>(
       "pid_aux",
       false,
       "Add a AuxVariable named \"pid\" that shows the processors and partitioning");
 
   params.addClassDescription(
-      "Adds various debugging type Output objects to the simulation system.");
+      "Adds various debugging type output to the simulation system.");
 
   return params;
 }
@@ -106,10 +110,10 @@ SetupDebugAction::act()
     _problem->addOutput(type, "_moose_reporter_debug_output", params);
   }
 
-  // Print execution information
-  if (getParam<bool>("show_execution_order"))
+  // Print execution information in all loops
+  if (parameters().isParamSetByUser("show_execution_order"))
   {
-    _problem->setExecutionPrinting(true);
+    _problem->setExecutionPrinting(getParam<ExecFlagEnum>("show_execution_order"));
   }
 
   // Add pid aux

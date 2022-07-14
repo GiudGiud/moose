@@ -2011,9 +2011,12 @@ public:
   MooseCoordTransform & coordTransform();
 
   /**
-   * Set the status of execution printing
+   * Set the status of loop order of execution printing
+   * @param print_exec set of execution flags to print on
    */
-  void setExecutionPrinting(bool print_execution) { _print_execution = print_execution; };
+  void setExecutionPrinting(ExecFlagEnum print_exec) {
+      _print_execution_on = print_exec;
+  };
 
   /**
    * Check whether the problem should output execution orders at this time
@@ -2382,8 +2385,8 @@ private:
   /// Flag used to indicate whether we are computing the scaling Residual
   bool _computing_scaling_residual = false;
 
-  /// True if order of executions will be output
-  bool _print_execution;
+  /// When to print the execution of loops
+  ExecFlagEnum _print_execution_on;
 };
 
 using FVProblemBase = FEProblemBase;
