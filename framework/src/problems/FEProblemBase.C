@@ -7574,7 +7574,8 @@ FEProblemBase::getFunction(const std::string & name, THREAD_ID tid)
 bool
 FEProblemBase::shouldPrintExecution() const
 {
-  if (_print_execution_on.contains(_current_execute_on_flag))
+  if (_print_execution_on.contains(_current_execute_on_flag) ||
+      _print_execution_on.contains(EXEC_ALWAYS))
     return true;
   else
     return false;

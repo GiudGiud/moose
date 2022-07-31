@@ -111,7 +111,7 @@ public:
 
 protected:
   /// Print list of objects executed and in which order
-  virtual void printExecutionInformation() const {};
+  virtual void printGeneralExecutionInformation() const {};
 
   FEProblemBase & _fe_problem;
   MooseMesh & _mesh;
@@ -179,7 +179,7 @@ ThreadedFaceLoop<RangeType>::operator()(const RangeType & range, bool bypass_thr
       _tid = bypass_threading ? 0 : puid.id;
 
       pre();
-      printExecutionInformation();
+      printGeneralExecutionInformation();
 
       _subdomain = Moose::INVALID_BLOCK_ID;
       _neighbor_subdomain = Moose::INVALID_BLOCK_ID;
@@ -294,7 +294,7 @@ private:
                                   std::set<unsigned int> & difference);
 
   /// Print list of objects executed and in which order
-  void printExecutionInformation() const override;
+  void printGeneralExecutionInformation() const override;
 
   /// Variables
   std::set<MooseVariableFieldBase *> _fv_vars;
@@ -910,7 +910,7 @@ ComputeFVFluxRJThread<RangeType>::postFace(const FaceInfo & /*fi*/)
 
 template <typename RangeType, typename AttributeTagType>
 void
-ComputeFVFluxThread<RangeType, AttributeTagType>::printExecutionInformation() const
+ComputeFVFluxThread<RangeType, AttributeTagType>::printGeneralExecutionInformation() const
 {
   if (_fe_problem.shouldPrintExecution() && _fv_flux_kernels.size())
   {

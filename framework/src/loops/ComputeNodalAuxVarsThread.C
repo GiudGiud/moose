@@ -126,7 +126,7 @@ ComputeNodalAuxVarsThread<AuxKernelType>::join(const ComputeNodalAuxVarsThread &
 
 template <typename AuxKernelType>
 void
-ComputeNodalAuxVarsThread<AuxKernelType>::printExecutionInformation() const
+ComputeNodalAuxVarsThread<AuxKernelType>::printGeneralExecutionInformation() const
 {
   if (_fe_problem.shouldPrintExecution() && _storage.hasActiveObjects())
   {
