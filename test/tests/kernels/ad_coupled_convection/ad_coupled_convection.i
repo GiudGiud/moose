@@ -62,6 +62,10 @@
   [../]
 []
 
+[Debug]
+  show_execution_order = 'NONE ALWAYS INITIAL NONLINEAR LINEAR TIMESTEP_BEGIN TIMESTEP_END FINAL'
+[]
+
 [Executioner]
   type = Steady
 
@@ -73,6 +77,18 @@
   l_tol = 1e-10
   nl_rel_tol = 1e-9
   nl_max_its = 2
+[]
+
+[Postprocessors]
+  [vol1]
+    type = VolumePostprocessor
+    block = 0
+    execute_on = INITIAL
+  []
+  [int1]
+    type = ElementIntegralVariablePostprocessor
+    variable = u
+  []
 []
 
 [Outputs]
