@@ -53,8 +53,7 @@ SetupDebugAction::validParams()
       false,
       "Add a AuxVariable named \"pid\" that shows the processors and partitioning");
 
-  params.addClassDescription(
-      "Adds various debugging type output to the simulation system.");
+  params.addClassDescription("Adds various debugging type output to the simulation system.");
 
   return params;
 }
