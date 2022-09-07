@@ -3000,6 +3000,14 @@ MooseMesh::getBoundaryConnectedBlocks(const BoundaryID bid) const
 std::set<SubdomainID>
 MooseMesh::getBoundaryConnectedSecondaryBlocks(const BoundaryID bid) const
 {
+  mooseDeprecated("MooseMesh::getBoundaryConnectedSecondaryBlocks() is deprecated, "
+      "please use MooseMesh::getBoundaryConnectedNeighborBlocks");
+  return getBoundaryConnectedNeighborBlocks(bid);
+}
+
+std::set<SubdomainID>
+MooseMesh::getBoundaryConnectedNeighborBlocks(const BoundaryID bid) const
+{
   std::set<SubdomainID> subdomain_ids;
   for (const auto & it : _neighbor_subdomain_boundary_ids)
     if (it.second.find(bid) != it.second.end())

@@ -158,7 +158,7 @@ public:
   virtual void buildMesh() = 0;
 
   /**
-   * Returns MeshBase::mesh_dimsension(), (not
+   * Returns MeshBase::mesh_dimension(), (not
    * MeshBase::spatial_dimension()!) of the underlying libMesh mesh
    * object.
    */
@@ -862,12 +862,21 @@ public:
   std::set<SubdomainID> getBoundaryConnectedBlocks(const BoundaryID bid) const;
 
   /**
-   * Get the list of subdomains associated with the given boundary of its secondary side.
+   * Get the list of neighbor subdomains associated the given sided boundary.
+   * Deprecated: use getBoundaryConnectedNeighborBlocks.
    *
    * @param bid The boundary ID you want to get the subdomain IDs for.
    * @return All subdomain IDs associated with given boundary ID
    */
   std::set<SubdomainID> getBoundaryConnectedSecondaryBlocks(const BoundaryID bid) const;
+
+  /**
+   * Get the list of neighbor subdomains associated with the given boundary.
+   *
+   * @param bid The boundary ID you want to get the subdomain IDs for.
+   * @return All subdomain IDs associated with given boundary ID on the neighbor side
+   */
+  std::set<SubdomainID> getBoundaryConnectedNeighborBlocks(const BoundaryID bid) const;
 
   /**
    * Get the list of subdomains contacting the given boundary.
@@ -1153,7 +1162,7 @@ public:
   /**
    * Performs a sanity check for every element in the mesh. If an element dimension is 3 and the
    * corresponding coordinate system is RZ, then this will error. If an element dimension is greater
-   * than 1 and the corresponding system is RPSHERICAL then this will error
+   * than 1 and the corresponding system is RSPHERICAL then this will error
    */
   void checkCoordinateSystems();
 
@@ -1251,7 +1260,7 @@ protected:
    */
   std::map<const Elem *, std::vector<const Elem *>> _coarsened_element_children;
 
-  /// Used for generating the semilocal node range
+  /// Used for generating the semi-local node range
   std::set<Node *> _semilocal_node_list;
 
   /**
@@ -1491,13 +1500,13 @@ private:
   std::map<std::pair<int, ElemType>, std::vector<std::pair<unsigned int, QpMap>>>
       _elem_type_to_coarsening_map;
 
-  /// Holds a map from subomdain ids to the neighboring subdomain ids
+  /// Holds a map from subdomain ids to the neighboring subdomain ids
   std::unordered_map<SubdomainID, std::set<SubdomainID>> _sub_to_neighbor_subs;
 
-  /// Holds a map from subomdain ids to the boundary ids that are attached to it
+  /// Holds a map from subdomain ids to the boundary ids that are attached to it
   std::unordered_map<SubdomainID, std::set<BoundaryID>> _subdomain_boundary_ids;
 
-  /// Holds a map from neighbor subomdain ids to the boundary ids that are attached to it
+  /// Holds a map from neighbor subdomain ids to the boundary ids that are attached to it
   std::unordered_map<SubdomainID, std::set<BoundaryID>> _neighbor_subdomain_boundary_ids;
 
   /// Holds a map from a high-order element side to its corresponding lower-d element
@@ -1523,7 +1532,7 @@ private:
   /// A parallel mesh generator such as DistributedRectilinearMeshGenerator
   /// already make everything ready. We do not need to gather all boundaries to
   /// every single processor. In general, we should avoid using ghostGhostedBoundaries
-  /// when posssible since it is not scalable
+  /// when possible since it is not scalable
   bool _need_ghost_ghosted_boundaries;
 
   /// Unique element integer IDs for each subdomain and each extra element integers
