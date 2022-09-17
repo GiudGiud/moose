@@ -126,12 +126,16 @@ FEProblemSolve::validParams()
                         false,
                         "Whether to compute the residual and Jacobian together.");
 
-  params.addParamNamesToGroup("solve_type l_tol l_abs_tol l_max_its nl_max_its nl_max_funcs "
-                              "nl_abs_tol nl_rel_tol nl_abs_step_tol nl_rel_step_tol "
-                              "snesmf_reuse_base compute_initial_residual_before_preset_bcs "
-                              "num_grids nl_div_tol nl_abs_div_tol residual_and_jacobian_together "
-                              "n_max_nonlinear_pingpong",
-                              "Solver");
+  params.addParamNamesToGroup("solve_type compute_initial_residual_before_preset_bcs verbose",
+                              "Solver general");
+  params.addParamNamesToGroup("nl_max_its nl_max_funcs nl_abs_tol nl_rel_tol nl_abs_step_tol "
+                              "nl_rel_step_tol snesmf_reuse_base num_grids nl_div_tol "
+                              "nl_abs_div_tol residual_and_jacobian_together "
+                              "n_max_nonlinear_pingpong nl_forced_its",
+                              "Solver nonlinear");
+  params.addParamNamesToGroup("l_tol l_abs_tol l_max_its", "Solver linear");
+  params.addParamNamesToGroup("splitting", "PETSc");
+  params.addParamNamesToGroup("skip_exception_check", "Advanced");
   params.addParamNamesToGroup(
       "automatic_scaling compute_scaling_once off_diagonals_in_auto_scaling "
       "scaling_group_variables resid_vs_jac_scaling_param ignore_variables_for_autoscaling",
