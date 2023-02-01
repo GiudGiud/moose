@@ -46,7 +46,7 @@ Simulation::Simulation(FEProblemBase & fe_problem, const InputParameters & pars)
     _output_vector_velocity(true),
     _zero(0)
 {
-  bool second_order_mesh = pars.get<bool>("2nd_order_mesh");
+  bool second_order_mesh = true; //pars.get<bool>("2nd_order_mesh");
   HeatConductionModel::_fe_type =
       second_order_mesh ? FEType(SECOND, LAGRANGE) : FEType(FIRST, LAGRANGE);
 

@@ -36,16 +36,16 @@ D_h = 5
     block = 'hs_external:block_a'
   []
   [v_y]
-    # order = SECOND
-    order = FIRST
+    order = SECOND
+    # order = FIRST
     family = LAGRANGE
     block = 'hs_external:block_a'
   []
   [pressure]
-    # order = FIRST
-    order = CONSTANT
-    # family = LAGRANGE
-    family = MONOMIAL
+    order = FIRST
+    # order = CONSTANT
+    family = LAGRANGE
+    # family = MONOMIAL
     block = 'hs_external:block_a'
   []
 []
@@ -95,12 +95,12 @@ D_h = 5
     boundary = 'hs_external:left hs_external:top hs_external:bottom'
     value = 0.0
   []
-  [x_inlet]
-    type = FunctionDirichletBC
-    variable = v_x
-    boundary = 'hs_external:left'
-    function = 'inlet_func'
-  []
+  # [x_inlet]
+  #   type = FunctionDirichletBC
+  #   variable = v_x
+  #   boundary = 'hs_external:left'
+  #   function = 'inlet_func'
+  # []
 []
 
 ###########################
@@ -154,7 +154,7 @@ D_h = 5
 []
 
 ###########################
-# Coupling
+# Coupling NS -> THM
 ###########################
 
 [Postprocessors]
@@ -207,7 +207,7 @@ D_h = 5
   []
   [set_inlet_velocity]
     type = RealFunctionControl
-    parameter = 'Components/inlet/v'
+    parameter = 'Components/inlet/vel'
     function = 'velocity_pp_fun'
     execute_on = 'initial timestep_begin'
   []
@@ -216,15 +216,55 @@ D_h = 5
 [Functions]
   [pressure_pp_fun]
     type = ParsedFunction
-    value = '1 + pp'
-    symbol_names = 'pp'
+    expression = 'pressure_pp'
+    symbol_names = 'pressure_pp'
     symbol_values = 'pressure_pp'
   []
   [velocity_pp_fun]
     type = ParsedFunction
-    value = '2'
-    symbol_names = 'v'
+    expression = 'velocity_pp'
+    symbol_names = 'velocity_pp'
     symbol_values = 'velocity_pp'
+  []
+[]
+
+###########################
+# Coupling THM -> NS
+###########################
+
+[BCs]
+  [x_inlet]
+    type = PostprocessorDirichletBC
+    variable = v_x
+    boundary = 'hs_external:left'
+    postprocessor = pipe_out_v
+  []
+  [p_outlet]
+    type = PostprocessorDirichletBC
+    variable = pressure
+    boundary = 'hs_external:left'
+    postprocessor = pipe_in_p
+  []
+[]
+
+[Postprocessors]
+  [m_dot_out]
+    type = ADFlowBoundaryFlux1Phase
+    boundary = 'outlet'
+    equation = mass
+    outputs = none
+  []
+  [pipe_out_v]
+    type = ParsedPostprocessor
+    function = 'm_dot_out / rho'
+    pp_names = 'm_dot_out'
+    constant_names = 'rho'
+    constant_expressions = '${rho}'
+  []
+  [pipe_in_p]
+    type = SideAverageValue
+    variable = p
+    boundary = inlet
   []
 []
 
@@ -236,9 +276,10 @@ D_h = 5
   [prop_mat]
     type = ADGenericConstantMaterial
     prop_names = 'density specific_heat thermal_conductivity'
+    block = 'pipe'
     prop_values = '${rho} ${cp} ${k}'
   []
-  [const]
+  [const_material]
     type = GenericConstantMaterial
     block = 'hs_external:block_a'
     prop_names = 'rho_ns mu_ns'
@@ -266,7 +307,7 @@ D_h = 5
 [Functions]
   [inlet_func]
     type = ParsedFunction
-    value = '-4 * (y - 0.5)^2 + 1'
+    expression = '-4 * (y - 0.5)^2 + 1'
   []
   [dh_fn]
     type = ConstantFunction
@@ -291,7 +332,7 @@ D_h = 5
 
   start_time = 0
   dt = 1.0
-  num_steps = 5
+  num_steps = 10
   # abort_on_solve_fail = true
   nl_abs_tol = 1e-12
 
@@ -299,11 +340,11 @@ D_h = 5
 
   solve_type = 'NEWTON'
 
-  petsc_options_iname = '-pc_type -pc_factor_shift -pc_factor_mat_solver_type'
-  petsc_options_value = 'lu NONZERO mumps'
-  # petsc_options = '-pc_svd_monitor'
-  # petsc_options_iname = '-pc_type -pc_factor_shift'
-  # petsc_options_value = 'svd NONZERO'
+  # petsc_options_iname = '-pc_type -pc_factor_shift -pc_factor_mat_solver_type'
+  # petsc_options_value = 'lu NONZERO mumps'
+  petsc_options = '-pc_svd_monitor'
+  petsc_options_iname = '-pc_type -pc_factor_shift'
+  petsc_options_value = 'svd NONZERO'
   # petsc_options = '-snes_test_jacobian'
   # petsc_options_iname = '-snes_test_error'
   # petsc_options_value = '1e-8'
