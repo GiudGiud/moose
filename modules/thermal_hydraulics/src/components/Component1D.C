@@ -130,6 +130,8 @@ Component1D::buildMesh()
 
   // Update the mesh
   mesh().update();
+
+  mesh().getMesh().all_second_order();
 }
 
 bool
