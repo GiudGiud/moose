@@ -15,7 +15,7 @@
   []
   [block_2nd]
     type = FileMeshGenerator
-    file = 'mesh_in_1st.e'
+    file = 'mesh_in.e'
   []
 
   [both]
@@ -40,4 +40,9 @@
 
 [Executioner]
   type = Steady
+  [Quadrature]
+    custom_blocks = '0 3'
+    custom_orders = 'first second'
+    element_order = third
+  []
 []

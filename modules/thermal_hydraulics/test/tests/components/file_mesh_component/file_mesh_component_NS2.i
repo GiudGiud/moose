@@ -30,8 +30,8 @@ D_h = 5
 
 [Variables]
   [v_x]
-    # order = SECOND
-    order = FIRST
+    order = SECOND
+    # order = FIRST
     family = LAGRANGE
     block = 'hs_external:block_a'
   []
@@ -162,11 +162,13 @@ D_h = 5
     type = SideAverageValue
     variable = pressure
     boundary = hs_external:right
+    execute_on = LINEAR
   []
   [velocity_pp]
     type = SideAverageValue
     variable = v_x
     boundary = hs_external:left
+    execute_on = LINEAR
   []
 []
 
@@ -203,13 +205,15 @@ D_h = 5
     type = RealFunctionControl
     parameter = 'Components/outlet/p'
     function = 'pressure_pp_fun'
-    execute_on = 'initial timestep_begin'
+    # execute_on = 'initial timestep_begin'
+    execute_on = LINEAR
   []
   [set_inlet_velocity]
     type = RealFunctionControl
     parameter = 'Components/inlet/vel'
     function = 'velocity_pp_fun'
-    execute_on = 'initial timestep_begin'
+    # execute_on = 'initial timestep_begin'
+    execute_on = LINEAR
   []
 []
 
@@ -253,6 +257,7 @@ D_h = 5
     boundary = 'outlet'
     equation = mass
     outputs = none
+    execute_on = LINEAR
   []
   [pipe_out_v]
     type = ParsedPostprocessor
@@ -260,11 +265,13 @@ D_h = 5
     pp_names = 'm_dot_out'
     constant_names = 'rho'
     constant_expressions = '${rho}'
+    execute_on = LINEAR
   []
   [pipe_in_p]
     type = SideAverageValue
     variable = p
     boundary = inlet
+    execute_on = LINEAR
   []
 []
 
