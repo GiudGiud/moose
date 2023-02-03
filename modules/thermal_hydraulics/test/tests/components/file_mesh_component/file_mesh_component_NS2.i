@@ -1,14 +1,11 @@
 # This test solves two identical heat conduction problems, one created with THM
 # components, and one with the constituent lower-level objects and FileMeshComponent.
 
-rho = 8000
+rho = 1000
 cp = 500
 k = 15
 
-initial_T = 1000
-T_left = 1005
-T_right = 300
-htc_right = 1000
+initial_T = 300
 
 D_h = 5
 
@@ -16,8 +13,8 @@ D_h = 5
   gravity_vector = '0 -9.81 0'
 
   initial_p = 1e6
-  initial_T = 453.1
-  initial_vel = 0.0
+  initial_T = 300
+  initial_vel = 1
 
   closures = simple_closures
 
@@ -95,12 +92,6 @@ D_h = 5
     boundary = 'hs_external:left hs_external:top hs_external:bottom'
     value = 0.0
   []
-  # [x_inlet]
-  #   type = FunctionDirichletBC
-  #   variable = v_x
-  #   boundary = 'hs_external:left'
-  #   function = 'inlet_func'
-  # []
 []
 
 ###########################
@@ -112,7 +103,6 @@ D_h = 5
     type = FileMeshComponent
     file = 'mesh_in.e'
     position = '0 0 0'
-    # second_order = true
   []
 
 
@@ -161,13 +151,13 @@ D_h = 5
   [pressure_pp]
     type = SideAverageValue
     variable = pressure
-    boundary = hs_external:right
+    boundary = hs_external:left
     execute_on = LINEAR
   []
   [velocity_pp]
     type = SideAverageValue
     variable = v_x
-    boundary = hs_external:left
+    boundary = hs_external:right
     execute_on = LINEAR
   []
 []
@@ -246,7 +236,7 @@ D_h = 5
   [p_outlet]
     type = PostprocessorDirichletBC
     variable = pressure
-    boundary = 'hs_external:left'
+    boundary = 'hs_external:right'
     postprocessor = pipe_in_p
   []
 []
@@ -295,13 +285,28 @@ D_h = 5
 []
 
 [FluidProperties]
+  # [eos]
+  #   type = StiffenedGasFluidProperties
+  #   gamma = 2.35
+  #   cv = 1816.0
+  #   q = -1.167e6
+  #   p_inf = 1.0e9
+  #   q_prime = 0
+  # []
   [eos]
-    type = StiffenedGasFluidProperties
-    gamma = 2.35
-    cv = 1816.0
-    q = -1.167e6
-    p_inf = 1.0e9
-    q_prime = 0
+    type = IdealGasFluidProperties
+    # type = Water97FluidProperties
+    # gamma = 2.35
+    # cv = 1816.0
+    # q = -1.167e6
+    # p_inf = 1.0e9
+    # q_prime = 0
+    # rho_0 = ${rho}
+    # e_0 = 1000
+    # T_0 = 300
+    # p_0 = 1e5
+    # a2 = 0
+    # beta = 0
   []
 []
 
