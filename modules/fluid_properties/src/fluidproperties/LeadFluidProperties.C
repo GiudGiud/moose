@@ -253,21 +253,38 @@ LeadFluidProperties::T_from_v_e(Real v, Real e, Real & T, Real & dT_dv, Real & d
 }
 
 Real
-LeadFluidProperties::T_from_p_h(Real p, Real h) const
+LeadFluidProperties::T_from_p_h(Real /*p*/, Real h) const
 {
-  auto lambda = [&](Real p, Real current_T, Real & new_h, Real & dh_dp, Real & dh_dT)
-  { h_from_p_T(p, current_T, new_h, dh_dp, dh_dT); };
-  Real T = FluidPropertiesUtils::NewtonSolve(
-               p, h, _T_initial_guess, _tolerance, lambda, name() + "::T_from_p_h")
-               .first;
-  // check for nans
-  if (std::isnan(T))
-    mooseError("Conversion from pressure (p = ",
-               p,
-               ") and enthalpy (h = ",
-               h,
-               ") to temperature failed to converge.");
-  return T;
+  if (h > 10000)
+  {
+    h = 10000;
+    mooseWarning("Clipping enthalpy at 10,000");
+  }
+  Real B0 =
+      191986659138419162792410873190316420742890943001202833073748516415355336739527638021832704. +
+      3685864710342399106934708119104291324979323671585662259236682293182304888731746697216. * h +
+      10474079689122754094075456955889381304105525468004676601120368500596693775941632. *
+          std::pow(h, 2) -
+      17261340773581478633198381309501841602068659474901526040567043944007860224. * std::pow(h, 3) +
+      227130389137483701292703092025158072598246204000263889314873027330048. * std::pow(h, 4);
+  if (B0 < 0)
+    mooseWarning("T_from_p_h returning a NaN (B0 term)");
+  Real B1 = 1133675486730090446848. - 1.5045618000321492e15 * h +
+            1.887634567370936e10 * std::pow(h, 2) + 1.2525073967318645e-24 * std::sqrt(B0);
+  if (B1 < 0)
+    mooseWarning("T_from_p_h returning a NaN (B1 term)");
+  Real B2 = std::pow(B1, 1. / 3);
+  Real B3 =
+      (1.84447821413889e-16 * (539258302490871733484322291712. - 1679395452497578115989504. * h));
+  Real B4 = -1.710526202779773e7 + B3 / B2 + B2;
+  if (B4 < 0)
+    mooseWarning("T_from_p_h returning a NaN (B4 term)");
+  Real B5 = -3.421052405559546e7 - B3 / B2 - B2 -
+            (-5.455572778698027e11 + 1.55440414507772e6 * (100599. + h)) / (4 * std::sqrt(B4));
+  if (B5 < 0)
+    mooseWarning("T_from_p_h returning a NaN (B5 term)");
+
+  return 1195.68 - std::sqrt(B4) / 2 + std::sqrt(B5) / 2;
 }
 
 void
