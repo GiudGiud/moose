@@ -27,10 +27,16 @@ Diffusion::computeResidual()
 {
   prepareVectorTag(_assembly, _var.number());
   const unsigned int n_test = _test.size();
-  for (_qp = 0; _qp < _qrule->n_points(); _qp++)
-#pragma omp simd
-    for (_i = 0; _i < n_test; _i++) // target for auto vectorization
-      _local_re(_i) += _grad_u[_qp] * _JxW[_qp] * _coord[_qp] * _grad_test[_i][_qp];
+  unsigned int qpoints = _qrule->n_points();
+  std::vector<RealVectorValue> jaja(qpoints);
+#pragma clang loop vectorize(enable) vectorize_width(8) unroll(enable) interleave(enable)
+  for (int qp = 0; qp < qpoints; qp++)
+    jaja[qp] = _grad_u[qp] * _JxW[qp] * _coord[qp];
+
+  for (int i = 0; i < n_test; i++) // target for auto vectorization
+#pragma clang loop vectorize(enable) vectorize_width(8) unroll(enable) interleave(enable)
+    for (unsigned int qp = 0; qp < qpoints; qp++)
+      _local_re(i) += jaja[qp] * _grad_test[i][qp];
   accumulateTaggedLocalResidual();
 }
 
