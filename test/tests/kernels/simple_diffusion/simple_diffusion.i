@@ -3,10 +3,12 @@
   dim = 2
   nx = 10
   ny = 10
+  second_order = true
 []
 
 [Variables]
   [u]
+    order = SECOND
   []
 []
 

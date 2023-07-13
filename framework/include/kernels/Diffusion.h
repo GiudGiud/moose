@@ -23,6 +23,10 @@ public:
   Diffusion(const InputParameters & parameters);
 
 protected:
+  virtual void computeResidual() override;
+
+  virtual void computeJacobian() override;
+
   virtual Real computeQpResidual() override;
 
   virtual Real computeQpJacobian() override;
