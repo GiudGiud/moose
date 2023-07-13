@@ -26,6 +26,19 @@ supports reading and writing a large number of formats and could be extended to 
 | .vtk, .pvtu | Visualization Toolkit |
 | .cpr        | Checkpoint file |
 
+## Unsupported File Formats
+
+These file formats are unsupported, however, using other tools they can be converted to supported formats.
+
+| Extension   | Description | Conversion pathway | Supported format |
+| :-          | :- | :- | :- |
+| .case | EnSight format |
+|        | Tecplot ASCII file |
+|        | Tecplot ASCII file |
+
+'.case' can be used as the output for Simcenter StarCCM+. The tetrahedralize option in Paraview is required to be able
+to export to Exodus files.
+
 ## Extra element integer
 
 When reading a mesh file in Sandia's ExodusII format, users can use parameter `exodus_extra_element_integers` to load elemental variables for setting extra element integers of the mesh.
