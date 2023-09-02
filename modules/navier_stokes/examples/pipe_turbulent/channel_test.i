@@ -136,9 +136,10 @@ C2_eps = 1.92
 
 [AuxVariables]
   [viscous_field]
-    order = CONSTANT
-    family = MONOMIAL
-    fv = true
+    type = MooseVariableFVReal
+  []
+  [mu_t]
+    type = MooseVariableFVReal
   []
 []
 
@@ -213,6 +214,7 @@ C2_eps = 1.92
     rho = ${rho}
     mu_t = 'mu_t'
     linearized_model = false
+    mu = 'mu'
   []
 
   [TKED_advection]
@@ -237,6 +239,7 @@ C2_eps = 1.92
     C1_eps = ${C1_eps}
     C2_eps = ${C2_eps}
     implicit = true
+    mu = 'mu'
   []
 []
 
@@ -245,6 +248,26 @@ C2_eps = 1.92
     type = ADFunctorElementalAux
     variable = viscous_field
     functor = 'mu'
+  []
+  [compute_mu_t]
+    type = kEpsilonViscosityAux
+    variable = mu_t
+    C_mu = ${C_mu}
+    k = TKE
+    epsilon = TKED
+    mu = 'mu'
+    rho = ${rho}
+    u = u
+    v = v
+    wall_treatement = false
+    walls = 'top'
+    non_equilibrium_treatement = false
+    rf = 1.0
+    mu_t_inital = '${fparse C_mu * k_bulk * k_bulk / eps_bulk}'
+    execute_on = 'NONLINEAR'
+    relaxation_method = 'nl'
+    iters_to_activate = 0
+    damper = 1.0
   []
 []
 
