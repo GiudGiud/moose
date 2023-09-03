@@ -60,8 +60,8 @@ INSFVTurbulentAdvection::computeQpResidual()
                                       limiterType(_advected_interp_method),
                                       MetaPhysicL::raw_value(v) * _normal > 0),
                              determineState());
-  // why ditch the derivative?
-  return _normal * MetaPhysicL::raw_value(v) * rho_face * var_face;
+  // why ditch the derivative? MetaPhysicL::raw_value(v)
+  return _normal * v * rho_face * var_face;
 }
 
 void
