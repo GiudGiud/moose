@@ -11,8 +11,6 @@ mu = 0.0166 # viscosity [Pa s]
 # https://www.researchgate.net/publication/337161399_Development_of_a_control-\
 # oriented_power_plant_simulator_for_the_molten_salt_fast_reactor/fulltext/5dc95c\
 # 9da6fdcc57503eec39/Development-of-a-control-oriented-power-plant-simulator-for-the-molten-salt-fast-reactor.pdf
-# Derived turbulent properties
-von_karman_const = 0.41
 
 # Mass flow rate tuning
 friction = 4.0e3 # [kg / m^4]
@@ -39,35 +37,31 @@ C_mu = 0.09
 
 [Mesh]
   # uniform_refine = 1
-  # [fmg]
-  #   type = FileMeshGenerator
-  #   file = 'msfr_rz_mesh.e'
-  # []
-  # [hx_top]
-  #   type = ParsedGenerateSideset
-  #   combinatorial_geometry = 'y > 0'
-  #   included_subdomain_ids = '3'
-  #   included_neighbor_ids = '1'
-  #   fixed_normal = true
-  #   normal = '0 1 0'
-  #   new_sideset_name = 'hx_top'
-  #   input = 'fmg'
-  # []
-  # [delete_unused]
-  #   type = BlockDeletionGenerator
-  #   input = 'hx_top'
-  #   block = 'shield reflector'
-  # []
   [fmg]
     type = FileMeshGenerator
-    file = 'run_ns_inital_in.e'
+    file = '../../../../../virtual_test_bed/msr/msfr/mesh/msfr_rz_mesh.e'
   []
+  [hx_top]
+    type = ParsedGenerateSideset
+    combinatorial_geometry = 'y > 0'
+    included_subdomains = '3'
+    included_neighbors = '1'
+    fixed_normal = true
+    normal = '0 1 0'
+    new_sideset_name = 'hx_top'
+    input = 'fmg'
+  []
+  [delete_unused]
+    type = BlockDeletionGenerator
+    input = 'hx_top'
+    block = 'shield reflector'
+  []
+  coord_type = 'RZ'
+  rz_coord_axis = Y
 []
 
 [Problem]
   kernel_coverage_check = false
-  coord_type = 'RZ'
-  rz_coord_axis = Y
 []
 
 ################################################################################
@@ -221,9 +215,9 @@ C_mu = 0.09
     rho = ${rho}
     u = vel_x
     v = vel_y
-    wall_treatement = false
+    wall_treatment = false
     walls = 'shield_wall reflector_wall'
-    non_equilibrium_treatement = false
+    non_equilibrium_treatment = false
     rf = 0.25
     execute_on = 'TIMESTEP_END'
   []
@@ -249,18 +243,18 @@ C_mu = 0.09
 
 [Functions]
   [ad_rampdown_mu_func]
-    type = ADParsedFunction
-    value = mu*(100*exp(-3*t)+1)
-    vars = 'mu'
-    vals = ${mu}
+    type = ParsedFunction
+    expression = mu*(100*exp(-3*t)+1)
+    symbol_names = 'mu'
+    symbol_values = ${mu}
   []
   # Duplicate definition to use in postprocessor,
   # we will convert types more in the future and avoid duplicates
   [rampdown_mu_func]
     type = ParsedFunction
-    value = mu*(100*exp(-3*t)+1)
-    vars = 'mu'
-    vals = ${mu}
+    expression = mu*(100*exp(-3*t)+1)
+    symbol_names = 'mu'
+    symbol_values = ${mu}
   []
 []
 
@@ -270,12 +264,6 @@ C_mu = 0.09
     prop_names = 'mu rho' #it converges to the real mu eventually.
     prop_values = 'ad_rampdown_mu_func ${rho}'
   []
-  #[not_used]
-  #  type = ADGenericFunctorMaterial
-  #  prop_names = 'not_used'
-  #  prop_values = 0
-  #  block = 'shield reflector'
-  #[]
 []
 
 ################################################################################

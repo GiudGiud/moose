@@ -1,5 +1,3 @@
-von_karman_const = 0.41
-
 Re = 5100
 
 rho = 1.0
@@ -61,8 +59,6 @@ sigma_k = 1.0
 sigma_eps = 1.3
 C1_eps = 1.44
 C2_eps = 1.92
-
-diff = 10.0
 
 [GlobalParams]
   rhie_chow_user_object = 'rc'
@@ -183,8 +179,8 @@ diff = 10.0
     linearized_model = true
     rf = 0.5
     walls = 'bottom wall-side'
-    non_equilibrium_treatement = false
-    n_iters_activate = 2
+    non_equilibrium_treatment = false
+    iters_to_activate = 2
     relaxation_method = "nl"
   []
 
@@ -214,8 +210,8 @@ diff = 10.0
     C2_eps = ${C2_eps}
     rf = 0.5
     walls = 'bottom wall-side'
-    # non_equilibrium_treatement = false
-    n_iters_activate = 2
+    # non_equilibrium_treatment = false
+    iters_to_activate = 2
   []
 []
 
@@ -248,9 +244,9 @@ diff = 10.0
     rho = ${rho}
     u = vel_x
     v = vel_y
-    wall_treatement = false
+    wall_treatment = false
     walls = 'bottom wall-side'
-    non_equilibrium_treatement = false
+    non_equilibrium_treatment = false
     rf = 0.1
     execute_on = 'LINEAR'
     n_iters_activate = 3
@@ -265,7 +261,7 @@ diff = 10.0
 [Functions]
   # Not working
   [viscous_jump]
-    type = ADParsedFunction
+    type = ParsedFunction
     expression = 'if((abs(y) > (D)*(11/2 -1)/(11/2)), mu_wall, mu_bulk)'
     symbol_names = 'D mu_wall mu_bulk'
     symbol_values = '${fparse 5*h} ${mu_wall} ${mu_bulk}'
@@ -351,8 +347,9 @@ diff = 10.0
 
 [Executioner]
   type = Steady
-  end_time = 100
-  dt = 1
+
+  # end_time = 100
+  # dt = 1
   # [TimeStepper]
   #   type = IterationAdaptiveDT
   #   dt = 0.001
@@ -361,8 +358,9 @@ diff = 10.0
   #   growth_factor = 1.2
   #   cutback_factor = 0.8
   # []
-  steady_state_detection = true
-  steady_state_tolerance = 1e-6
+  # steady_state_detection = true
+  # steady_state_tolerance = 1e-6
+
   solve_type = 'NEWTON'
   petsc_options_iname = '-pc_type -pc_factor_shift_type -snes_linesearch_damping'
   petsc_options_value = 'lu        NONZERO               0.7'

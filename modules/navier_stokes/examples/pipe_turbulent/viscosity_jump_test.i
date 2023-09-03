@@ -1,6 +1,5 @@
 # Geometry
 D = 0.02
-total_len = '${fparse 40 * D}'
 L = '${fparse 20 * D}'
 nx = 50
 ny = 10
@@ -33,7 +32,6 @@ sigma_eps = 1.3
 C1_eps = 1.44
 C2_eps = 1.92
 
-diff = 10.0
 advected_interp_method = 'upwind'
 velocity_interp_method = 'rc'
 
@@ -217,7 +215,7 @@ velocity_interp_method = 'rc'
     linearized_model = true
     rf = 1.0
     walls = 'bottom top'
-    non_equilibrium_treatement = false
+    non_equilibrium_treatment = false
   []
 
   [TKED_time]
@@ -252,7 +250,7 @@ velocity_interp_method = 'rc'
     C2_eps = ${C2_eps}
     rf = 1.0
     walls = 'bottom top'
-    # non_equilibrium_treatement = false
+    # non_equilibrium_treatment = false
   []
 []
 
@@ -288,9 +286,9 @@ velocity_interp_method = 'rc'
     rho = ${rho}
     u = vel_x
     v = vel_y
-    wall_treatement = false
+    wall_treatment = false
     walls = 'top bottom'
-    non_equilibrium_treatement = false
+    non_equilibrium_treatment = false
     rf = 1.0
     execute_on = 'TIMESTEP_END'
   []
@@ -314,7 +312,7 @@ velocity_interp_method = 'rc'
 [Functions]
   # Not working
   [viscous_jump]
-    type = ADParsedFunction
+    type = ParsedFunction
     expression = 'if((abs(y) > (D)*(ny/2 -1)/(ny/2)), mu_wall, mu_bulk)'
     symbol_names = 'D ny mu_wall mu_bulk'
     symbol_values = '${D} ${ny} ${mu_wall} ${mu_bulk}'

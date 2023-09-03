@@ -1,13 +1,11 @@
-von_karman_const = 0.41
-
-H = 1 #halfwidth of the channel
+# H = 1 #halfwidth of the channel
 L = 150
 
-Re = 13700
+# Re = 13700
 
 rho = 1
 bulk_u = 1
-mu = '${fparse rho * bulk_u * 2 * H / Re}'
+# mu = '${fparse rho * bulk_u * 2 * H / Re}'
 
 advected_interp_method = 'upwind'
 velocity_interp_method = 'rc'
@@ -24,27 +22,25 @@ velocity_interp_method = 'rc'
 []
 
 # Crafted wall function
-f = '${fparse 0.316 * Re^(-0.25)}'
-ref_delta_P = '${fparse f * L / (2*H) * rho * bulk_u^2 / 2}'
-tau_wall = '${fparse ref_delta_P / (pi * (2*H) * L)}'
-u_tau = '${fparse sqrt(tau_wall / rho)}'
-y_dist_wall = '${fparse (2*H)/11/2}'
-mu_wall = '${fparse rho * pow(u_tau,2) * y_dist_wall / bulk_u}'
+# f = '${fparse 0.316 * Re^(-0.25)}'
+# ref_delta_P = '${fparse f * L / (2*H) * rho * bulk_u^2 / 2}'
+# tau_wall = '${fparse ref_delta_P / (pi * (2*H) * L)}'
+# u_tau = '${fparse sqrt(tau_wall / rho)}'
+# y_dist_wall = '${fparse (2*H)/11/2}'
+# mu_wall = '${fparse rho * pow(u_tau,2) * y_dist_wall / bulk_u}'
 
 # Crafted bulk viscosity
-turbulent_intensity = 0.01 #'${fparse 0.16 * pow(Re, -1.0/8.0)}'
-C_mu = 0.09
-mixing_length = '${fparse (2*H) * 0.07}'
-k_bulk = '${fparse 3/2 * pow(bulk_u*turbulent_intensity, 2)}'
-eps_bulk = '${fparse pow(C_mu, 0.75) * pow(k_bulk, 1.5) / mixing_length}'
-mu_bulk = '${fparse rho * C_mu * pow(k_bulk, 2) / eps_bulk}'
+# turbulent_intensity = 0.01 #'${fparse 0.16 * pow(Re, -1.0/8.0)}'
+# C_mu = 0.09
+# mixing_length = '${fparse (2*H) * 0.07}'
+# k_bulk = '${fparse 3/2 * pow(bulk_u*turbulent_intensity, 2)}'
+# eps_bulk = '${fparse pow(C_mu, 0.75) * pow(k_bulk, 1.5) / mixing_length}'
+# mu_bulk = '${fparse rho * C_mu * pow(k_bulk, 2) / eps_bulk}'
 
-sigma_k = 1.0
-sigma_eps = 1.3
-C1_eps = 1.44
-C2_eps = 1.92
-
-diff = 10.0
+# sigma_k = 1.0
+# sigma_eps = 1.3
+# C1_eps = 1.44
+# C2_eps = 1.92
 
 [GlobalParams]
   rhie_chow_user_object = 'rc'
@@ -234,8 +230,9 @@ diff = 10.0
 
 [Executioner]
   type = Steady
-  end_time = 4
-  dt = 1
+
+  # end_time = 4
+  # dt = 1
   # [TimeStepper]
   #   type = IterationAdaptiveDT
   #   dt = 0.001
@@ -244,8 +241,9 @@ diff = 10.0
   #   growth_factor = 1.2
   #   cutback_factor = 0.8
   # []
-  steady_state_detection = true
-  steady_state_tolerance = 1e-6
+  # steady_state_detection = true
+  # steady_state_tolerance = 1e-6
+
   solve_type = 'NEWTON'
   petsc_options_iname = '-pc_type -pc_factor_shift_type -snes_linesearch_damping'
   petsc_options_value = 'lu        NONZERO               0.7'

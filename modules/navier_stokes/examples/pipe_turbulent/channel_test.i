@@ -259,9 +259,9 @@ C2_eps = 1.92
     rho = ${rho}
     u = u
     v = v
-    wall_treatement = false
+    wall_treatment = false
     walls = 'top'
-    non_equilibrium_treatement = false
+    non_equilibrium_treatment = false
     rf = 1.0
     mu_t_inital = '${fparse C_mu * k_bulk * k_bulk / eps_bulk}'
     execute_on = 'NONLINEAR'
@@ -274,14 +274,14 @@ C2_eps = 1.92
 [Functions]
   # Not working
   [viscous_jump]
-    type = ADParsedFunction
+    type = ParsedFunction
     expression = 'if((y > (0.5 * D)*(ny -1)/ny), mu_wall, mu_bulk)'
     symbol_names = 'D ny mu_wall mu_bulk'
     symbol_values = '${D} ${ny} ${mu_wall} ${mu_bulk}'
   []
   # Working
   # [viscous_jump]
-  #   type = ADParsedFunction
+  #   type = ParsedFunction
   #   expression = 'if((y > (0.5 * D)*(ny -1)/ny), mu_wall*10.0, mu_bulk)'
   #   symbol_names = 'D ny mu_wall mu_bulk'
   #   symbol_values = '${D} ${ny} ${mu_wall} ${mu_bulk}'

@@ -14,20 +14,18 @@
 # 'run_neutronics.i', saved in 'restart/run_neutronics_ns_restart.e'
 
 # Material properties
-rho = 4284  # density [kg / m^3]  (@1000K)
-cp = 1594  # specific heat capacity [J / kg / K]
-drho_dT = 0.882  # derivative of density w.r.t. temperature [kg / m^3 / K]
+rho = 4284 # density [kg / m^3]  (@1000K)
+cp = 1594 # specific heat capacity [J / kg / K]
+drho_dT = 0.882 # derivative of density w.r.t. temperature [kg / m^3 / K]
 mu = 0.0166 # viscosity [Pa s]
 k = 1.7 # thermal conductivity [W / m / K]
 # https://www.researchgate.net/publication/337161399_Development_of_a_control-\
 # oriented_power_plant_simulator_for_the_molten_salt_fast_reactor/fulltext/5dc9\
 # 5c9da6fdcc57503eec39/Development-of-a-control-oriented-power-plant-simulator-\
 # for-the-molten-salt-fast-reactor.pdf
-von_karman_const = 0.41
 
 # Turbulent properties
-Pr_t = 0.9 # turbulent Prandtl number
-Sc_t = 1   # turbulent Schmidt number
+Sc_t = 1 # turbulent Schmidt number
 sigma_k = 1.0
 sigma_eps = 1.3
 C1_eps = 1.44
@@ -35,13 +33,13 @@ C2_eps = 1.92
 C_mu = 0.09
 
 # Derived material properties
-alpha = ${fparse drho_dT / rho}  # thermal expansion coefficient
+alpha = '${fparse drho_dT / rho}' # thermal expansion coefficient
 
 # Operating parameters
 T_HX = 873.15 # heat exchanger temperature [K]
 
 # Mass flow rate tuning, for heat exchanger pressure and temperature drop
-friction = 4e3  # [kg / m^4]
+friction = 4e3 # [kg / m^4]
 pump_force = -20000. # [N / m^3]
 
 # Delayed neutron precursor parameters. Lambda values are decay constants in
@@ -102,9 +100,6 @@ beta6 = 0.000184087
     new_sideset_name = 'hx_bot'
     input = 'hx_top'
   []
-[]
-
-[Problem]
   coord_type = 'RZ'
   rz_coord_axis = Y
 []
@@ -174,7 +169,7 @@ beta6 = 0.000184087
     friction_types = 'FORCHHEIMER'
     friction_coeffs = ${friction}
     ambient_convection_blocks = 'hx'
-    ambient_convection_alpha = ${fparse 600 * 20e3} # HX specifications
+    ambient_convection_alpha = '${fparse 600 * 20e3}' # HX specifications
     ambient_temperature = 'hx_cold_temp'
   []
 []
@@ -280,7 +275,7 @@ beta6 = 0.000184087
     [InitialCondition]
       type = FunctionIC
       function = 'cosine_guess'
-      scaling_factor = ${fparse 3e9/2.81543}
+      scaling_factor = '${fparse 3e9/2.81543}'
     []
   []
   [fission_source]
@@ -289,7 +284,7 @@ beta6 = 0.000184087
     [InitialCondition]
       type = FunctionIC
       function = 'cosine_guess'
-      scaling_factor = ${fparse 6.303329e+01/2.81543}
+      scaling_factor = '${fparse 6.303329e+01/2.81543}'
     []
     block = 'fuel pump hx'
   []
@@ -307,18 +302,18 @@ beta6 = 0.000184087
   # Guess to have a 3D power distribution
   [cosine_guess]
     type = ParsedFunction
-    value = 'max(0, cos(x*pi/2/1.2))*max(0, cos(y*pi/2/1.1))'
+    expression = 'max(0, cos(x*pi/2/1.2))*max(0, cos(y*pi/2/1.1))'
   []
   [hx_cold_temp]
-    type = ADParsedFunction
-    value = 'Tcold'
-    vars  = 'Tcold'
-    vals = '${T_HX}'
+    type = ParsedFunction
+    expression = 'Tcold'
+    symbol_names = 'Tcold'
+    symbol_values = '${T_HX}'
   []
   [Pr_t]
     # Function fitted from 3D model to match effective diffusivity
     type = ParsedFunction
-    value = 'max(1.0 - max(0, cos(x*pi/4/1.2)), 0.001)'
+    expression = 'max(1.0 - max(0, cos(x*pi/4/1.2)), 0.001)'
   []
 []
 
@@ -403,9 +398,9 @@ beta6 = 0.000184087
     rho = ${rho}
     u = vel_x
     v = vel_y
-    wall_treatement = false
+    wall_treatment = false
     walls = 'shield_wall reflector_wall'
-    non_equilibrium_treatement = false
+    non_equilibrium_treatment = false
     rf = 1.0
     execute_on = 'INITIAL'
   []
@@ -472,15 +467,15 @@ beta6 = 0.000184087
     # This time stepper makes the time step grow exponentially
     # It can only be used with proper initialization
     type = IterationAdaptiveDT
-    dt = 1  # chosen to obtain convergence with first coupled iteration
+    dt = 1 # chosen to obtain convergence with first coupled iteration
     growth_factor = 2
   []
   # [TimeStepper]
   #   type = FunctionDT
   #   function = dts
   # []
-  steady_state_detection  = true
-  steady_state_tolerance  = 1e-8
+  steady_state_detection = true
+  steady_state_tolerance = 1e-8
   steady_state_start_time = 10
 
   # Solver parameters

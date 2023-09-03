@@ -1,4 +1,5 @@
-von_karman_const = 0.41
+# Note
+# This input cannot be run standalone as the RC coefficients need to be transferred
 
 H = 1 #halfwidth of the channel
 L = 150
@@ -24,12 +25,12 @@ velocity_interp_method = 'rc'
 []
 
 # Crafted wall function
-f = '${fparse 0.316 * Re^(-0.25)}'
-ref_delta_P = '${fparse f * L / (2*H) * rho * bulk_u^2 / 2}'
-tau_wall = '${fparse ref_delta_P / (pi * (2*H) * L)}'
-u_tau = '${fparse sqrt(tau_wall / rho)}'
-y_dist_wall = '${fparse (2*H)/11/2}'
-mu_wall = '${fparse rho * pow(u_tau,2) * y_dist_wall / bulk_u}'
+# f = '${fparse 0.316 * Re^(-0.25)}'
+# ref_delta_P = '${fparse f * L / (2*H) * rho * bulk_u^2 / 2}'
+# tau_wall = '${fparse ref_delta_P / (pi * (2*H) * L)}'
+# u_tau = '${fparse sqrt(tau_wall / rho)}'
+# y_dist_wall = '${fparse (2*H)/11/2}'
+# mu_wall = '${fparse rho * pow(u_tau,2) * y_dist_wall / bulk_u}'
 
 # Crafted bulk viscosity
 turbulent_intensity = '${fparse 0.16 * pow(Re, -1.0/8.0)}'
@@ -37,14 +38,12 @@ C_mu = 0.09
 mixing_length = '${fparse (2*H) * 0.07}'
 k_bulk = '${fparse 3/2 * pow(bulk_u*turbulent_intensity, 2)}'
 eps_bulk = '${fparse pow(C_mu, 0.75) * pow(k_bulk, 1.5) / mixing_length}'
-mu_bulk = '${fparse rho * C_mu * pow(k_bulk, 2) / eps_bulk}'
+# mu_bulk = '${fparse rho * C_mu * pow(k_bulk, 2) / eps_bulk}'
 
 sigma_k = 1.0
 sigma_eps = 1.3
 C1_eps = 1.44
 C2_eps = 1.92
-
-diff = 10.0
 
 [GlobalParams]
   rhie_chow_user_object = 'rc'
@@ -106,7 +105,7 @@ diff = 10.0
     linearized_model = true
     rf = 1.0
     walls = 'top'
-    non_equilibrium_treatement = false
+    non_equilibrium_treatment = false
     relaxation_method = 'time'
     iters_to_activate = 0
   []
@@ -137,7 +136,7 @@ diff = 10.0
     C2_eps = ${C2_eps}
     rf = 1.0
     walls = 'top'
-    non_equilibrium_treatement = false
+    non_equilibrium_treatment = false
     relaxation_method = 'time'
     iters_to_activate = 0
   []
@@ -178,9 +177,9 @@ diff = 10.0
     rho = ${rho}
     u = vel_x
     v = vel_y
-    wall_treatement = false
+    wall_treatment = false
     walls = 'top'
-    non_equilibrium_treatement = false
+    non_equilibrium_treatment = false
     rf = 1.0
     mu_t_inital = '${fparse C_mu * k_bulk * k_bulk / eps_bulk}'
     execute_on = 'NONLINEAR'

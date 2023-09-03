@@ -148,7 +148,7 @@ C_mu = 0.09
     linearized_model = true
     rf = 0.5
     walls = 'left top right bottom'
-    non_equilibrium_treatement = false
+    non_equilibrium_treatment = false
   []
 
   [TKED_advection]
@@ -209,9 +209,9 @@ C_mu = 0.09
     rho = ${rho}
     u = vel_x
     v = vel_y
-    wall_treatement = false
+    wall_treatment = false
     walls = 'left top right bottom'
-    non_equilibrium_treatement = false
+    non_equilibrium_treatment = false
     rf = 0.5
     execute_on = 'TIMESTEP_END'
   []

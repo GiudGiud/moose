@@ -1,5 +1,3 @@
-von_karman_const = 0.41
-
 H = 1 #halfwidth of the channel
 L = 150
 
@@ -43,8 +41,6 @@ sigma_k = 1.0
 sigma_eps = 1.3
 C1_eps = 1.44
 C2_eps = 1.92
-
-diff = 10.0
 
 [GlobalParams]
   rhie_chow_user_object = 'rc'
@@ -165,7 +161,7 @@ diff = 10.0
     linearized_model = true
     rf = 1.0
     walls = 'top'
-    non_equilibrium_treatement = false
+    non_equilibrium_treatment = false
   []
 
   [TKED_advection]
@@ -194,7 +190,7 @@ diff = 10.0
     C2_eps = ${C2_eps}
     rf = 1.0
     walls = 'top'
-    # non_equilibrium_treatement = false
+    # non_equilibrium_treatment = false
   []
 []
 
@@ -227,9 +223,9 @@ diff = 10.0
     rho = ${rho}
     u = vel_x
     v = vel_y
-    wall_treatement = false
+    wall_treatment = false
     walls = 'top'
-    non_equilibrium_treatement = false
+    non_equilibrium_treatment = false
     rf = 1.0
     execute_on = 'TIMESTEP_END'
   []
@@ -242,7 +238,7 @@ diff = 10.0
 [Functions]
   # Not working
   [viscous_jump]
-    type = ADParsedFunction
+    type = ParsedFunction
     expression = 'if((abs(y) > (D)*(11/2 -1)/(11/2)), mu_wall, mu_bulk)'
     symbol_names = 'D mu_wall mu_bulk'
     symbol_values = '${fparse 2*H} ${mu_wall} ${mu_bulk}'
