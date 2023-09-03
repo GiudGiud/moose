@@ -237,7 +237,6 @@ kEpsilonViscosityFunctorMaterial::initialSetup()
 ADReal
 kEpsilonViscosityFunctorMaterial::findUStarLocalMethod(const ADReal & u, const Real & dist)
 {
-
   /// Setting up parameters
   const auto state = determineState();
   auto rho = _rho(makeElemArg(_current_elem), state);
@@ -292,6 +291,7 @@ kEpsilonViscosityFunctorMaterial::getWallData(Moose::ElemArg r,
                                               Point & loc_normal) const
 {
   const auto & elem = *r.elem;
+  mooseAssert(r.elem, "We should have an element");
   for (unsigned int i_side = 0; i_side < elem.n_sides(); ++i_side)
   {
     const std::vector<BoundaryID> side_bnds =
@@ -302,10 +302,22 @@ kEpsilonViscosityFunctorMaterial::getWallData(Moose::ElemArg r,
       BoundaryID wall_id = _subproblem.mesh().getBoundaryID(name);
       for (BoundaryID side_id : side_bnds)
       {
+        // One of the element sides is on the wall
         if (side_id == wall_id)
         {
-          const FaceInfo * const fi = _mesh.faceInfo(&elem, i_side);
-          Real dist = std::abs((fi->elemCentroid() - fi->faceCentroid()) * fi->normal());
+          const auto * neighbor = elem.neighbor_ptr(i_side);
+          unsigned int i_neighbor = 0;
+          if (neighbor)
+            i_neighbor = neighbor->which_neighbor_am_i(&elem);
+          const FaceInfo * fi = _mesh.faceInfo(&elem, i_side);
+          Real dist = 0;
+          if (fi)
+            dist = std::abs((fi->elemCentroid() - fi->faceCentroid()) * fi->normal());
+          else
+          {
+            fi = _mesh.faceInfo(neighbor, i_neighbor);
+            dist = std::abs((fi->neighborCentroid() - fi->faceCentroid()) * fi->normal());
+          }
 
           if (dist < min_wall_dist)
           {
