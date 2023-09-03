@@ -31,6 +31,13 @@ protected:
   // Note: this method may be to need reimplemented for each new turbulent model
   ADReal findUStarLocalMethod(const ADReal & u, const Real & dist);
 
+  /**
+   * Obtain wall information
+   * @param r the spatial argument
+   * @param wall_bounded whether the spatial argument is right by a wall
+   * @param min_wall_dist distance to the nearest wall
+   * @param loc_normal normal of the face
+   */
   void getWallData(Moose::ElemArg r,
                    bool & wall_bounded,
                    Real & min_wall_dist,
@@ -91,38 +98,37 @@ protected:
   /// Whether to use a wall treatment for non-equilibrium
   const bool _non_equilibrium_treatment;
 
-  /// Relaxation factor
+  /// Relaxation factor on the turbulent viscosity
   const Real _rf;
 
-  /// -- Parameters of the wall function method
-
+  /// Parameters of the wall function method
   /// Maximum number of iterations to find the friction velocity
   static constexpr int _MAX_ITERS_U_TAU{50};
-
   /// Relative tolerance to find the friction velocity
   static constexpr Real _REL_TOLERANCE{1e-6};
-
-  /// -- Constants of the method
-  static constexpr Real _von_karman{0.4187};
-  static constexpr Real _E{9.793};
 
   /// Viscosity limiter - maximum viscosity must be at the wall
   Real _max_viscosity_value;
 
-  /// -- Number of iterations needed to activate the computation of mu_t
+  /// Number of iterations needed to activate the computation of mu_t
   unsigned int _iters_to_activate;
 
-  /// -- Initial value for mu_t
-  Real _mu_t_inital;
+  /// Initial value for mu_t
+  Real _mu_t_initial;
 
-  /// -- Relaxation method for production and destruction
+  /// Relaxation method for production and destruction
   const MooseEnum _relaxation_method;
 
-  /// -- Element Localized Damping
+  /// Element Localized Damping: exponent that is increased on every use to increase damping
   std::map<const Elem *, Real> _nl_damping_map;
 
-  /// -- Damping values for nonlinear iterations
+  /// Exponent for damping based on nonlinear iterations
   Real _damper;
 
+  /// Previous step turbulent viscosity for damping. This must be set externally
   const Moose::Functor<ADReal> & _mu_t_old;
+
+  /// Constants of the method
+  static constexpr Real _von_karman{0.4187};
+  static constexpr Real _E{9.793};
 };
