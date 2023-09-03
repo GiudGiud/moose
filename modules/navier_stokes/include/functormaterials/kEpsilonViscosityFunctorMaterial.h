@@ -31,6 +31,27 @@ protected:
   // Note: this method may be to need reimplemented for each new turbulent model
   ADReal findUStarLocalMethod(const ADReal & u, const Real & dist);
 
+  void getWallData(Moose::ElemArg r,
+                   bool & wall_bounded,
+                   Real & min_wall_dist,
+                   Point & loc_normal) const;
+  void getWallData(Moose::ElemPointArg r,
+                   bool & wall_bounded,
+                   Real & min_wall_dist,
+                   Point & loc_normal) const;
+  void getWallData(Moose::ElemQpArg r,
+                   bool & wall_bounded,
+                   Real & min_wall_dist,
+                   Point & loc_normal) const;
+  void getWallData(Moose::FaceArg r,
+                   bool & wall_bounded,
+                   Real & min_wall_dist,
+                   Point & loc_normal) const;
+  void getWallData(Moose::ElemSideQpArg r,
+                   bool & wall_bounded,
+                   Real & min_wall_dist,
+                   Point & loc_normal) const;
+
   /// the dimension of the simulation
   const unsigned int _dim;
 

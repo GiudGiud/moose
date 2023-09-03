@@ -59,7 +59,10 @@ kEpsilonViscosityFunctorMaterial::validParams()
       relaxation_method,
       "The method used for relaxing the turbulent kinetic energy production. "
       "'nl' = previous nonlinear iteration and 'time' = previous timestep.");
-  params.addParam<Real>("damper", 0.0, "Damping factor for nonlinear iterations.");
+  params.addParam<Real>(
+      "damper",
+      0.0,
+      "Exponential damping factor for nonlinear iterations. Inactive by default with a value of 0");
   return params;
 }
 
@@ -98,41 +101,20 @@ kEpsilonViscosityFunctorMaterial::kEpsilonViscosityFunctorMaterial(const InputPa
                                                 ->get_current_nonlinear_iteration_number();
 
         bool wall_bounded = false;
-        Real min_wall_dist = 0.0;
+        Real min_wall_dist = std::numeric_limits<Real>::max();
         Point loc_normal(0, 0, 0);
 
-        // for (unsigned int i_side = 0; i_side < elem.n_sides(); ++i_side)
-        // {
-        //   const std::vector<BoundaryID> side_bnds =
-        //       _subproblem.mesh().getBoundaryIDs(_current_elem, i_side);
-
-        //   for (const BoundaryName & name : _wall_boundary_names)
-        //   {
-        //     BoundaryID wall_id = _subproblem.mesh().getBoundaryID(name);
-        //     for (BoundaryID side_id : side_bnds)
-        //     {
-        //       if (side_id == wall_id)
-        //       {
-        //         const FaceInfo * const fi = _mesh.faceInfo(&elem, i_side);
-        //         Real dist = std::abs((fi->elemCentroid() - fi->faceCentroid()) * fi->normal());
-
-        //         if (dist > min_wall_dist)
-        //         {
-        //           min_wall_dist = dist;
-        //           loc_normal = fi->normal();
-        //         }
-        //         wall_bounded = true;
-        //       }
-        //     }
-        //   }
-        // }
+        // We need to know:
+        // - if we are right by a wall (first cell)
+        // - how far we are from the wall
+        // - the normal to the wall
+        getWallData(r, wall_bounded, min_wall_dist, loc_normal);
 
         auto time_scale = _k(r, t) / _epsilon(r, t);
 
         if (_constrain_time_scale)
         {
           auto min_constraint_time_scale = 0.6 * std::sqrt(_mu(r, t) / _rho(r, t) / _epsilon(r, t));
-
           time_scale = std::max(min_constraint_time_scale.value(), time_scale.value());
         }
 
@@ -150,6 +132,7 @@ kEpsilonViscosityFunctorMaterial::kEpsilonViscosityFunctorMaterial(const InputPa
             velocity(2) = (*_w_var)(r, t);
 
           // Compute the velocity and the velocity component that is parallel to the wall
+          // NOTE This is only correct if we are right by a wall
           ADReal parallel_speed = (velocity - velocity * loc_normal * loc_normal).norm();
 
           // Getting y_plus
@@ -213,6 +196,9 @@ kEpsilonViscosityFunctorMaterial::kEpsilonViscosityFunctorMaterial(const InputPa
         else
           return_value = std::abs(mu_t);
 
+        if (return_value > _max_viscosity_value)
+          return_value = _max_viscosity_value;
+
         return return_value;
       });
 }
@@ -221,19 +207,22 @@ void
 kEpsilonViscosityFunctorMaterial::initialSetup()
 {
   // Setting up limiter for turbulent viscosity
-  auto current_argument = makeElemArg(_current_elem);
-  const auto state = determineState();
-  Real mu_t = _rho(current_argument, state).value() * _C_mu(current_argument, state).value() *
-              std::pow(_k(current_argument, state).value(), 2) /
-              (_epsilon(current_argument, state).value() + 1e-10);
-
-  if (mu_t > _max_viscosity_value)
-    _max_viscosity_value = std::max(mu_t, 1e3);
-
   for (const auto & elem : _c_fe_problem.mesh().getMesh().element_ptr_range())
   {
-    _nl_damping_map[elem] = 0.0;
+    const auto current_argument = makeElemArg(elem);
+    const auto state = determineState();
+    const auto mu_t = _rho(current_argument, state).value() *
+                      _C_mu(current_argument, state).value() *
+                      std::pow(_k(current_argument, state).value(), 2) /
+                      (std::min(1e-10, _epsilon(current_argument, state).value()));
+
+    if (mu_t > _max_viscosity_value)
+      _max_viscosity_value = std::max(mu_t, 1e3);
   }
+
+  // Initialize damper
+  for (const auto & elem : _c_fe_problem.mesh().getMesh().element_ptr_range())
+    _nl_damping_map[elem] = 0.0;
 }
 
 ADReal
@@ -286,3 +275,91 @@ kEpsilonViscosityFunctorMaterial::findUStarLocalMethod(const ADReal & u, const R
     return u_tau;
   }
 }
+
+void
+kEpsilonViscosityFunctorMaterial::getWallData(Moose::ElemArg r,
+                                              bool & wall_bounded,
+                                              Real & min_wall_dist,
+                                              Point & loc_normal) const
+{
+  const auto & elem = *r.elem;
+  for (unsigned int i_side = 0; i_side < elem.n_sides(); ++i_side)
+  {
+    const std::vector<BoundaryID> side_bnds =
+        _subproblem.mesh().getBoundaryIDs(_current_elem, i_side);
+
+    for (const BoundaryName & name : _wall_boundary_names)
+    {
+      BoundaryID wall_id = _subproblem.mesh().getBoundaryID(name);
+      for (BoundaryID side_id : side_bnds)
+      {
+        if (side_id == wall_id)
+        {
+          const FaceInfo * const fi = _mesh.faceInfo(&elem, i_side);
+          Real dist = std::abs((fi->elemCentroid() - fi->faceCentroid()) * fi->normal());
+
+          if (dist < min_wall_dist)
+          {
+            min_wall_dist = dist;
+            loc_normal = fi->normal();
+          }
+          wall_bounded = true;
+        }
+      }
+    }
+  }
+}
+
+void
+kEpsilonViscosityFunctorMaterial::getWallData(Moose::ElemPointArg, bool &, Real &, Point &) const
+{
+  mooseError("ElemPointArg overload not implemented");
+}
+void
+kEpsilonViscosityFunctorMaterial::getWallData(Moose::ElemQpArg, bool &, Real &, Point &) const
+{
+  mooseError("ElemQpArg overload not implemented");
+}
+void
+kEpsilonViscosityFunctorMaterial::getWallData(Moose::FaceArg r,
+                                              bool & wall_bounded,
+                                              Real & min_wall_dist,
+                                              Point & loc_normal) const
+{
+  const FaceInfo * const fi = r.fi;
+  mooseAssert(fi, "We should have a fi");
+  const auto side_bnds = fi->boundaryIDs();
+  for (const BoundaryName & name : _wall_boundary_names)
+  {
+    BoundaryID wall_id = _subproblem.mesh().getBoundaryID(name);
+    for (BoundaryID side_id : side_bnds)
+    {
+      if (side_id == wall_id)
+      {
+        Real dist = std::abs((fi->elemCentroid() - fi->faceCentroid()) * fi->normal());
+
+        if (dist < min_wall_dist)
+        {
+          min_wall_dist = dist;
+          loc_normal = fi->normal();
+        }
+        wall_bounded = true;
+      }
+    }
+  }
+}
+
+void
+kEpsilonViscosityFunctorMaterial::getWallData(Moose::ElemSideQpArg, bool &, Real &, Point &) const
+{
+  mooseError("ElemSideQp overload not implemented");
+}
+
+// Talk with Mauricio about:
+// - ADReal parallel_speed = (velocity - velocity * loc_normal * loc_normal).norm(); away from the
+// wall
+// - wall distance is not set outside of the first cell by the wall. We have to use a similar trick
+// as Sterling:
+//   use a distance auxvariable or some
+// - the missing derivatives in mu_t and advection
+// - min_wall_dist is the maximum wall distance in the auxkernel
