@@ -47,12 +47,12 @@ kEpsilonViscosityFunctorMaterial::validParams()
   params.addParam<bool>("non_equilibrium_treatment",
                         false,
                         "Use non-equilibrium wall treatment (faster than standard wall treatment)");
-  params.addParam<Real>("rf", 1.0, "Relaxation factor.");
+  params.addParam<Real>("rf", 1.0, "Linear relaxation factor.");
   params.addParam<unsigned int>("iters_to_activate",
                                 1,
                                 "Number of nonlinear iterations needed to activate the source in "
                                 "the turbulent kinetic energy.");
-  params.addParam<Real>("mu_t_inital", 10.0, "Initial value for the turbulent viscosity.");
+  params.addParam<Real>("mu_t_initial", 10.0, "Initial value for the turbulent viscosity.");
   MooseEnum relaxation_method("time nl", "nl");
   params.addParam<MooseEnum>(
       "relaxation_method",
@@ -63,6 +63,15 @@ kEpsilonViscosityFunctorMaterial::validParams()
       "damper",
       0.0,
       "Exponential damping factor for nonlinear iterations. Inactive by default with a value of 0");
+
+  params.addParamNamesToGroup("u v w k epsilon", "Variables dependence");
+  params.addParamNamesToGroup("mu " + NS::density, "Fluid properties dependence");
+  params.addParamNamesToGroup("constrain_time_scale max_mixing_length", "Bounds");
+  params.addParamNamesToGroup("walls linearized_yplus wall_treatment non_equilibrium_treatment",
+                              "Wall treatment");
+  params.addParamNamesToGroup("rf iters_to_activate mu_t_initial relaxation_method damper",
+                              "Damping and relaxation");
+
   return params;
 }
 
@@ -85,7 +94,7 @@ kEpsilonViscosityFunctorMaterial::kEpsilonViscosityFunctorMaterial(const InputPa
     _non_equilibrium_treatment(getParam<bool>("non_equilibrium_treatment")),
     _rf(getParam<Real>("rf")),
     _iters_to_activate(getParam<unsigned int>("iters_to_activate")),
-    _mu_t_inital(getParam<Real>("mu_t_inital")),
+    _mu_t_initial(getParam<Real>("mu_t_initial")),
     _relaxation_method(getParam<MooseEnum>("relaxation_method")),
     _damper(getParam<Real>("damper")),
     _mu_t_old(getFunctor<ADReal>("mu_t_old"))
@@ -189,10 +198,10 @@ kEpsilonViscosityFunctorMaterial::kEpsilonViscosityFunctorMaterial(const InputPa
         if (current_nl_iteration == _iters_to_activate)
           _nl_damping_map[_current_elem] += 1.0;
         if ((_relaxation_method == "nl") && (_damper > 1e-10))
-          return_value += _mu_t_inital * std::exp(-_nl_damping_map[_current_elem] / _damper);
+          return_value += _mu_t_initial * std::exp(-_nl_damping_map[_current_elem] / _damper);
 
         if ((current_nl_iteration < _iters_to_activate))
-          return_value = _mu_t_inital;
+          return_value = _mu_t_initial;
         else
           return_value = std::abs(mu_t);
 
