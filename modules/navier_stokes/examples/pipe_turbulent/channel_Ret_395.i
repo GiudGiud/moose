@@ -16,8 +16,8 @@ velocity_interp_method = 'rc'
     dim = 2
     dx = '${L}'
     dy = '0.667 0.333'
-    ix = '200'
-    iy = '10  1'
+    ix = '60'
+    iy = '4  1'
   []
 []
 
@@ -85,7 +85,6 @@ C2_eps = 1.92
 []
 
 [FVKernels]
-
   [mass]
     type = INSFVMassAdvection
     variable = pressure
@@ -196,11 +195,9 @@ C2_eps = 1.92
 
 [AuxVariables]
   [U]
-    order = CONSTANT
-    family = MONOMIAL
-    fv = true
+    type = MooseVariableFVReal
   []
-  [mu_t]
+  [mu_t_old]
     type = MooseVariableFVReal
     initial_condition = '${fparse mu_bulk}'
   []
@@ -215,7 +212,7 @@ C2_eps = 1.92
   []
   [compute_mu_t]
     type = kEpsilonViscosityAux
-    variable = mu_t
+    variable = mu_t_old
     C_mu = ${C_mu}
     k = TKE
     epsilon = TKED
@@ -235,21 +232,21 @@ C2_eps = 1.92
   previous_nl_solution_required = true
 []
 
-[Functions]
-  # Not working
-  [viscous_jump]
-    type = ParsedFunction
-    expression = 'if((abs(y) > (D)*(11/2 -1)/(11/2)), mu_wall, mu_bulk)'
-    symbol_names = 'D mu_wall mu_bulk'
-    symbol_values = '${fparse 2*H} ${mu_wall} ${mu_bulk}'
-  []
-[]
-
 [Materials]
-  [viscosity]
-    type = ADGenericFunctorMaterial
-    prop_names = 'mu_t_imposed'
-    prop_values = 'viscous_jump'
+  [compute_mu_t]
+    type = kEpsilonViscosityFunctorMaterial
+    C_mu = ${C_mu}
+    k = TKE
+    epsilon = TKED
+    mu = ${mu}
+    rho = ${rho}
+    u = vel_x
+    v = vel_y
+    wall_treatment = false
+    walls = 'top'
+    non_equilibrium_treatment = false
+    rf = 1.0
+    execute_on = 'TIMESTEP_END'
   []
 []
 
@@ -267,16 +264,16 @@ C2_eps = 1.92
     function = 0
   []
   [walls-u]
-    type = FVDirichletBC
+    type = INSFVNoSlipWallBC
     boundary = 'top'
     variable = vel_x
-    value = 0
+    function = 0
   []
   [walls-v]
-    type = FVDirichletBC
+    type = INSFVNoSlipWallBC
     boundary = 'top'
     variable = vel_y
-    value = 0
+    function = 0
   []
   [outlet_p]
     type = INSFVOutletPressureBC
@@ -299,17 +296,17 @@ C2_eps = 1.92
     k = TKE
     characteristic_length = '${fparse 2*H}'
   []
-  [walls_mu_t]
-    type = INSFVTurbulentViscosityWallFunction
-    boundary = 'top'
-    variable = mu_t
-    u = vel_x
-    v = vel_y
-    rho = ${rho}
-    mu = ${mu}
-    mu_t = mu_t
-    k = TKE
-  []
+  # [walls_mu_t]
+  #   type = INSFVTurbulentViscosityWallFunction
+  #   boundary = 'top'
+  #   variable = mu_t
+  #   u = vel_x
+  #   v = vel_y
+  #   rho = ${rho}
+  #   mu = ${mu}
+  #   mu_t = mu_t
+  #   k = TKE
+  # []
   [sym-u]
     type = INSFVSymmetryVelocityBC
     boundary = 'bottom'
@@ -351,6 +348,7 @@ C2_eps = 1.92
 
 [Executioner]
   type = Transient
+
   end_time = 100
   dt = 1
   # [TimeStepper]
@@ -363,9 +361,13 @@ C2_eps = 1.92
   # []
   steady_state_detection = true
   steady_state_tolerance = 1e-6
+
   solve_type = 'NEWTON'
-  petsc_options_iname = '-pc_type -pc_factor_shift_type -snes_linesearch_damping'
-  petsc_options_value = 'lu        NONZERO               0.7'
+  # petsc_options_iname = '-pc_type -pc_factor_shift_type -snes_linesearch_damping'
+  # petsc_options_value = 'lu        NONZERO               0.7'
+  petsc_options_iname = '-pc_type'
+  petsc_options_value = 'svd     '
+  petsc_options = '-pc_svd_monitor'
   nl_abs_tol = 1e-8
   nl_rel_tol = 1e-2
   nl_max_its = 2000

@@ -23,8 +23,8 @@ bulk_u = 1
 L = '${fparse 10 * D}'
 
 # Discretization
-nx = 40
-ny = 20
+nx = 20
+ny = 5
 
 # Crafted wall function
 f = '${fparse 0.316 * Re^(-0.25)}'
@@ -138,7 +138,7 @@ C2_eps = 1.92
   [viscous_field]
     type = MooseVariableFVReal
   []
-  [mu_t]
+  [mu_t_old]
     type = MooseVariableFVReal
   []
 []
@@ -249,9 +249,37 @@ C2_eps = 1.92
     variable = viscous_field
     functor = 'mu'
   []
+  [mu_t_old]
+    type = FunctorElementalAux
+    variable = mu_t_old
+    functor = 'mu_t'
+    execute_on = TIMESTEP_BEGIN
+  []
+  # [compute_mu_t]
+  #   type = kEpsilonViscosityAux
+  #   variable = mu_t
+  #   C_mu = ${C_mu}
+  #   k = TKE
+  #   epsilon = TKED
+  #   mu = 'mu'
+  #   rho = ${rho}
+  #   u = u
+  #   v = v
+  #   wall_treatment = false
+  #   walls = 'top'
+  #   non_equilibrium_treatment = false
+  #   rf = 1.0
+  #   mu_t_inital = '${fparse C_mu * k_bulk * k_bulk / eps_bulk}'
+  #   execute_on = 'NONLINEAR'
+  #   relaxation_method = 'nl'
+  #   iters_to_activate = 0
+  #   damper = 1.0
+  # []
+[]
+
+[FunctorMaterials]
   [compute_mu_t]
-    type = kEpsilonViscosityAux
-    variable = mu_t
+    type = kEpsilonViscosityFunctorMaterial
     C_mu = ${C_mu}
     k = TKE
     epsilon = TKED
@@ -261,12 +289,11 @@ C2_eps = 1.92
     v = v
     wall_treatment = false
     walls = 'top'
-    non_equilibrium_treatment = false
+    non_equilibrium_treatment = true
     rf = 1.0
     mu_t_inital = '${fparse C_mu * k_bulk * k_bulk / eps_bulk}'
-    execute_on = 'NONLINEAR'
     relaxation_method = 'nl'
-    iters_to_activate = 0
+    iters_to_activate = 2
     damper = 1.0
   []
 []
@@ -379,14 +406,18 @@ C2_eps = 1.92
 [Executioner]
   type = Steady
   solve_type = 'NEWTON'
-  petsc_options_iname = '-pc_type -pc_factor_shift_type -snes_linesearch_damping'
-  petsc_options_value = 'lu NONZERO 0.9'
+  # petsc_options_iname = '-pc_type -pc_factor_shift_type -snes_linesearch_damping -pc_factor_mat_solver_package'
+  # petsc_options_value = 'lu NONZERO 0.9 strumpack'
   # petsc_options = '-snes_monitor -ksp_monitor -snes_converged_reason -ksp_converged_reason -snes_linesearch_damping '
   # petsc_options_iname = '-pc_type -pc_svd_monitor 1.0'
   # petsc_options_value = 'svd true'
+  petsc_options_iname = '-pc_type'
+  petsc_options_value = 'svd     '
+  petsc_options = '-pc_svd_monitor'
   line_search = none # working better with default or l2 line search
   nl_rel_tol = 1e-8
   nl_abs_tol = 1e-8
+  nl_forced_its = 10
 []
 
 [Debug]
