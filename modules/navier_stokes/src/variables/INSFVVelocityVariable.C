@@ -400,7 +400,8 @@ INSFVVelocityVariable::adGradSln(const Elem * const elem,
         grad(lm_dim_index) = x(lm_dim_index);
     }
 
-    if (_cache_cell_gradients && !correct_skewness)
+    if (_cache_cell_gradients && !correct_skewness && time.state == 0 &&
+        time.iteration_type == Moose::SolutionIterationType::Time)
     {
       auto pr = _elem_to_grad.emplace(elem, std::move(grad));
       mooseAssert(pr.second, "Insertion should have just happened.");

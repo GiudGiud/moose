@@ -504,9 +504,9 @@ MooseVariableFV<OutputType>::getDirichletBoundaryFaceValue(
 {
   mooseAssert(isDirichletBoundaryFace(fi, elem, state),
               "This function should only be called on Dirichlet boundary faces.");
-  mooseAssert(state.state == 0,
+  mooseAssert(state.iteration_type == SolutionIterationType::Nonlinear || state.state == 0,
               "getDirichletBoundaryFaceValue currently only supports evaluating at the current "
-              "time/iteration state");
+              "time state");
 
   const auto & diri_pr = getDirichletBC(fi);
 
@@ -742,8 +742,8 @@ MooseVariableFV<OutputType>::evaluate(const FaceArg & face, const StateArg & sta
   mooseAssert(fi, "The face information must be non-null");
   if (isDirichletBoundaryFace(*fi, face.face_side, state))
   {
-    mooseAssert(state.state == 0,
-                "We have not yet added support for evaluting Dirichlet boundary conditions at "
+    mooseAssert(state.iteration_type == SolutionIterationType::Nonlinear || state.state == 0,
+                "We have not yet added support for evaluating Dirichlet boundary conditions at "
                 "states other than the current solution state (e.g. current time)");
     return getDirichletBoundaryFaceValue(*fi, face.face_side, state);
   }
@@ -777,7 +777,7 @@ ADReal
 MooseVariableFV<Real>::evaluateDot(const ElemArg & elem_arg, const StateArg & state) const
 {
   const Elem * const elem = elem_arg.elem;
-  mooseAssert(state.state == 0,
+  mooseAssert(state.iteration_type == SolutionIterationType::Nonlinear || state.state == 0,
               "We dot not currently support any time derivative evaluations other than for the "
               "current time-step");
   mooseAssert(_time_integrator && _time_integrator->dt(),
