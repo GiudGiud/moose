@@ -15,8 +15,8 @@
 
 #include "INSFVVelocityVariable.h"
 /**
- * Computes the turbuent viscosity for the k-Epsilon model.
- * Implements two near-wall treatements: equilibrium and non-equilibrium wall functions.
+ * Computes the turbulent viscosity for the k-Epsilon model.
+ * Implements two near-wall treatments: equilibrium and non-equilibrium wall functions.
  */
 class kEpsilonViscosityAux : public AuxKernel
 {
@@ -30,7 +30,7 @@ protected:
   virtual void initialSetup() override;
   // virtual void meshChanged() override;
 
-  // Local method to find friction velocty
+  // Local method to find friction velocity
   // Note: this method may be to need reimplemented for each new turbulent model
   ADReal findUStarLocalMethod(const ADReal & u, const Real & dist);
 
@@ -58,23 +58,23 @@ protected:
   /// Wall boundaries
   std::vector<BoundaryName> _wall_boundary_names;
 
-  /// Linearzied computation of y_plus ?
+  /// Linearized computation of y_plus ?
   const bool _linearized_yplus;
 
   /// Number of auxiliary kernel iterations
   unsigned int _n_kernel_iters;
 
-  /// Relxation iteration for activating the k-epsilon model
+  /// Relaxation iteration for activating the k-epsilon model
   const Real _n_iters_activate;
 
   /// Maximum mixing length allowed for the domain
   const Real _max_mixing_length;
 
-  /// Linearzied computation of y_plus ?
-  const bool _wall_treatement;
+  /// Linearized computation of y_plus ?
+  const bool _wall_treatment;
 
-  /// Non-equilibrium wall treatement ?
-  const bool _non_equilibrium_treatement;
+  /// Non-equilibrium wall treatment ?
+  const bool _non_equilibrium_treatment;
 
   /// Relaxation Factor
   const Real _rf;

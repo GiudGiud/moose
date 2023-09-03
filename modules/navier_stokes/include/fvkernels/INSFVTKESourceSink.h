@@ -12,7 +12,7 @@
 #include "FVElementalKernel.h"
 
 /**
- * Simple class to demonstrate off diagonal Jacobian contributions.
+ * Turbulent kinetic energy source and sink term
  */
 class INSFVTKESourceSink : public FVElementalKernel
 {
@@ -36,7 +36,6 @@ protected:
   const INSFVVelocityVariable * const _w_var;
 
   /// epsilon - dissipation rate of TKE
-  // const INSFVVariable * const _epsilon;
   const Moose::Functor<ADReal> & _epsilon;
 
   /// Density
@@ -54,47 +53,47 @@ protected:
   /// Maximum mixing length allowed for the domain
   const Real _max_mixing_length;
 
-  /// Linearized model?
+  /// Whether to use a linearized model
   const bool _linearized_model;
 
   /// Linearization coupled functor
   const Moose::Functor<ADReal> & _linear_variable;
 
-  /// Apply realizable constraints?
+  /// Whether to apply a realizable constraint
   const bool _realizable_constraint;
 
   /// Local relaxation factor
   const Real _rf;
 
-  /// No equilibrium treatement
-  const bool _non_equilibrium_treatement;
+  /// Whether to not apply an equilibrium treatment
+  const bool _non_equilibrium_treatment;
 
   /// C_mu constant
   Real _C_mu;
 
-  /// Maps for wall treatement
+  /// Maps for wall treatment
   std::map<const Elem *, bool> _wall_bounded;
   std::map<const Elem *, std::vector<Real>> _dist;
   std::map<const Elem *, std::vector<Point>> _normal;
 
   /// Storing current time
   Real _loc_dt;
-  std::map<const Elem *, Real> _pevious_production;
-  std::map<const Elem *, Real> _pevious_destruction;
+  std::map<const Elem *, Real> _previous_production;
+  std::map<const Elem *, Real> _previous_destruction;
 
-  /// -- Constants of the method
+  /// Constants of the method
   static constexpr Real _von_karman{0.4187};
 
-  /// -- Time storing
+  /// Storing a time point for XXXXXX
   Real _stored_time;
 
-  /// -- Relaxation method for production and destruction
+  /// Relaxation method for production and destruction
   const MooseEnum _relaxation_method;
 
-  /// -- Number of iterations needed to activate the source in the k epsilon model
+  /// Number of iterations needed to activate the source in the k epsilon model
   unsigned int _iters_to_activate;
 
-  /// -- Top bounds for turbulent production and destruction
+  /// Top bounds for turbulent production and destruction
   Real _top_production_bound;
   Real _top_destruction_bound;
 };

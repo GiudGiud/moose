@@ -72,8 +72,8 @@ protected:
   /// Local Relaxation Factor
   const Real _rf;
 
-  /// No equilibrium treatement
-  const bool _non_equilibrium_treatement;
+  /// No equilibrium treatment
+  const bool _non_equilibrium_treatment;
 
   /// C_mu constant
   Real _C_mu;
@@ -82,10 +82,10 @@ protected:
   std::map<const Elem *, Real> _symmetric_strain_tensor_norm_old;
   std::map<const Elem *, Real> _old_destruction;
 
-  /// Map for the previous nonlienar iterate
-  std::map<const Elem *, Real> _pevious_nl_sol;
+  /// Map for the previous nonlinear iterate
+  std::map<const Elem *, Real> _previous_nl_sol;
 
-  /// Maps for wall treatement
+  /// Maps for wall treatment
   std::map<const Elem *, bool> _wall_bounded;
   std::map<const Elem *, std::vector<Real>> _dist;
   std::map<const Elem *, std::vector<Point>> _normal;
@@ -94,8 +94,8 @@ protected:
 
   /// Storing current time
   Real _loc_dt;
-  std::map<const Elem *, Real> _pevious_production;
-  std::map<const Elem *, Real> _pevious_destruction;
+  std::map<const Elem *, Real> _previous_production;
+  std::map<const Elem *, Real> _previous_destruction;
 
   /// -- Constants of the method
   static constexpr Real _von_karman{0.4187};
