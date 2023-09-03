@@ -41,14 +41,13 @@ kEpsilonViscosityAux::validParams()
 
   params.addParam<Real>("max_mixing_length",
                         1e10,
-                        "Maximum mixing legth allowed for the domain - adjust if seeking for "
+                        "Maximum mixing length allowed for the domain - adjust if seeking for "
                         "realizable k-epsilon answer.");
   params.addParam<bool>(
-      "wall_treatement", true, "Activate wall treatement by adding wall functions.");
-  params.addParam<bool>(
-      "non_equilibrium_treatement",
-      false,
-      "Use non-equilibrium wall treatement (faster than standard wall treatement)");
+      "wall_treatment", true, "Activate wall treatment by adding wall functions.");
+  params.addParam<bool>("non_equilibrium_treatment",
+                        false,
+                        "Use non-equilibrium wall treatment (faster than standard wall treatment)");
   params.addParam<Real>("rf", 1.0, "Relaxation factor.");
   params.addParam<unsigned int>(
       "iters_to_activate",
@@ -61,7 +60,7 @@ kEpsilonViscosityAux::validParams()
       relaxation_method,
       "The method used for relaxing the turbulent kinetic energy production. "
       "'nl' = previous nonlinear iteration and 'time' = previous timestep.");
-  params.addParam<Real>("damper", 0.0, "Damping factor for nonlienar iterations.");
+  params.addParam<Real>("damper", 0.0, "Damping factor for nonlinear iterations.");
   return params;
 }
 
@@ -85,8 +84,8 @@ kEpsilonViscosityAux::kEpsilonViscosityAux(const InputParameters & params)
     _n_kernel_iters(0),
     _n_iters_activate(getParam<unsigned int>("n_iters_activate")),
     _max_mixing_length(getParam<Real>("max_mixing_length")),
-    _wall_treatement(getParam<bool>("wall_treatement")),
-    _non_equilibrium_treatement(getParam<bool>("non_equilibrium_treatement")),
+    _wall_treatment(getParam<bool>("wall_treatment")),
+    _non_equilibrium_treatment(getParam<bool>("non_equilibrium_treatment")),
     _rf(getParam<Real>("rf")),
     _iters_to_activate(getParam<unsigned int>("iters_to_activate")),
     _mu_t_inital(getParam<Real>("mu_t_inital")),
@@ -230,7 +229,7 @@ kEpsilonViscosityAux::computeValue()
               _k(current_argument, state).value() * time_scale.value();
 
   Real mu_t_wall = mu_t;
-  if (wall_bounded && _wall_treatement)
+  if (wall_bounded && _wall_treatment)
   {
 
     // Getting y_plus
@@ -244,7 +243,7 @@ kEpsilonViscosityAux::computeValue()
     ADReal parallel_speed = (velocity - velocity * loc_normal * loc_normal).norm();
 
     ADReal y_plus, u_tau;
-    if (_non_equilibrium_treatement)
+    if (_non_equilibrium_treatment)
     {
       y_plus = _rho(current_argument, state) * std::pow(_C_mu(current_argument, state), 0.25) *
                std::pow(_k(current_argument, state), 0.5) * min_wall_dist /

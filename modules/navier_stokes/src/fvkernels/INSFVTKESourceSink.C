@@ -19,7 +19,7 @@ InputParameters
 INSFVTKESourceSink::validParams()
 {
   InputParameters params = FVElementalKernel::validParams();
-  params.addClassDescription("Elental kernel to compute the production and destruction "
+  params.addClassDescription("Elemental kernel to compute the production and destruction "
                              " terms of turbulent kinetic energy (TKE).");
   params.addRequiredCoupledVar("u", "The velocity in the x direction.");
   params.addCoupledVar("v", "The velocity in the y direction.");
@@ -33,7 +33,7 @@ INSFVTKESourceSink::validParams()
 
   params.addParam<Real>("max_mixing_length",
                         10.0,
-                        "Maximum mixing legth allowed for the domain - adjust for realizable "
+                        "Maximum mixing length allowed for the domain - adjust for realizable "
                         "k-epsilon to work properly.");
   params.addParam<bool>(
       "linearized_model", false, "Boolean to determine if the problem is linearized.");
@@ -42,13 +42,12 @@ INSFVTKESourceSink::validParams()
   params.addParam<bool>(
       "realizable_constraint",
       true,
-      "Boolean to determine if the kEpsilon mixing length realizability constrints are applied.");
+      "Boolean to determine if the kEpsilon mixing length realizability constraints are applied.");
   params.set<unsigned short>("ghost_layers") = 2;
   params.addParam<Real>("rf", 1.0, "Relaxation factor.");
-  params.addParam<bool>(
-      "non_equilibrium_treatement",
-      true,
-      "Use non-equilibrium wall treatement (faster than standard wall treatement)");
+  params.addParam<bool>("non_equilibrium_treatment",
+                        true,
+                        "Use non-equilibrium wall treatment (faster than standard wall treatment)");
   params.addParam<Real>("C_mu", 0.09, "Coupled turbulent kinetic energy closure.");
   MooseEnum relaxation_method("time nl", "nl");
   params.addParam<MooseEnum>(
@@ -88,7 +87,7 @@ INSFVTKESourceSink::INSFVTKESourceSink(const InputParameters & params)
     _linear_variable(getFunctor<ADReal>("linear_variable")),
     _realizable_constraint(getParam<bool>("realizable_constraint")),
     _rf(getParam<Real>("rf")),
-    _non_equilibrium_treatement(getParam<bool>("non_equilibrium_treatement")),
+    _non_equilibrium_treatment(getParam<bool>("non_equilibrium_treatment")),
     _C_mu(getParam<Real>("C_mu")),
     _relaxation_method(getParam<MooseEnum>("relaxation_method")),
     _iters_to_activate(getParam<unsigned int>("iters_to_activate")),
@@ -113,8 +112,8 @@ INSFVTKESourceSink::INSFVTKESourceSink(const InputParameters & params)
 
   for (const auto & elem : _fe_problem.mesh().getMesh().element_ptr_range())
   {
-    _pevious_production[elem] = 0.0;
-    _pevious_destruction[elem] = 0.0;
+    _previous_production[elem] = 0.0;
+    _previous_destruction[elem] = 0.0;
 
     int neighs = 0;
 
@@ -165,7 +164,7 @@ INSFVTKESourceSink::computeQpResidual()
   {
     std::vector<ADReal> u_tau_vec, u_tau_vec_old;
     Real tot_weight = 0.0;
-    // if (_non_equilibrium_treatement)
+    // if (_non_equilibrium_treatment)
     // {
     //   u_tau_vec.push_back(std::pow(_C_mu, 0.25) * std::pow(_var(makeElemArg(_current_elem,
     //   state)), 0.5)); u_tau_vec_old.push_back(std::pow(_C_mu, 0.25) *
@@ -220,8 +219,8 @@ INSFVTKESourceSink::computeQpResidual()
       eq_value += std::pow(u_tau_vec[i].value(), 2) / std::sqrt(_C_mu) / tot_weight;
     }
 
-    eq_value = _rf * eq_value + (1.0 - _rf) * _pevious_production[_current_elem];
-    _pevious_production[_current_elem] = eq_value;
+    eq_value = _rf * eq_value + (1.0 - _rf) * _previous_production[_current_elem];
+    _previous_production[_current_elem] = eq_value;
 
     // production = _rf * production + (1.0 - _rf) * production_old_time;
     // destruction = _rf * destruction + (1.0 - _rf) * destruction_old_time;
@@ -278,23 +277,23 @@ INSFVTKESourceSink::computeQpResidual()
         destruction = _rho(makeElemArg(_current_elem), loc_state) *
                       _epsilon(makeElemArg(_current_elem), loc_state);
 
-      production = _rf * production + (1.0 - _rf) * _pevious_production[_current_elem];
-      destruction = _rf * destruction + (1.0 - _rf) * _pevious_destruction[_current_elem];
+      production = _rf * production + (1.0 - _rf) * _previous_production[_current_elem];
+      destruction = _rf * destruction + (1.0 - _rf) * _previous_destruction[_current_elem];
 
-      _pevious_production[_current_elem] = production.value();
-      _pevious_destruction[_current_elem] = destruction.value();
+      _previous_production[_current_elem] = production.value();
+      _previous_destruction[_current_elem] = destruction.value();
 
-      if (std::abs(_pevious_production[_current_elem]) >
-          _top_production_bound * std::abs(_pevious_destruction[_current_elem]))
-        _pevious_production[_current_elem] =
-            _top_production_bound * std::abs(_pevious_destruction[_current_elem]) *
-            _pevious_production[_current_elem] / std::abs(_pevious_production[_current_elem]);
+      if (std::abs(_previous_production[_current_elem]) >
+          _top_production_bound * std::abs(_previous_destruction[_current_elem]))
+        _previous_production[_current_elem] =
+            _top_production_bound * std::abs(_previous_destruction[_current_elem]) *
+            _previous_production[_current_elem] / std::abs(_previous_production[_current_elem]);
 
-      if (std::abs(_pevious_destruction[_current_elem]) >
-          _top_destruction_bound * std::abs(_pevious_production[_current_elem]))
-        _pevious_destruction[_current_elem] =
-            _top_destruction_bound * std::abs(_pevious_production[_current_elem]) *
-            _pevious_destruction[_current_elem] / std::abs(_pevious_destruction[_current_elem]);
+      if (std::abs(_previous_destruction[_current_elem]) >
+          _top_destruction_bound * std::abs(_previous_production[_current_elem]))
+        _previous_destruction[_current_elem] =
+            _top_destruction_bound * std::abs(_previous_production[_current_elem]) *
+            _previous_destruction[_current_elem] / std::abs(_previous_destruction[_current_elem]);
 
       _loc_dt = _dt;
       _stored_time = _fe_problem.time();
@@ -341,7 +340,7 @@ INSFVTKESourceSink::computeQpResidual()
     //   destruction = (destruction < production) ? destruction : production;
     // }
 
-    residual = _pevious_destruction[_current_elem] - _pevious_production[_current_elem];
+    residual = _previous_destruction[_current_elem] - _previous_production[_current_elem];
     if (_fe_problem.isTransient())
       residual +=
           _rho(makeElemArg(_current_elem), state) * _var.dot(makeElemArg(_current_elem), state);
@@ -363,12 +362,8 @@ INSFVTKESourceSink::computeQpResidual()
   // _production_NL_old[_current_elem] = production.value();
   // _destruction_NL_old[_current_elem] = destruction.value();
 
-  ADReal return_value;
-
   if ((current_nl_iteration < _iters_to_activate)) // && (!_fe_problem.isTransient()))
-    return_value = 0.0;
+    return 0.0;
   else
-    return_value = residual;
-
-  return return_value;
+    return residual;
 }
