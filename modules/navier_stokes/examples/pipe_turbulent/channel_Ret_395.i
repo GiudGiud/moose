@@ -22,12 +22,12 @@ velocity_interp_method = 'rc'
 []
 
 # Crafted wall function
-f = '${fparse 0.316 * Re^(-0.25)}'
-ref_delta_P = '${fparse f * L / (2*H) * rho * bulk_u^2 / 2}'
-tau_wall = '${fparse ref_delta_P / (pi * (2*H) * L)}'
-u_tau = '${fparse sqrt(tau_wall / rho)}'
-y_dist_wall = '${fparse (2*H)/11/2}'
-mu_wall = '${fparse rho * pow(u_tau,2) * y_dist_wall / bulk_u}'
+# f = '${fparse 0.316 * Re^(-0.25)}'
+# ref_delta_P = '${fparse f * L / (2*H) * rho * bulk_u^2 / 2}'
+# tau_wall = '${fparse ref_delta_P / (pi * (2*H) * L)}'
+# u_tau = '${fparse sqrt(tau_wall / rho)}'
+# y_dist_wall = '${fparse (2*H)/11/2}'
+# mu_wall = '${fparse rho * pow(u_tau,2) * y_dist_wall / bulk_u}'
 
 # Crafted bulk viscosity
 turbulent_intensity = 0.01 #'${fparse 0.16 * pow(Re, -1.0/8.0)}'
@@ -246,7 +246,6 @@ C2_eps = 1.92
     walls = 'top'
     non_equilibrium_treatment = false
     rf = 1.0
-    execute_on = 'TIMESTEP_END'
   []
 []
 

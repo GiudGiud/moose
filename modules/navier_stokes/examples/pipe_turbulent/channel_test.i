@@ -269,7 +269,7 @@ C2_eps = 1.92
   #   walls = 'top'
   #   non_equilibrium_treatment = false
   #   rf = 1.0
-  #   mu_t_inital = '${fparse C_mu * k_bulk * k_bulk / eps_bulk}'
+  #   mu_t_initial = '${fparse C_mu * k_bulk * k_bulk / eps_bulk}'
   #   execute_on = 'NONLINEAR'
   #   relaxation_method = 'nl'
   #   iters_to_activate = 0
@@ -281,20 +281,26 @@ C2_eps = 1.92
   [compute_mu_t]
     type = kEpsilonViscosityFunctorMaterial
     C_mu = ${C_mu}
+
+    # Variables
     k = TKE
     epsilon = TKED
     mu = 'mu'
     rho = ${rho}
     u = u
     v = v
-    wall_treatment = false
-    walls = 'top'
+
+    # Wall treatment
+    walls = 'wall'
+    wall_treatment = true
     non_equilibrium_treatment = true
+
+    # Relaxation
     rf = 1.0
-    mu_t_inital = '${fparse C_mu * k_bulk * k_bulk / eps_bulk}'
+    mu_t_initial = '${fparse C_mu * k_bulk * k_bulk / eps_bulk}'
     relaxation_method = 'nl'
-    iters_to_activate = 2
-    damper = 1.0
+    iters_to_activate = 0
+    damper = 0
   []
 []
 

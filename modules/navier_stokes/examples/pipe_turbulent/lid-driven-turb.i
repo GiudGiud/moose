@@ -186,7 +186,7 @@ C_mu = 0.09
     family = MONOMIAL
     fv = true
   []
-  [mu_t]
+  [mu_t_old]
     type = MooseVariableFVReal
     initial_condition = 1.0
   []
@@ -199,9 +199,33 @@ C_mu = 0.09
     x = vel_x
     y = vel_y
   []
+  [mu_t_old]
+    type = FunctorElementalAux
+    variable = mu_t_old
+    functor = 'mu_t'
+    execute_on = TIMESTEP_BEGIN
+  []
+  # [compute_mu_t]
+  #   type = kEpsilonViscosityAux
+  #   variable = mu_t
+  #   C_mu = ${C_mu}
+  #   k = TKE
+  #   epsilon = TKED
+  #   mu = ${mu}
+  #   rho = ${rho}
+  #   u = vel_x
+  #   v = vel_y
+  #   wall_treatment = false
+  #   walls = 'left top right bottom'
+  #   non_equilibrium_treatment = false
+  #   rf = 0.5
+  #   execute_on = 'TIMESTEP_END'
+  # []
+[]
+
+[FunctorMaterials]
   [compute_mu_t]
-    type = kEpsilonViscosityAux
-    variable = mu_t
+    type = kEpsilonViscosityFunctorMaterial
     C_mu = ${C_mu}
     k = TKE
     epsilon = TKED
@@ -211,9 +235,12 @@ C_mu = 0.09
     v = vel_y
     wall_treatment = false
     walls = 'left top right bottom'
-    non_equilibrium_treatment = false
+    non_equilibrium_treatment = true
     rf = 0.5
-    execute_on = 'TIMESTEP_END'
+    mu_t_initial = 1 #'${fparse C_mu * k_bulk * k_bulk / eps_bulk}'
+    relaxation_method = 'nl'
+    iters_to_activate = 5
+    damper = 1.0
   []
 []
 
@@ -240,17 +267,17 @@ C_mu = 0.09
     boundary = 'left right top bottom'
     function = 0
   []
-  [walls_mu_t]
-    type = INSFVTurbulentViscosityWallFunction
-    boundary = 'left right top bottom'
-    variable = mu_t
-    u = vel_x
-    v = vel_y
-    rho = ${rho}
-    mu = ${mu}
-    mu_t = mu_t
-    k = TKE
-  []
+  # [walls_mu_t]
+  #   type = INSFVTurbulentViscosityWallFunction
+  #   boundary = 'left right top bottom'
+  #   variable = mu_t
+  #   u = vel_x
+  #   v = vel_y
+  #   rho = ${rho}
+  #   mu = ${mu}
+  #   mu_t = mu_t
+  #   k = TKE
+  # []
 []
 
 [Debug]
