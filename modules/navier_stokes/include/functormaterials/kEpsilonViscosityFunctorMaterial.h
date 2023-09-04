@@ -29,7 +29,8 @@ protected:
 
   // Local method to find friction velocity
   // Note: this method may be to need reimplemented for each new turbulent model
-  ADReal findUStarLocalMethod(const ADReal & u, const Real & dist);
+  ADReal
+  findUStarLocalMethod(const ADReal & rho, const ADReal & mu, const ADReal & u, const Real & dist);
 
   /**
    * Obtain wall information
@@ -127,6 +128,9 @@ protected:
 
   /// Previous step turbulent viscosity for damping. This must be set externally
   const Moose::Functor<ADReal> & _mu_t_old;
+
+  /// Boundary ids for walls to consider for wall treatment
+  std::set<BoundaryID> _wall_boundary_ids;
 
   /// Constants of the method
   static constexpr Real _von_karman{0.4187};

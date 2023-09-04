@@ -47,7 +47,7 @@ kEpsilonViscosityFunctorMaterial::validParams()
   params.addParam<bool>("non_equilibrium_treatment",
                         false,
                         "Use non-equilibrium wall treatment (faster than standard wall treatment)");
-  params.addParam<Real>("rf", 1.0, "Linear relaxation factor.");
+  params.addParam<Real>("rf", 1.0, "Linear relaxation factor. 1 for no relaxation");
   params.addParam<unsigned int>("iters_to_activate",
                                 1,
                                 "Number of nonlinear iterations needed to activate the source in "
@@ -100,6 +100,15 @@ kEpsilonViscosityFunctorMaterial::kEpsilonViscosityFunctorMaterial(const InputPa
     _mu_t_old(getFunctor<ADReal>("mu_t_old"))
 {
   _max_viscosity_value = 0.0;
+
+  // Check that the boundaries exist and avoid on-the-fly searches for names
+  for (const auto & wall_name : _wall_boundary_names)
+  {
+    if (!MooseMeshUtils::hasBoundaryName(_mesh, wall_name))
+      paramError("walls", "Wall specified does not exist in the mesh");
+    else
+      _wall_boundary_ids.insert(MooseMeshUtils::getBoundaryID(wall_name, _mesh));
+  }
 
   addFunctorProperty<ADReal>(
       "mu_t",
@@ -156,7 +165,9 @@ kEpsilonViscosityFunctorMaterial::kEpsilonViscosityFunctorMaterial(const InputPa
           }
           else
           {
-            u_tau = this->findUStarLocalMethod(parallel_speed, min_wall_dist);
+            // u_tau =
+            //     this->findUStarLocalMethod(_rho(r, t), _mu(r, t), parallel_speed, min_wall_dist);
+            u_tau = this->findUStar(_rho(r, t), _mu(r, t), parallel_speed, min_wall_dist);
             y_plus = min_wall_dist * u_tau * _rho(r, t) / _mu(r, t);
           }
 
@@ -234,55 +245,54 @@ kEpsilonViscosityFunctorMaterial::initialSetup()
     _nl_damping_map[elem] = 0.0;
 }
 
-ADReal
-kEpsilonViscosityFunctorMaterial::findUStarLocalMethod(const ADReal & u, const Real & dist)
-{
-  /// Setting up parameters
-  const auto state = determineState();
-  auto rho = _rho(makeElemArg(_current_elem), state);
-  auto mu = _mu(makeElemArg(_current_elem), state);
-  auto nu = mu / rho;
+// ADReal
+// kEpsilonViscosityFunctorMaterial::findUStarLocalMethod(const ADReal & rho,
+//                                                        const ADReal & mu,
+//                                                        const ADReal & u,
+//                                                        const Real & dist)
+// {
+//   /// Setting up parameters
+//   auto nu = mu / rho;
+//   const ADReal a_c = 1 / _von_karman;
+//   const ADReal b_c = 1 / _von_karman * (std::log(_E * dist / mu) + 1.0);
+//   const ADReal c_c = u;
+//   ADReal u_tau = (-b_c + std::sqrt(std::pow(b_c, 2) + 4.0 * a_c * c_c)) / (2.0 * a_c);
 
-  const ADReal a_c = 1 / _von_karman;
-  const ADReal b_c = 1 / _von_karman * (std::log(_E * dist / mu) + 1.0);
-  const ADReal c_c = u;
-  ADReal u_tau = (-b_c + std::sqrt(std::pow(b_c, 2) + 4.0 * a_c * c_c)) / (2.0 * a_c);
+//   if (_linearized_yplus)
+//   {
+//     return u_tau;
+//   }
+//   else
+//   {
+//     // Newton-Raphson method to solve for u_tau
+//     Real rel_err;
+//     for (int i = 0; i < _MAX_ITERS_U_TAU; ++i)
+//     {
+//       ADReal residual = u / u_tau - 1 / _von_karman * std::log(_E * dist * u_tau / nu);
 
-  if (_linearized_yplus)
-  {
-    return u_tau;
-  }
-  else
-  {
-    // Newton-Raphson method to solve for u_tau
-    Real rel_err;
-    for (int i = 0; i < _MAX_ITERS_U_TAU; ++i)
-    {
-      ADReal residual = u / u_tau - 1 / _von_karman * std::log(_E * dist * u_tau / nu);
+//       if (residual < _REL_TOLERANCE)
+//         return u_tau;
 
-      if (residual < _REL_TOLERANCE)
-        return u_tau;
+//       ADReal residual_derivative =
+//           -1 / u_tau * (u / u_tau + 1 / _von_karman * std::log(_E * dist / nu));
+//       ADReal new_u_tau = std::max(1e-20, u_tau - residual / residual_derivative);
+//       u_tau = new_u_tau;
+//     }
 
-      ADReal residual_derivative =
-          -1 / u_tau * (u / u_tau + 1 / _von_karman * std::log(_E * dist / nu));
-      ADReal new_u_tau = std::max(1e-20, u_tau - residual / residual_derivative);
-      u_tau = new_u_tau;
-    }
+//     mooseWarning("Could not find the wall friction velocity (mu: ",
+//                  mu,
+//                  " rho: ",
+//                  rho,
+//                  " velocity: ",
+//                  u,
+//                  " wall distance: ",
+//                  dist,
+//                  ") - Relative residual: ",
+//                  rel_err);
 
-    mooseWarning("Could not find the wall friction velocity (mu: ",
-                 mu,
-                 " rho: ",
-                 rho,
-                 " velocity: ",
-                 u,
-                 " wall distance: ",
-                 dist,
-                 ") - Relative residual: ",
-                 rel_err);
-
-    return u_tau;
-  }
-}
+//     return u_tau;
+//   }
+// }
 
 void
 kEpsilonViscosityFunctorMaterial::getWallData(Moose::ElemArg r,
@@ -297,9 +307,8 @@ kEpsilonViscosityFunctorMaterial::getWallData(Moose::ElemArg r,
     const std::vector<BoundaryID> side_bnds =
         _subproblem.mesh().getBoundaryIDs(_current_elem, i_side);
 
-    for (const BoundaryName & name : _wall_boundary_names)
+    for (const BoundaryID & wall_id : _wall_boundary_ids)
     {
-      BoundaryID wall_id = _subproblem.mesh().getBoundaryID(name);
       for (BoundaryID side_id : side_bnds)
       {
         // One of the element sides is on the wall
@@ -350,9 +359,8 @@ kEpsilonViscosityFunctorMaterial::getWallData(Moose::FaceArg r,
   const FaceInfo * const fi = r.fi;
   mooseAssert(fi, "We should have a fi");
   const auto side_bnds = fi->boundaryIDs();
-  for (const BoundaryName & name : _wall_boundary_names)
+  for (const BoundaryID & wall_id : _wall_boundary_ids)
   {
-    BoundaryID wall_id = _subproblem.mesh().getBoundaryID(name);
     for (BoundaryID side_id : side_bnds)
     {
       if (side_id == wall_id)
@@ -381,6 +389,6 @@ kEpsilonViscosityFunctorMaterial::getWallData(Moose::ElemSideQpArg, bool &, Real
 // wall
 // - wall distance is not set outside of the first cell by the wall. We have to use a similar trick
 // as Sterling:
-//   use a distance auxvariable or some
+//   use a distance auxvariable or some UO
 // - the missing derivatives in mu_t and advection
 // - min_wall_dist is the maximum wall distance in the auxkernel
