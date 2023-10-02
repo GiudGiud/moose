@@ -47,6 +47,18 @@ PhysicsBase::validParams()
   return params;
 }
 
+// InputParameters
+// PhysicsBase::selectParams(const InputParameters & parameters,
+//                           std::vector<std::string> & params_to_keep)
+// {
+//   InputParameters params = emptyInputParameters();
+//   for (const auto & param : params_to_keep)
+//     if (!parameters.have_parameter(param))
+//       mooseError(
+//           "Cannot transfer parameter", param, "because it does not exist in the source object");
+//   // params += parameters;
+// }
+
 PhysicsBase::PhysicsBase(const InputParameters & parameters)
   : Action(parameters),
     _sys_number(0),
