@@ -132,6 +132,7 @@ protected:
   /// Get the problem for this physics
   /// Useful to add objects to the simulation
   virtual FEProblemBase & getProblem() { return *_problem; }
+  virtual FEProblemBase & getProblem() const { return *_problem; }
   /// Get the mesh for this physics
   /// This could be set by a component
   /// NOTE: hopefully we will not need this
