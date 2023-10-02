@@ -126,6 +126,17 @@ protected:
   /// Keep track of the subdomains the Physics is defined on
   std::vector<SubdomainName> _blocks;
 
+  /// Get the factory for this physics
+  /// The factory lets you get the parameters for objects
+  virtual Factory & getFactory() { return *_factory; }
+  /// Get the problem for this physics
+  /// Useful to add objects to the simulation
+  virtual FEProblemBase & getProblem() { return *_problem; }
+  /// Get the mesh for this physics
+  /// This could be set by a component
+  /// NOTE: hopefully we will not need this
+  // virtual const MooseMesh & getMesh() const override { return *_mesh; }
+
 private:
   /// Gathers additional parameters for the relationship managers from the Physics
   /// then calls the parent Action::addRelationshipManagers with those parameters
