@@ -4,7 +4,7 @@ The `Physics` system is meant to standardize the process of adding an equation a
 to a simulation. It is based on the [Action system](source/actions/Action.md), with additional APIs
 defined to support the definition of an equation.
 
-## Interaction with Components
+### Interaction with components
 
 The interaction with Components is one of the main goals of the Physics system. Stay tuned for future developments.
 

@@ -138,6 +138,13 @@ protected:
   /// NOTE: hopefully we will not need this
   // virtual const MooseMesh & getMesh() const override { return *_mesh; }
 
+  /// Utilities to handle parameters
+  void checkParamsBothSetOrNotSet(std::string param1, std::string param2) const;
+  template <typename T, typename S>
+  void checkVectorParamsSameLength(std::string param1, std::string param2) const;
+  template <typename T>
+  void checkVectorParamsNoOverlap(std::vector<std::string> param_vec) const;
+
 private:
   /// Gathers additional parameters for the relationship managers from the Physics
   /// then calls the parent Action::addRelationshipManagers with those parameters
