@@ -15,6 +15,9 @@
 #include "AuxiliarySystem.h"
 #include "BlockRestrictable.h"
 
+// Discretizations can be created by the Physics
+#include "ContinuousGalerkin.h"
+
 InputParameters
 PhysicsBase::validParams()
 {
@@ -46,18 +49,6 @@ PhysicsBase::validParams()
                               "Restart from Exodus");
   return params;
 }
-
-// InputParameters
-// PhysicsBase::selectParams(const InputParameters & parameters,
-//                           std::vector<std::string> & params_to_keep)
-// {
-//   InputParameters params = emptyInputParameters();
-//   for (const auto & param : params_to_keep)
-//     if (!parameters.have_parameter(param))
-//       mooseError(
-//           "Cannot transfer parameter", param, "because it does not exist in the source object");
-//   // params += parameters;
-// }
 
 PhysicsBase::PhysicsBase(const InputParameters & parameters)
   : Action(parameters),
@@ -264,4 +255,30 @@ PhysicsBase::checkRequiredTasks() const
                    "' but this task is not registered to the derived class. Registered tasks for "
                    "this Physics are: " +
                    Moose::stringify(registered_tasks));
+}
+
+void
+PhysicsBase::addDiscretization(const InputParameters & params)
+{
+  mooseAssert(!_discretization, "The discretization should not already exist");
+  std::string discretization_type;
+  if (isParamValid("discretization"))
+    discretization_type = getParam<DiscretizationName>("discretization");
+  else
+    discretization_type = params.get<std::string>("_type");
+
+  // Process potential short names
+  if (discretization_type == "cgfe")
+    discretization_type = "ContinuousGalerkin";
+
+  // Generate some default parameters if using a short-hand name
+  const InputParameters & discr_params =
+      isParamValid("discretization") ? getFactory().getValidParams(discretization_type) : params;
+
+  if (discretization_type == "ContinuousGalerkin")
+    _discretization = std::make_unique<ContinuousGalerkin>(discr_params);
+  else
+    paramError("discretization",
+               "Unrecognized discretization. You need to override addDiscretization() in your "
+               "derived class to enable it");
 }

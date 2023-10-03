@@ -145,6 +145,10 @@ protected:
   template <typename T>
   void checkVectorParamsNoOverlap(std::vector<std::string> param_vec) const;
 
+  /// Working with the discretization
+  // void setDiscretization(PhysicsDiscretization * disc) { _discretization = disc; }
+  PhysicsDiscretization * getDiscretization() { return _discretization.get(); }
+
 private:
   /// Gathers additional parameters for the relationship managers from the Physics
   /// then calls the parent Action::addRelationshipManagers with those parameters
