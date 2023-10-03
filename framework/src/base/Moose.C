@@ -280,7 +280,6 @@ addActionTypes(Syntax & syntax)
                            "(setup_recover_file_base)"
                            "(check_copy_nodal_vars)"
                            "(setup_mesh)"
-                           "(add_physics)"
                            "(add_geometric_rm)"
                            "(add_partitioner)"
                            "(add_mesh_generator)"
