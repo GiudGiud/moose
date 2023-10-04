@@ -18,6 +18,9 @@
 // Discretizations can be created by the Physics
 #include "ContinuousGalerkin.h"
 
+#include "NonlinearSystemBase.h"
+#include "AuxiliarySystem.h"
+
 InputParameters
 PhysicsBase::validParams()
 {
@@ -255,6 +258,21 @@ PhysicsBase::checkRequiredTasks() const
                    "' but this task is not registered to the derived class. Registered tasks for "
                    "this Physics are: " +
                    Moose::stringify(registered_tasks));
+}
+
+bool
+PhysicsBase::nonLinearVariableExists(const VariableName & var_name, bool error_if_aux) const
+{
+  if (_problem->getNonlinearSystemBase().hasVariable(var_name))
+    return true;
+  else if (error_if_aux && _problem->getAuxiliarySystem().hasVariable(var_name))
+    mooseError("Variable",
+               var_name,
+               "is supposed to be nonlinear for physics",
+               name(),
+               "but it's already defined as auxiliary");
+  else
+    return false;
 }
 
 void
