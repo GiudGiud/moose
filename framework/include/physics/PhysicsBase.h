@@ -126,6 +126,7 @@ protected:
   /// Keep track of the subdomains the Physics is defined on
   std::vector<SubdomainName> _blocks;
 
+  // TODO : Remove virtual
   /// Get the factory for this physics
   /// The factory lets you get the parameters for objects
   virtual Factory & getFactory() { return *_factory; }
@@ -137,6 +138,8 @@ protected:
   /// This could be set by a component
   /// NOTE: hopefully we will not need this
   // virtual const MooseMesh & getMesh() const override { return *_mesh; }
+  /// Get the discretization object
+  virtual PhysicsDiscretization & getDiscretization() { return *_discretization; }
 
   /// Utilities to handle parameters
   void checkParamsBothSetOrNotSet(std::string param1, std::string param2) const;
@@ -145,9 +148,9 @@ protected:
   template <typename T>
   void checkVectorParamsNoOverlap(std::vector<std::string> param_vec) const;
 
-  /// Working with the discretization
-  // void setDiscretization(PhysicsDiscretization * disc) { _discretization = disc; }
-  PhysicsDiscretization * getDiscretization() { return _discretization.get(); }
+  // TODO once design validated, make private, use a setter
+  /// Pointer to the discretized physics object
+  std::unique_ptr<PhysicsBase> _discretized_physics;
 
 private:
   /// Gathers additional parameters for the relationship managers from the Physics
