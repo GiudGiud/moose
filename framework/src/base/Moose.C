@@ -95,6 +95,7 @@ addActionTypes(Syntax & syntax)
   /**************************/
   registerMooseObjectTask("create_problem",               Problem,                false);
   registerMooseObjectTask("add_physics",                  Physics,                false);
+  registerMooseObjectTask("add_physics_discretization",   Discretization,         false);
   registerMooseObjectTask("setup_executioner",            Executioner,            false);
   registerMooseObjectTask("read_executor",                Executor,               false);
   registerTask("add_executor", true);
@@ -511,6 +512,9 @@ associateSyntaxInner(Syntax & syntax, ActionFactory & /*action_factory*/)
 
   registerSyntax("AddPhysicsAction", "Physics/*");
   syntax.registerSyntaxType("Physics/*", "PhysicsName");
+
+  registerSyntax("AddPhysicsDiscretizationAction", "Physics/*/Discretization");
+  syntax.registerSyntaxType("Physics/*/Discretization", "DiscretizationName");
 
   registerSyntax("AddPositionsAction", "Positions/*");
   syntax.registerSyntaxType("Positions/*", "PositionsName");
