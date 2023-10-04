@@ -138,8 +138,6 @@ protected:
   /// This could be set by a component
   /// NOTE: hopefully we will not need this
   // virtual const MooseMesh & getMesh() const override { return *_mesh; }
-  /// Get the discretization object
-  virtual PhysicsDiscretization & getDiscretization() { return *_discretization; }
 
   /// Utilities to check parameters
   void checkParamsBothSetOrNotSet(std::string param1, std::string param2) const;
@@ -148,10 +146,6 @@ protected:
   template <typename T>
   void checkVectorParamsNoOverlap(std::vector<std::string> param_vec) const;
   bool nonLinearVariableExists(const VariableName & var_name, bool error_if_aux) const;
-
-  // TODO once design validated, make private, use a setter
-  /// Pointer to the discretized physics object
-  std::unique_ptr<PhysicsBase> _discretized_physics;
 
 private:
   /// Gathers additional parameters for the relationship managers from the Physics
