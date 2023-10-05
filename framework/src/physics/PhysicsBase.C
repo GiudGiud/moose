@@ -271,3 +271,26 @@ PhysicsBase::nonLinearVariableExists(const VariableName & var_name, bool error_i
   else
     return false;
 }
+
+void
+PhysicsBase::checkDependentParameterError(const std::string & main_parameter,
+                                          const std::vector<std::string> & dependent_parameters,
+                                          const bool should_be_defined) const
+{
+  for (const auto & param : dependent_parameters)
+    if (parameters().isParamSetByUser(param) == !should_be_defined)
+      paramError(param,
+                 "This parameter should " + std::string(should_be_defined ? "" : "not") +
+                     " be given by the user with the corresponding " + main_parameter +
+                     " setting!");
+}
+
+void
+PhysicsBase::assignBlocks(InputParameters & params, const std::vector<SubdomainName> & blocks) const
+{
+  // We only set the blocks if we don't have `ANY_BLOCK_ID` defined because the subproblem
+  // (through the mesh) errors out if we use this keyword during the addVariable/Kernel
+  // functions
+  if (std::find(blocks.begin(), blocks.end(), "ANY_BLOCK_ID") == blocks.end())
+    params.set<std::vector<SubdomainName>>("block") = blocks;
+}

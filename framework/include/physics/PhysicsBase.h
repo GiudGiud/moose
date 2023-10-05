@@ -140,12 +140,18 @@ protected:
   // virtual const MooseMesh & getMesh() const override { return *_mesh; }
 
   /// Utilities to check parameters
+  /// These will be replaced by being baked into the validParams() logic, one day
   void checkParamsBothSetOrNotSet(std::string param1, std::string param2) const;
   template <typename T, typename S>
   void checkVectorParamsSameLength(std::string param1, std::string param2) const;
+  template <typename T, typename S>
+  void checkTwoDVectorParamsSameLength(std::string param1, std::string param2) const;
   template <typename T>
   void checkVectorParamsNoOverlap(std::vector<std::string> param_vec) const;
   bool nonLinearVariableExists(const VariableName & var_name, bool error_if_aux) const;
+  void checkDependentParameterError(const std::string & main_parameter,
+                                    const std::vector<std::string> & dependent_parameters,
+                                    const bool should_be_defined) const;
 
 private:
   /// Gathers additional parameters for the relationship managers from the Physics
