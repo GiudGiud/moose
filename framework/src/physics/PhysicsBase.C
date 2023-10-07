@@ -257,6 +257,19 @@ PhysicsBase::checkRequiredTasks() const
                    Moose::stringify(registered_tasks));
 }
 
+void
+PhysicsBase::checkSecondParamSetOnlyIfFirstOneTrue(const std::string & param1,
+                                                   const std::string & param2) const
+{
+  mooseAssert(parameters().have_parameter<bool>(param1),
+              "Cannot check if parameter " + param1 +
+                  " is true if it's not a bool parameter of this object");
+  if (!getParam<bool>(param1) && isParamSetByUser(param2))
+    paramError(param2,
+               "Parameter '" + param1 + "' cannot be set to false if parameter '" + param2 +
+                   "' is set by the user");
+}
+
 bool
 PhysicsBase::nonLinearVariableExists(const VariableName & var_name, bool error_if_aux) const
 {
