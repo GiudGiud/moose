@@ -17,6 +17,7 @@
 
 #include "NonlinearSystemBase.h"
 #include "AuxiliarySystem.h"
+#include "BlockRestrictable.h"
 
 InputParameters
 PhysicsBase::validParams()
@@ -204,6 +205,13 @@ PhysicsBase::copyVariablesFromMesh(const std::vector<VariableName> & variables_t
 }
 
 void
+PhysicsBase::addBlocks(const std::vector<SubdomainName> & blocks)
+{
+  _blocks.insert(_blocks.end(), blocks.begin(), blocks.end());
+  _dim = _problem->mesh().getBlocksMaxDimension(_blocks);
+}
+
+void
 PhysicsBase::checkParamsBothSetOrNotSet(const std::string & param1,
                                         const std::string & param2) const
 {
@@ -306,4 +314,17 @@ PhysicsBase::assignBlocks(InputParameters & params, const std::vector<SubdomainN
   // functions
   if (std::find(blocks.begin(), blocks.end(), "ANY_BLOCK_ID") == blocks.end())
     params.set<std::vector<SubdomainName>>("block") = blocks;
+}
+
+void
+PhysicsBase::copyVariablesFromMesh(std::vector<VariableName> variables_to_copy)
+{
+  if (getParam<bool>("initialize_variables_from_mesh_file"))
+  {
+    SystemBase & system = getProblem().getNonlinearSystemBase();
+
+    for (const auto & var_name : variables_to_copy)
+      system.addVariableToCopy(
+          var_name, var_name, getParam<std::string>("initial_from_file_timestep"));
+  }
 }

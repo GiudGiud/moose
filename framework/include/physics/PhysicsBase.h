@@ -138,6 +138,10 @@ protected:
   /// This could be set by a component
   /// NOTE: hopefully we will not need this
   // virtual const MooseMesh & getMesh() const override { return *_mesh; }
+  /// Tell the app if we want to use Exodus restart
+  void prepareCopyNodalVariables() const;
+  /// Copy variables from the mesh file
+  void copyVariablesFromMesh(std::vector<VariableName> variables_to_copy);
 
   /// Utilities to check parameters
   /// These will be replaced by being baked into the validParams() logic, one day
@@ -188,10 +192,19 @@ protected:
   /// TODO: interaction with components
   void processMesh(){};
 
+  /// Return the list of nonlinear variables in this physics
+  std::vector<VariableName> nonlinearVariableNames() const { return _nl_var_names; };
+  /// Add a nonlinear variable to the Physics
+  // TODO not the right name!
+  void addNonlinearVariable(const VariableName & var_name) { _nl_var_names.push_back(var_name); }
+  /// A new blocks to the Physics
+  void addBlocks(const std::vector<SubdomainName> & blocks);
+
   /// Dimension of the physics, which we expect for now to be the dimension of the mesh
   unsigned int _dim;
 
-  /// TODO: see if we can rely on BlockRestrictable instead
+  // The block restrictable interface is not adapted to keeping track of a growing list of blocks as
+  // we add more parameters
   std::vector<SubdomainName> _blocks;
 
 private:
