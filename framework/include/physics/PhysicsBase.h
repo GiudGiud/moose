@@ -291,7 +291,7 @@ PhysicsBase::assertParamDefined(const std::string & libmesh_dbg_var(param)) cons
 
 template <typename T>
 void
-PhysicsBase::assertParamDefined(const std::string & param1) const
+PhysicsBase::assertParamDefined(const std::string & libmesh_dbg_var(param1)) const
 {
   mooseAssert(parameters().have_parameter<T>(param1),
               "Parameter '" + param1 + "' is not defined with type " +
