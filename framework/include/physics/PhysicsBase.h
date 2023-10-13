@@ -159,18 +159,32 @@ protected:
   template <typename T, typename S>
   void checkTwoDVectorParamsSameLength(const std::string & param1,
                                        const std::string & param2) const;
+  template <typename T, typename S>
+  void checkTwoDVectorParamInnerSameLengthAsOneDVector(const std::string & param1,
+                                                       const std::string & param2) const;
   /// Check that there is no overlap between the two vector parameters
   template <typename T>
   void checkVectorParamsNoOverlap(const std::vector<std::string> & param_vec) const;
   bool nonLinearVariableExists(const VariableName & var_name, bool error_if_aux) const;
-  /// Check that the dependent parameters all are (or are not) defined when the main parameter is
-  void checkDependentParameterError(const std::string & main_parameter,
-                                    const std::vector<std::string> & dependent_parameters,
-                                    const bool should_be_defined) const;
+  /// Check that the user did not pass an empty vector
+  template <typename T>
+  void checkVectorParamNotEmpty(const std::string & param1) const;
+  /// Check that two vector parameters are the same length if both are set
+  template <typename T, typename S>
+  void checkVectorParamsSameLengthIfSet(const std::string & param1,
+                                        const std::string & param2) const;
+
+  template <typename T, typename S, typename U>
+  void checkVectorParamLengthSameAsCombinedOthers(const std::string & param1,
+                                                  const std::string & param2,
+                                                  const std::string & param3) const;
+
   /// Check that two parameters are either both set or both not set
   void checkParamsBothSetOrNotSet(const std::string & param1, const std::string & param2) const;
   void checkSecondParamSetOnlyIfFirstOneTrue(const std::string & param1,
                                              const std::string & param2) const;
+  void checkSecondParamSetOnlyIfFirstOneSet(const std::string & param1,
+                                            const std::string & param2) const;
   /// Check if the user commited errors during the definition of block-wise parameters
   template <typename T>
   void checkBlockwiseConsistency(const std::string & block_param_name,
@@ -402,6 +416,7 @@ void
 PhysicsBase::warnInconsistent(const InputParameters & other_param,
                               const std::string & param_name) const
 {
+  assertParamDefined<T>(param_name);
   bool warn = false;
   if (parameters().isParamValid(param_name) && other_param.isParamValid(param_name))
   {
