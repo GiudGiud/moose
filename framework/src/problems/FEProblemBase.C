@@ -2253,7 +2253,7 @@ PhysicsBase *
 FEProblemBase::getPhysics(const std::string & name) const //, THREAD_ID tid
 {
   return dynamic_cast<PhysicsBase *>(_physics.getActiveObject(name, 0).get());
-};
+}
 
 void
 FEProblemBase::addFunction(const std::string & type,
