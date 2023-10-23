@@ -86,7 +86,6 @@ class VectorPostprocessor;
 class Function;
 class MooseAppCoordTransform;
 class MortarUserObject;
-class PhysicsBase;
 
 // libMesh forward declarations
 namespace libMesh
@@ -673,9 +672,6 @@ public:
    */
   virtual void
   addVariable(const std::string & var_type, const std::string & var_name, InputParameters & params);
-
-  virtual void
-  addPhysics(const std::string & var_type, const std::string & var_name, InputParameters & params);
 
   virtual void addKernel(const std::string & kernel_name,
                          const std::string & name,

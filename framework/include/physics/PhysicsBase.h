@@ -129,11 +129,20 @@ protected:
   // TODO : Remove virtual
   /// Get the factory for this physics
   /// The factory lets you get the parameters for objects
-  virtual Factory & getFactory() { return *_factory; }
+  virtual Factory & getFactory() { return _factory; }
+  virtual Factory & getFactory() const { return _factory; }
   /// Get the problem for this physics
   /// Useful to add objects to the simulation
-  virtual FEProblemBase & getProblem() { return *_problem; }
-  virtual FEProblemBase & getProblem() const { return *_problem; }
+  virtual FEProblemBase & getProblem()
+  {
+    mooseAssert(_problem, "Requesting the problem too early");
+    return *_problem;
+  }
+  virtual FEProblemBase & getProblem() const
+  {
+    mooseAssert(_problem, "Requesting the problem too early");
+    return *_problem;
+  }
   /// Get the mesh for this physics
   /// This could be set by a component
   /// NOTE: hopefully we will not need this
@@ -217,9 +226,6 @@ protected:
 
   /// Whether to output additional information
   const bool _verbose;
-
-  /// Dimension of the physics, which we expect for now to be the dimension of the mesh
-  unsigned int _dim;
 
   // The block restrictable interface is not adapted to keeping track of a growing list of blocks as
   // we add more parameters
@@ -437,8 +443,8 @@ PhysicsBase::warnInconsistent(const InputParameters & other_param,
       warn = true;
   }
   if (warn)
-    mooseWarning("Parameter " + param_name +
-                 " is inconsistent between this physics and the parameter set for \"" +
-                 other_param.get<std::string>("_object_name") + "\" of type \"" +
-                 other_param.get<std::string>("_type") + "\"");
+    mooseWarning("Parameter " + param_name + " is inconsistent between Physics \"" + name() +
+                 "\" of type \"" + type() + "\" and the parameter set for \"" +
+                 other_param.get<std::string>("_action_name") + "\" of type \"" +
+                 other_param.get<std::string>("action_type") + "\"");
 }
