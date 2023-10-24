@@ -47,17 +47,14 @@ WCNSFVPhysicsBase::validParams()
 
 WCNSFVPhysicsBase::WCNSFVPhysicsBase(const InputParameters & parameters)
   : NavierStokesFlowPhysicsBase(parameters),
-    _velocity_interpolation(getParam<MooseEnum>("velocity_interpolation"))
+    _velocity_interpolation(getParam<MooseEnum>("velocity_interpolation")),
+    _flux_inlet_pps(getParam<std::vector<PostprocessorName>>("flux_inlet_pps")),
+    _flux_inlet_directions(getParam<std::vector<Point>>("flux_inlet_directions"))
 {
   // Parameter checking
   checkSecondParamSetOnlyIfFirstOneSet("flux_inlet_pps", "flux_inlet_directions");
   checkVectorParamsSameLengthIfSet<PostprocessorName, Point>("flux_inlet_pps",
                                                              "flux_inlet_directions");
-  if (_boundary_condition_information_complete)
-    checkVectorParamLengthSameAsCombinedOthers<BoundaryName,
-                                               std::vector<FunctionName>,
-                                               PostprocessorName>(
-        "inlet_boundaries", "momentum_inlet_function", "flux_inlet_pps");
 
   // Check that flow physics are consistent
   if (isParamValid("coupled_flow_physics"))
@@ -222,29 +219,11 @@ void
 WCNSFVPhysicsBase::checkCommonParametersConsistent(const InputParameters & other_params) const
 {
   NavierStokesFlowPhysicsBase::checkCommonParametersConsistent(other_params);
+
   // Check all the parameters in WCNSFVPhysicsBase
-  warnInconsistent<std::vector<std::vector<FunctionName>>>(other_params, "momentum_inlet_function");
   warnInconsistent<std::vector<PostprocessorName>>(other_params, "flux_inlet_pps");
   warnInconsistent<std::vector<Point>>(other_params, "flux_inlet_directions");
-  warnInconsistent<std::vector<FunctionName>>(other_params, "pressure_function");
   warnInconsistent<MooseEnum>(other_params, "velocity_interpolation");
   warnInconsistent<MooseEnum>(other_params, "pressure_face_interpolation");
   warnInconsistent<MooseEnum>(other_params, "momentum_face_interpolation");
-}
-
-VariableName
-WCNSFVPhysicsBase::getFlowVariableName(const std::string & short_name) const
-{
-  if (short_name == NS::pressure)
-    return getPressureName();
-  else if (short_name == NS::velocity_x && dimension() > 0)
-    return getVelocityNames()[0];
-  else if (short_name == NS::velocity_y && dimension() > 1)
-    return getVelocityNames()[1];
-  else if (short_name == NS::velocity_z && dimension() > 2)
-    return getVelocityNames()[2];
-  else if (short_name == NS::temperature)
-    return getTemperatureName();
-  else
-    mooseError("Short Variable name '", short_name, "' not recognized.");
 }

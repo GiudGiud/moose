@@ -57,6 +57,13 @@ protected:
   /// Boundaries which define a wall (slip/noslip/etc.)
   const std::vector<BoundaryName> _wall_boundaries;
 
+  /// Momentum inlet boundary types
+  MultiMooseEnum _momentum_inlet_types;
+  /// Momentum outlet boundary types
+  MultiMooseEnum _momentum_outlet_types;
+  /// Momentum wall boundary types
+  MultiMooseEnum _momentum_wall_types;
+
   /// Name of the density material property
   const MooseFunctorName _density_name;
   /// Name of the dynamic viscosity material property
