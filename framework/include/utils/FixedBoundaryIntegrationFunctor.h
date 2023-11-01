@@ -27,16 +27,16 @@
  * A functor that computes the integral of a functor on a fixed boundary.
  */
 template <typename T>
-class BoundaryIntegralFunctor : public Moose::FunctorBase<T>
+class FixedBoundaryIntegralFunctor : public Moose::FunctorBase<T>
 {
 public:
-  BoundaryIntegralFunctor(const std::string & name,
-                          const Moose::FunctorEnvelope<T> & functor,
-                          const std::set<ExecFlagType> & clearance_schedule,
-                          const MooseMesh & mesh,
-                          const BoundaryID boundary_id);
+  FixedBoundaryIntegralFunctor(const std::string & name,
+                               const Moose::FunctorEnvelope<T> & functor,
+                               const std::set<ExecFlagType> & clearance_schedule,
+                               const MooseMesh & mesh,
+                               const BoundaryID boundary_id);
 
-  virtual ~BoundaryIntegralFunctor() = default;
+  virtual ~FixedBoundaryIntegralFunctor() = default;
 
   bool isExtrapolatedBoundaryFace(const FaceInfo & fi,
                                   const Elem * elem,
@@ -64,12 +64,6 @@ protected:
   ValueType evaluate(const Moose::NodeArg & elem_point,
                      const Moose::StateArg & time) const override;
 
-  /**
-   * Provide a useful error message about lack of functor material property on the provided
-   * subdomain \p sub_id
-   */
-  void subdomainErrorMessage(SubdomainID sub_id) const;
-
   /// Functor to evaluate to compute the boundary integral
   const Moose::Functor<T> & _functor;
 
@@ -81,7 +75,7 @@ protected:
 };
 
 template <typename T>
-BoundaryIntegralFunctor<T>::BoundaryIntegralFunctor(
+FixedBoundaryIntegralFunctor<T>::FixedBoundaryIntegralFunctor(
     const std::string & name,
     const Moose::FunctorEnvelope<T> & functor,
     const std::set<ExecFlagType> & clearance_schedule,
@@ -96,28 +90,16 @@ BoundaryIntegralFunctor<T>::BoundaryIntegralFunctor(
 
 template <typename T>
 bool
-BoundaryIntegralFunctor<T>::isExtrapolatedBoundaryFace(const FaceInfo & /*fi*/,
-                                                       const Elem *,
-                                                       const Moose::StateArg &) const
+FixedBoundaryIntegralFunctor<T>::isExtrapolatedBoundaryFace(const FaceInfo & /*fi*/,
+                                                            const Elem *,
+                                                            const Moose::StateArg &) const
 {
   return false;
 }
 
 template <typename T>
-void
-BoundaryIntegralFunctor<T>::subdomainErrorMessage(const SubdomainID sub_id) const
-{
-  mooseError("The provided subdomain ID ",
-             std::to_string(sub_id),
-             " doesn't exist in the map for lambda functor '",
-             this->functorName(),
-             "'! This is likely because you did not provide a functor "
-             "definition on that subdomain");
-}
-
-template <typename T>
-typename BoundaryIntegralFunctor<T>::ValueType
-BoundaryIntegralFunctor<T>::globalValue(const Moose::StateArg & time) const
+typename FixedBoundaryIntegralFunctor<T>::ValueType
+FixedBoundaryIntegralFunctor<T>::globalValue(const Moose::StateArg & time) const
 {
   using namespace Moose::FV;
   auto & binfo = _mesh.getMesh().get_boundary_info();
@@ -145,59 +127,59 @@ BoundaryIntegralFunctor<T>::globalValue(const Moose::StateArg & time) const
 }
 
 template <typename T>
-typename BoundaryIntegralFunctor<T>::ValueType
-BoundaryIntegralFunctor<T>::evaluate(const Moose::ElemArg & /*elem_arg*/,
-                                     const Moose::StateArg & time) const
+typename FixedBoundaryIntegralFunctor<T>::ValueType
+FixedBoundaryIntegralFunctor<T>::evaluate(const Moose::ElemArg & /*elem_arg*/,
+                                          const Moose::StateArg & time) const
 {
   return globalValue(time);
 }
 
 template <typename T>
-typename BoundaryIntegralFunctor<T>::ValueType
-BoundaryIntegralFunctor<T>::evaluate(const Moose::FaceArg & /*face*/,
-                                     const Moose::StateArg & time) const
+typename FixedBoundaryIntegralFunctor<T>::ValueType
+FixedBoundaryIntegralFunctor<T>::evaluate(const Moose::FaceArg & /*face*/,
+                                          const Moose::StateArg & time) const
 {
   return globalValue(time);
 }
 
 template <typename T>
-typename BoundaryIntegralFunctor<T>::ValueType
-BoundaryIntegralFunctor<T>::evaluate(const Moose::ElemQpArg & /*elem_qp*/
-                                     ,
-                                     const Moose::StateArg & time) const
+typename FixedBoundaryIntegralFunctor<T>::ValueType
+FixedBoundaryIntegralFunctor<T>::evaluate(const Moose::ElemQpArg & /*elem_qp*/
+                                          ,
+                                          const Moose::StateArg & time) const
 {
   return globalValue(time);
 }
 
 template <typename T>
-typename BoundaryIntegralFunctor<T>::ValueType
-BoundaryIntegralFunctor<T>::evaluate(const Moose::ElemSideQpArg & /*elem_side_qp*/,
-                                     const Moose::StateArg & time) const
+typename FixedBoundaryIntegralFunctor<T>::ValueType
+FixedBoundaryIntegralFunctor<T>::evaluate(const Moose::ElemSideQpArg & /*elem_side_qp*/,
+                                          const Moose::StateArg & time) const
 {
   return globalValue(time);
 }
 
 template <typename T>
-typename BoundaryIntegralFunctor<T>::ValueType
-BoundaryIntegralFunctor<T>::evaluate(const Moose::ElemPointArg & /*elem_point_arg*/,
-                                     const Moose::StateArg & time) const
+typename FixedBoundaryIntegralFunctor<T>::ValueType
+FixedBoundaryIntegralFunctor<T>::evaluate(const Moose::ElemPointArg & /*elem_point_arg*/,
+                                          const Moose::StateArg & time) const
 {
   return globalValue(time);
 }
 
 template <typename T>
-typename BoundaryIntegralFunctor<T>::ValueType
-BoundaryIntegralFunctor<T>::evaluate(const Moose::NodeArg & /*node_arg*/,
-                                     const Moose::StateArg & time) const
+typename FixedBoundaryIntegralFunctor<T>::ValueType
+FixedBoundaryIntegralFunctor<T>::evaluate(const Moose::NodeArg & /*node_arg*/,
+                                          const Moose::StateArg & time) const
 {
   return globalValue(time);
 }
 
 /**
- * A functor that is evaluated on-the-fly via calls to various overloads of \p operator()
+ * A functor that computes the average of another functor on a boundary
  */
 template <typename T>
-class BoundaryAverageFunctor : public BoundaryIntegralFunctor<T>
+class BoundaryAverageFunctor : public FixedBoundaryIntegralFunctor<T>
 {
 public:
   BoundaryAverageFunctor(const std::string & name,
@@ -211,11 +193,9 @@ public:
   using typename Moose::FunctorBase<T>::FunctorType;
   using typename Moose::FunctorBase<T>::ValueType;
   using typename Moose::FunctorBase<T>::FunctorReturnType;
-  using BoundaryIntegralFunctor<T>::hasBlocks;
-  using BoundaryIntegralFunctor<T>::subdomainErrorMessage;
-  using BoundaryIntegralFunctor<T>::_mesh;
-  using BoundaryIntegralFunctor<T>::_bid;
-  using BoundaryIntegralFunctor<T>::_functor;
+  using FixedBoundaryIntegralFunctor<T>::_mesh;
+  using FixedBoundaryIntegralFunctor<T>::_bid;
+  using FixedBoundaryIntegralFunctor<T>::_functor;
 
 protected:
   ValueType globalValue(const Moose::StateArg & time) const override;
@@ -227,7 +207,7 @@ BoundaryAverageFunctor<T>::BoundaryAverageFunctor(const std::string & name,
                                                   const std::set<ExecFlagType> & clearance_schedule,
                                                   const MooseMesh & mesh,
                                                   const BoundaryID boundary_id)
-  : BoundaryIntegralFunctor<T>(name, functor, clearance_schedule, mesh, boundary_id)
+  : FixedBoundaryIntegralFunctor<T>(name, functor, clearance_schedule, mesh, boundary_id)
 {
 }
 
