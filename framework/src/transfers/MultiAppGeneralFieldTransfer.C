@@ -17,6 +17,7 @@
 #include "MooseVariableFE.h"
 #include "Positions.h"
 #include "MultiAppPositions.h" // remove after use_nearest_app deprecation
+#include "MooseAppCoordTransform.h"
 
 // libmesh includes
 #include "libmesh/point_locator_base.h"
@@ -1312,6 +1313,8 @@ bool
 MultiAppGeneralFieldTransfer::closestToPosition(unsigned int pos_index, const Point & pt) const
 {
   mooseAssert(_nearest_positions_obj, "Should not be here without a positions object");
+  if (!_skip_coordinate_collapsing)
+    paramError("skip_coordinate_collapsing", "Coordinate collapsing not implemented");
   bool initial = _fe_problem.getCurrentExecuteOnFlag() == EXEC_INITIAL;
   return _nearest_positions_obj->getPosition(pos_index, initial) ==
          _nearest_positions_obj->getNearestPosition(pt, initial);

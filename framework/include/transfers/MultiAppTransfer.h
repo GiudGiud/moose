@@ -225,6 +225,10 @@ private:
   void getFromMultiAppInfo();
   void getToMultiAppInfo();
 
+  /// Whether to skip coordinate collapsing (transformations of coordinates between applications
+  /// using different frames of reference)
+  const bool _skip_coordinate_collapsing;
+
   /// The moose coordinate transformation object describing rotations, scaling, and coordinate
   /// system of the from application
   std::unique_ptr<MooseAppCoordTransform> _from_moose_app_transform;
