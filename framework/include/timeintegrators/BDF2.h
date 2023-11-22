@@ -37,11 +37,20 @@ protected:
   template <typename T, typename T2, typename T3, typename T4>
   void
   computeTimeDerivativeHelper(T & u_dot, const T2 & u, const T3 & u_old, const T4 & u_older) const;
+  /**
+   * Helper function that actually does the math for computing the second time derivative
+   */
+  template <typename T, typename T2, typename T3>
+  void
+  computeSecondTimeDerivativeHelper(T & u_dotdot, const T2 & u_dot, const T3 & u_dot_old) const;
 
   std::vector<Real> & _weight;
 
   /// The older solution
   const NumericVector<Number> & _solution_older;
+
+  /// Whether to compute a second order time derivative
+  const bool _compute_dotdot;
 };
 
 namespace BDF2Helper
@@ -66,5 +75,22 @@ BDF2::computeTimeDerivativeHelper(T & u_dot,
     MathUtils::addScaled(_weight[1], u_old, u_dot);
     MathUtils::addScaled(_weight[2], u_older, u_dot);
     u_dot *= 1. / _dt;
+  }
+}
+
+template <typename T, typename T2, typename T3>
+void
+BDF2::computeSecondTimeDerivativeHelper(T & u_dotdot, const T2 & u_dot, const T3 & u_dot_old) const
+{
+  // Leave it at 0 for first time step
+  if (_t_step == 1)
+  {
+    u_dotdot.zero();
+  }
+  else
+  {
+    u_dotdot = u_dot;
+    u_dotdot -= u_dot_old;
+    u_dotdot *= 1. / _dt;
   }
 }

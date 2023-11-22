@@ -9,6 +9,7 @@
 
 #include "BDF2.h"
 #include "NonlinearSystem.h"
+#include "FEProblemBase.h"
 
 registerMooseObject("MooseApp", BDF2);
 
@@ -18,15 +19,25 @@ BDF2::validParams()
   InputParameters params = TimeIntegrator::validParams();
   params.addClassDescription(
       "Second order backward differentiation formula time integration scheme.");
+  params.addParam<bool>("compute_second_derivative",
+                        false,
+                        "Whether to compute the second time derivative of the solution. We use a "
+                        "simple BDF-1 scheme on the BDF-2 time derivative to compute it");
   return params;
 }
 
 BDF2::BDF2(const InputParameters & parameters)
   : TimeIntegrator(parameters),
     _weight(declareRestartableData<std::vector<Real>>("weight")),
-    _solution_older(_sys.solutionState(2))
+    _solution_older(_sys.solutionState(2)),
+    _compute_dotdot(getParam<bool>("compute_second_derivative"))
 {
   _weight.resize(3);
+  if (_compute_dotdot)
+  {
+    _fe_problem.setUDotDotRequested(true);
+    _fe_problem.setUDotOldRequested(true);
+  }
 }
 
 void
@@ -61,6 +72,14 @@ BDF2::computeTimeDerivatives()
   }
   computeTimeDerivativeHelper(u_dot, *_solution, _solution_old, _solution_older);
   u_dot.close();
+
+  if (_compute_dotdot)
+  {
+    NumericVector<Number> & u_dot_old = *_sys.solutionUDotOld();
+    NumericVector<Number> & u_dotdot = *_sys.solutionUDotDot();
+    computeSecondTimeDerivativeHelper(u_dotdot, u_dot, u_dot_old);
+    u_dotdot.close();
+  }
 }
 
 void
