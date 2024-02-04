@@ -4,8 +4,8 @@
     input = 'finite_strain_elastic_new_test.i'
     exodiff = 'finite_strain_elastic_new_test_out.e'
     issues = '#4716 #7555'
-    design = 'source/materials/ComputeFiniteStrainElasticStress.md source/materials/ComputeFiniteStrain.md syntax/Modules/TensorMechanics/Master/index.md'
-    requirement = 'The ComputeFiniteStrainElasticStress class shall compute the elastic stress for a finite strain formulation found with the Taylor expansion from Rashid(1993) on a unit 3D cube in a Cartesian system using the TensorMechanicsMaster action.'
+    design = 'source/materials/ComputeFiniteStrainElasticStress.md source/materials/ComputeFiniteStrain.md syntax/Physics/SolidMechanics/QuasiStatic/index.md'
+    requirement = 'The ComputeFiniteStrainElasticStress class shall compute the elastic stress for a finite strain formulation found with the Taylor expansion from Rashid(1993) on a unit 3D cube in a Cartesian system using the SolidMechanicsMaster action.'
   [../]
   [./new_Bbar]
     type = 'Exodiff'
@@ -23,7 +23,7 @@
     exodiff = 'finite_strain_fake_plastic_out.e'
     issues = '#9212 #7555'
     design = 'source/materials/ComputeMultiPlasticityStress.md tensor_mechanics/VolumetricLocking.md'
-    requirement = 'The ComputeMultiPlasticityStress class shall, when supplied with no plastic models, reduce to and produce the solely elastic stress solution for a finite strain fomulation, using the TensorMechanicsMaster action.'
+    requirement = 'The ComputeMultiPlasticityStress class shall, when supplied with no plastic models, reduce to and produce the solely elastic stress solution for a finite strain fomulation, using the SolidMechanicsMaster action.'
   [../]
   [./fake_plastic_Bbar]
     type = 'Exodiff'
@@ -40,8 +40,8 @@
     input = 'elastic_rotation_test.i'
     exodiff = 'elastic_rotation_test_out.e'
     issues = '#4716 #7555'
-    design = 'source/materials/ComputeFiniteStrainElasticStress.md syntax/Modules/TensorMechanics/Master/index.md'
-    requirement = 'The ComputeFiniteStrainElasticStress class shall compute the elastic stress based on a finite strain fomulation and then follow the stress as the mesh is rotated 90 degrees in accordance with Kamojjala et al.(2015) using the TensorMechanicsMaster action.'
+    design = 'source/materials/ComputeFiniteStrainElasticStress.md syntax/Physics/SolidMechanics/QuasiStatic/index.md'
+    requirement = 'The ComputeFiniteStrainElasticStress class shall compute the elastic stress based on a finite strain fomulation and then follow the stress as the mesh is rotated 90 degrees in accordance with Kamojjala et al.(2015) using the SolidMechanicsMaster action.'
   [../]
   [./rotation_new_Bbar]
     type = 'Exodiff'
@@ -58,8 +58,8 @@
     input = 'finite_strain_elastic_eigen_sol.i'
     exodiff = 'finite_strain_elastic_eigen_sol_out.e'
     issues = '#4716 #7555'
-    design = 'source/materials/ComputeFiniteStrainElasticStress.md source/materials/ComputeFiniteStrain.md syntax/Modules/TensorMechanics/Master/index.md'
-    requirement = 'The ComputeFiniteStrainElasticStress class shall compute the elastic stress for a finite strain formulation using a direct eigensolution to perform the polar decomposition of stretch and rotation on a unit 3D cube in a Cartesian system using the TensorMechanicsMaster action.'
+    design = 'source/materials/ComputeFiniteStrainElasticStress.md source/materials/ComputeFiniteStrain.md syntax/Physics/SolidMechanics/QuasiStatic/index.md'
+    requirement = 'The ComputeFiniteStrainElasticStress class shall compute the elastic stress for a finite strain formulation using a direct eigensolution to perform the polar decomposition of stretch and rotation on a unit 3D cube in a Cartesian system using the SolidMechanicsMaster action.'
   [../]
   [./eigen_sol_Bbar]
     type = 'Exodiff'
@@ -76,7 +76,7 @@
     input = 'finite_strain_stress_errorcheck.i'
     expect_err = 'This linear elastic stress calculation only works for small strains; use ComputeFiniteStrainElasticStress for simulations using incremental and finite strains.'
     issues = '#4716 #7555'
-    design = 'source/materials/ComputeFiniteStrainElasticStress.md source/materials/ComputeLinearElasticStress.md syntax/Modules/TensorMechanics/Master/index.md'
+    design = 'source/materials/ComputeFiniteStrainElasticStress.md source/materials/ComputeLinearElasticStress.md syntax/Physics/SolidMechanics/QuasiStatic/index.md'
     requirement = 'The ComputeLinearElasticStress class shall generate an error if a user attempts to run a problem using ComputeLinearElasticStress with a finite strain formulation.'
   [../]
 []

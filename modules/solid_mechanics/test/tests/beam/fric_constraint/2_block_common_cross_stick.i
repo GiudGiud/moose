@@ -91,7 +91,7 @@
   end_time = 13
 []
 
-[Modules/TensorMechanics/LineElementMaster]
+[Physics/SolidMechanics/LineElementStatic]
   # parameters common to all blocks
 
   add_variables = true

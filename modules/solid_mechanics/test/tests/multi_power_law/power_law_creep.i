@@ -35,8 +35,8 @@
   []
 []
 
-[Modules/TensorMechanics/Master]
-  [MasterAction]
+[Physics/SolidMechanics/QuasiStatic]
+  [QuasiStaticAction]
     strain = SMALL
     incremental = true
     add_variables = true

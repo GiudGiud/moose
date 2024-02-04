@@ -104,7 +104,7 @@
   end_time = 2.1
 []
 
-[Modules/TensorMechanics/LineElementMaster]
+[Physics/SolidMechanics/LineElementStatic]
   [./all]
   add_variables = true
   displacements = 'disp_x disp_y disp_z'

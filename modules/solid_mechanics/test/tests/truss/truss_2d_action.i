@@ -137,7 +137,7 @@
   end_time = 1
 []
 
-[Modules/TensorMechanics/LineElementMaster]
+[Physics/SolidMechanics/LineElementStatic]
   [./block]
     truss = true
     add_variables = true
