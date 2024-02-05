@@ -7,7 +7,7 @@
   displacements = 'disp_x disp_y'
   # elem_type applies to the GeneratedMeshGenerator blocks
   elem_type = QUAD4
-  # volumetric_locking_correction applies to the TensorMechanics QuasiStatic action
+  # volumetric_locking_correction applies to the SolidMechanics QuasiStatic action
   volumetric_locking_correction = false
   # uniform_refine applies to the final mesh
   uniform_refine = 0
