@@ -6,7 +6,7 @@ documenting the class, which includes the typical automatic documentation associ
 however, what is contained is ultimately determined by what is necessary to make the documentation
 clear for users.
 
-!syntax description /Modules/TensorMechanics/CohesiveZoneMaster/CohesiveZoneAction
+!syntax description /Physics/SolidMechanics/CohesiveZoneModel/CohesiveZoneAction
 
 ## Overview
 
@@ -16,6 +16,6 @@ clear for users.
 
 !! Describe and include an example of how to use the CohesiveZoneAction action.
 
-!syntax description /Modules/TensorMechanics/CohesiveZoneMaster/CohesiveZoneAction
+!syntax description /Physics/SolidMechanics/CohesiveZoneModel/CohesiveZoneAction
 
-!syntax parameters /Modules/TensorMechanics/CohesiveZoneMaster/CohesiveZoneAction
+!syntax parameters /Physics/SolidMechanics/CohesiveZoneModel/CohesiveZoneAction
