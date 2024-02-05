@@ -1,6 +1,6 @@
 #
 # This test checks whether the ComputeReducedOrderEigenstrain is functioning properly
-# when using the automatic_eigenstrain_names within the TensorMechanicsAction.  These
+# when using the automatic_eigenstrain_names within the SolidMechanicsAction.  These
 # results should match the results found in the eigenstrain folder for reducedOrderRZLinear.i
 #
 

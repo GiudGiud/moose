@@ -1,7 +1,7 @@
 # The primary purpose of this test is to verify that the ability to combine
 # multiple eigenstrains works correctly.  It should behave identically to the
 # constant_expansion_coeff.i model in the thermal_expansion directory. Instead
-# of having the eigenstrain names passed directly to the TensorMechanics QuasiStaticAction,
+# of having the eigenstrain names passed directly to the SolidMechanics QuasiStaticAction,
 # the QuasiStaticAction should be able to extract the necessary eigenstrains and apply
 # to their respective blocks without reduncacy.
 
