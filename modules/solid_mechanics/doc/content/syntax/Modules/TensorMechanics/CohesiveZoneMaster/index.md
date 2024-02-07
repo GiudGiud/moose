@@ -15,7 +15,7 @@ The `TensorMechanics` system provides a cohesive zone modeling capability that c
 
 The [BreakMeshByBlockGenerator](BreakMeshByBlockGenerator.md) is utilized to create the cohesive zone interface  by splitting a monolithic mesh into blocks by adding the required nodes and boundaries between each block pair. The split mesh allows to compute a displacement jump $\llbracket u \rrbracket$ at each quadrature point on the interface. The schematic below is an example of using `BreakMeshByBlockGenerator` on a 3-blocks, 2-dimensional mesh. The generated interfaces are highlighted in yellow.
 
-!media media/tensor_mechanics/BreakMeshByBlock.png style=width:100%;
+!media media/solid_mechanics/BreakMeshByBlock.png style=width:100%;
 
 The `ComputeDisplacementJump` object computes the displacement jump across the cohesive zone according to the selected formulation. The `ComputeLocalTraction` provides the cohesive zone response in the natural interface coordinate system.
 The `ComputeGlobalTraction` object computes the traction in global coordinates and its derivative w.r.t. the displacement jump in global coordinates, $\llbracket u \rrbracket$.
@@ -27,7 +27,7 @@ The provided `CZMInterfaceKernel` assume the `ComputeLocalTraction` is only func
 The `CohesiveZoneMaster` action automatically adds the proper `ComputeDisplacementJump`, `ComputeGlobalTraction`, `CZMInterfaceKernel` based on the `kinematic_type` parameter value (see inputs).
 The flowchart below summarizes the flow of information of the cohesive zone modeling frameworks, and highlights the  objects automatically added by the `CohesizeZoneMaster` action.
 
-!media media/tensor_mechanics/CZMMasterAction.png style=width:100%;
+!media media/solid_mechanics/CZMMasterAction.png style=width:100%;
 
 !alert note
 Even when using the `CohesiveZoneMaster` action it is the responsibility of the user to add the appropriate `ComputeLocalTraction` constitutive model and `BreakMeshByBlockGenerator` in the input file.
@@ -71,14 +71,14 @@ Both types of `ComputeLocalTraction` objects allow using either the `Small Strai
 
 The following example show how to use the `CohesiveZoneMaster` action.
 
-!listing modules/tensor_mechanics/test/tests/cohesive_zone_model/stretch_rotate_large_deformation.i block=Modules/TensorMechanics/CohesiveZoneMaster
+!listing modules/solid_mechanics/test/tests/cohesive_zone_model/stretch_rotate_large_deformation.i block=Modules/TensorMechanics/CohesiveZoneMaster
 
 If necessary, multiple instances of the `CohesiveZoneMaster` action can be added, for instance when different material properties `base_name` are needed for different boundaries. The `base_name` parameter used in the action should also be provided to the associated materials.
 The `generate_output` parameter adds scalar quantities of the traction and displacement jump to the outputs. Available options are: `traction_x traction_y traction_z normal_traction tangent_traction jump_x jump_y jump_z normal_jump tangent_jump pk1_traction_x pk1_traction_y pk1_traction_z `.
 The name `traction` refers to the Cauchy traction, `pk1_traction` refers to the the first Piola-Kirchhoff traction, and `jump` refers to the displacement jump across the cohesive interface. All the above vectors are defined in the global coordinate system.
 The `normal_traction` and `tangent_traction` are scalar values compute using [CZMRealVectorScalar](CZMRealVectorScalar.md) (the same is true for the `normal_jump` and `tangent_jump`).
 
-!listing modules/tensor_mechanics/test/tests/cohesive_zone_model/czm_multiple_action_and_materials.i start=[Modules/TensorMechanics/CohesiveZoneMaster] end=[Modules] include-end=false
+!listing modules/solid_mechanics/test/tests/cohesive_zone_model/czm_multiple_action_and_materials.i start=[Modules/TensorMechanics/CohesiveZoneMaster] end=[Modules] include-end=false
 
 !syntax parameters /Modules/TensorMechanics/CohesiveZoneMaster/CohesiveZoneAction
 !syntax inputs /Modules/TensorMechanics/CohesiveZoneMaster/CohesiveZoneAction
