@@ -126,4 +126,4 @@ The [SolidMechanics/QuasiStaticAction](/Physics/SolidMechanics/QuasiStatic/index
 The input file syntax to set the Stress Divergence kernel for finite strain problems is:
 
 !listing modules/solid_mechanics/test/tests/finite_strain_elastic/finite_strain_elastic_new_test.i
-         block=Modules
+         block=Physics
