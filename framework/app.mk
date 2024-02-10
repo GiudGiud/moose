@@ -209,6 +209,7 @@ app_LINK := $(foreach i, $(include_files), $(all_header_dir)/$(notdir $(i)))
 $(eval $(call all_header_dir_rule, $(all_header_dir)))
 $(call symlink_rules, $(all_header_dir), $(include_files))
 
+$(APPLICATION_NAME)_header_symlinks: $(all_header_dir) $(app_LINK)
 app_INCLUDE = -I$(all_header_dir)
 
 else # No Header Symlinks
