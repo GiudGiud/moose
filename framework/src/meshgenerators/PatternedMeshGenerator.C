@@ -309,10 +309,10 @@ PatternedMeshGenerator::mergeSubdomainNameMaps(
   for (auto const & id_name_pair : main_subdomain_map)
   {
     const auto name_to_insert = id_name_pair.second;
-    if (main_subdomain_map_name_list.find(name_to_insert) != main_subdomain_map_name_list.end())
-      paramError("inputs",
-                 "Two of the input meshes contain a subdomain with the name '" + name_to_insert +
-                     "' which corresponds to two conflicting subdomain ids.");
+    // if (main_subdomain_map_name_list.find(name_to_insert) != main_subdomain_map_name_list.end())
+    //   paramError("inputs",
+    //              "The input meshes both contain subdomain name '" + name_to_insert +
+    //                  "' that correspond to conflicting subdomain ids.");
     main_subdomain_map_name_list.emplace(name_to_insert);
   }
 }
