@@ -329,7 +329,7 @@ TraceRay::exitsElem(const Elem * elem,
   Real current_intersection_distance;
   ElemExtrema current_intersected_extrema;
   // Scale the minimum intersection distance required by hmax
-  Real best_intersection_distance = TRACE_TOLERANCE * hmax;
+  Real best_intersection_distance = 0;
   // Whether or not we are going to try backface culling the first time around
   // This depends on if the user set it to use culling
   bool use_backface_culling = _backface_culling;
@@ -451,7 +451,7 @@ TraceRay::exitsElem(const Elem * elem,
 
         // The intersection we just computed is further than any other intersection
         // that was found so far - mark it as the best
-        if (current_intersection_distance > best_intersection_distance)
+        if (current_intersection_distance >= best_intersection_distance)
         {
           debugRay("    Best intersection so far");
 

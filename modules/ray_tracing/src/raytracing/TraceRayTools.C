@@ -122,7 +122,8 @@ findPointNeighbors(
     std::vector<const Elem *> active_neighbor_children,
     std::vector<NeighborInfo> & info)
 {
-  mooseAssert(elem->contains_point(point), "Doesn't contain point");
+  mooseAssert(elem->contains_point(point),
+              Moose::stringify(*elem) + "\n doesn't contain point " + Moose::stringify(point));
 
   info.clear();
 
@@ -430,9 +431,11 @@ intersectTriangle(const Point & start,
 
   const auto possible_distance = (edge2 * qvec) / det;
   debugRaySimple("  possible_distance = ", possible_distance);
-  if (possible_distance <= TRACE_TOLERANCE)
+  if (possible_distance <= TRACE_TOLERANCE &&
+      std::abs(direction * (edge1.cross(edge2))) < TRACE_TOLERANCE)
   {
-    debugRaySimple("intersectTriangle() did not intersect: distance too small");
+    debugRaySimple("intersectTriangle() did not intersect: distance too small and direction "
+                   "parallel to triangle");
     return false;
   }
 
