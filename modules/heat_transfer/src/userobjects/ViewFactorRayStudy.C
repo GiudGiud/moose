@@ -11,6 +11,7 @@
 
 // Local includes
 #include "ViewFactorRayBC.h"
+#include "GeometryUtils.h"
 
 // libMesh includes
 #include "libmesh/parallel_algebra.h"
@@ -265,6 +266,7 @@ ViewFactorRayStudy::generateRays()
   reserveRayBuffer(num_local_rays);
 
   Point direction;
+  unsigned int num_rays_corrected = 0;
 
   // loop through all starting points and spawn rays from each for each point and angle
   for (const auto & start_elem : _start_elems)
@@ -312,6 +314,68 @@ ViewFactorRayStudy::generateRays()
                                 : std::cos(_2d_aq_angles[l]) * _2d_aq_weights[l];
         const auto start_weight = start_elem._weights[start_i] * awf;
 
+        // Modify the sampled direction to at worst graze the face of 3D protruding non-planar
+        // elements. We do not expect there are any neighbor elements to track in if it exits the
+        // non-planar side.
+        // TODO: modify the weights to keep the quadrature order
+        bool intersection_found = false;
+        if (_is_3d && start_elem._start_elem &&
+            start_elem._start_elem->side_ptr(start_elem._incoming_side) &&
+            !start_elem._start_elem->neighbor_ptr(start_elem._incoming_side) &&
+            sideIsNonPlanar(start_elem._start_elem, start_elem._incoming_side))
+        {
+          // Find edge on side that is 'in front' of the future ray
+          unsigned int closest_edge = 0;
+          Point intersection_point(std::numeric_limits<Real>::max(), -1, -1);
+          Point proj_dir;
+          for (const auto edge_i :
+               start_elem._start_elem->side_ptr(start_elem._incoming_side)->side_index_range())
+          {
+            // Project direction onto (start_point, node 1, node 2)
+            const auto d1 = edge_1.node_ptr(0) - start_elem._points[start_i];
+            const auto d2 = edge_1.node_ptr(1) - start_elem._points[start_i];
+            const auto d1_unit = d1.unit();
+            const auto d2_unit = d2.unit();
+            if (MooseUtils::absoluteFuzzyEqual(d1_unit * d2_unit, 1))
+              continue;
+            const auto normal = d1_unit.cross(d2_unit).unit();
+
+            // One of the nodes must be in front of the start point following the direction
+            if (d1 * direction < 0 && d2 * direction < 0)
+              continue;
+
+            proj_dir = direction - direction * normal;
+            // Only the side of interest will have the projected direction in between d1 and d2
+            if ((proj_dir * d2_unit > d1_unit * d2_unit) &&
+                (proj_dir * d1_unit > d1_unit * d2_unit))
+            {
+              const auto dist = geom_utils::distanceFromLine(
+                  start_elem._points[start_i], edge_1.node_ptr(0), edge_1.node_ptr(1));
+              // Ortho-normalize the base on the plane
+              const auto d2_norm = d1_unit.cross(normal);
+              intersection_point =
+                  dist * (d1_unit * proj_dir) * d1 + dist * (d2_norm * proj_dir) * d2_norm;
+              intersection_found = true;
+              break;
+            }
+          }
+
+          // Correct the direction if needed
+          auto grazing_dir = (intersection_point - start_elem._points[start_i]).unit();
+          if (intersection_found && inward_normal * direction < inward_normal * grazing_dir)
+          {
+            const Real nd = inward_normal * direction;
+            const Real gn = inward_normal * grazing_dir;
+            const Real b = sqrt((1 - gn * gn) / (1 - nd * nd));
+            const auto old_direction = direction;
+            direction = direction * b + inward_normal * (gn - b * nd);
+            mooseInfo("Correcting sampled direction, to avoid exiting the mesh from a non-planar "
+                      "face, from " +
+                      Moose::stringify(old_direction) + " to " + Moose::stringify(direction));
+          }
+          std::cout << "Must match: " << direction << " " << proj_dir << std::endl;
+        }
+
         // Acquire a Ray and fill with the starting information
         std::shared_ptr<Ray> ray = acquireRay();
         ray->setStart(
@@ -324,6 +388,10 @@ ViewFactorRayStudy::generateRays()
         moveRayToBuffer(ray);
       }
   }
+  if (num_rays_corrected)
+    mooseInfo("Non-planar side direction correction was applied to ",
+              num_rays_corrected,
+              " starting rays");
 }
 
 void
