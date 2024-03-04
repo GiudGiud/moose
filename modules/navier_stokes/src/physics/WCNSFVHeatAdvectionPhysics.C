@@ -107,9 +107,6 @@ WCNSFVHeatAdvectionPhysics::addNonlinearVariables()
     return;
   }
 
-  // Process parameters necessary to handle block-restriction
-  processMesh();
-
   auto params = getFactory().getValidParams("INSFVEnergyVariable");
   assignBlocks(params, _blocks);
   params.set<std::vector<Real>>("scaling") = {getParam<Real>("energy_scaling")};

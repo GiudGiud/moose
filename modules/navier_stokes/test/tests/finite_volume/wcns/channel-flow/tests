@@ -22,6 +22,16 @@
     recover = false # see #19126
     valgrind = HEAVY
   []
+  [transient-physics]
+    type = Exodiff
+    input = 2d-transient-physics.i
+    exodiff = '2d-transient-physics_out.e'
+    method = "!dbg"
+    requirement = 'The system shall be able to solve for a transient 2D channel case with a weakly compressible formulation using the WCNSFV Physics syntax.'
+    abs_zero = 1e-9
+    recover = false # see #19126
+    valgrind = HEAVY
+  []
   [turbulence]
     type = 'Exodiff'
     input = 2d-transient.i

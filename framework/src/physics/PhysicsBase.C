@@ -138,71 +138,6 @@ PhysicsBase::act()
 }
 
 void
-PhysicsBase::act()
-{
-  if (_current_task == "init_physics")
-    initializePhysics();
-  else if (_current_task == "add_variable")
-    addNonlinearVariables();
-  else if (_current_task == "add_ic")
-    addInitialConditions();
-
-  else if (_current_task == "add_kernel")
-    addFEKernels();
-  else if (_current_task == "add_nodal_kernel")
-    addNodalKernels();
-  else if (_current_task == "add_fv_kernel")
-    addFVKernels();
-  else if (_current_task == "add_dirac_kernel")
-    addDiracKernels();
-  else if (_current_task == "add_dg_kernel")
-    addDGKernels();
-  else if (_current_task == "add_scalar_kernel")
-    addScalarKernels();
-  else if (_current_task == "add_interface_kernel")
-    addInterfaceKernels();
-  else if (_current_task == "add_fv_ik")
-    addFVInterfaceKernels();
-
-  else if (_current_task == "add_bc")
-    addFEBCs();
-  else if (_current_task == "add_nodal_bc")
-    addNodalBCs();
-  else if (_current_task == "add_fv_bc")
-    addFVBCs();
-  else if (_current_task == "add_periodic_bc")
-    addPeriodicBCs();
-  else if (_current_task == "add_function")
-    addFunctions();
-  else if (_current_task == "add_user_object")
-    addUserObjects();
-
-  else if (_current_task == "add_aux_variable")
-    addAuxiliaryVariables();
-  else if (_current_task == "add_aux_kernel")
-    addAuxiliaryKernels();
-  else if (_current_task == "add_material")
-    addMaterials();
-  else if (_current_task == "add_functor_material")
-    addFunctorMaterials();
-
-  else if (_current_task == "add_postprocessor")
-    addPostprocessors();
-  else if (_current_task == "add_vector_postprocessor")
-    addVectorPostprocessors();
-  else if (_current_task == "add_reporter")
-    addReporters();
-  else if (_current_task == "add_output")
-    addOutputs();
-  else if (_current_task == "add_preconditioning")
-    addPreconditioning();
-  else if (_current_task == "add_executioner")
-    addExecutioner();
-  else if (_current_task == "add_executor")
-    addExecutors();
-}
-
-void
 PhysicsBase::prepareCopyNodalVariables() const
 {
   if (getParam<bool>("initialize_variables_from_mesh_file"))
@@ -273,31 +208,6 @@ PhysicsBase::copyVariablesFromMesh(const std::vector<VariableName> & variables_t
 }
 
 void
-PhysicsBase::addBlocks(const std::vector<SubdomainName> & blocks)
-{
-  _blocks.insert(_blocks.end(), blocks.begin(), blocks.end());
-  _dim = _mesh->getBlocksMaxDimension(_blocks);
-}
-
-void
-PhysicsBase::addRelationshipManagers(Moose::RelationshipManagerType input_rm_type)
-{
-  InputParameters params = getAdditionalRMParams();
-  Action::addRelationshipManagers(input_rm_type, params);
-}
-
-void
-PhysicsBase::initializePhysics()
-{
-  mooseAssert(_mesh, "We should have a mesh to find the dimension");
-  _dim = _mesh->dimension();
-
-  mooseAssert(_mesh, "We should have a problem to check if it is transient");
-  if (_is_transient == "true" && !getProblem().isTransient())
-    paramError("transient", "We cannot solve a physics as transient in a steady problem");
-}
-
-void
 PhysicsBase::checkParamsBothSetOrNotSet(const std::string & param1,
                                         const std::string & param2) const
 {
@@ -318,6 +228,16 @@ PhysicsBase::checkSecondParamSetOnlyIfFirstOneTrue(const std::string & param1,
     paramError(param2,
                "Parameter '" + param1 + "' cannot be set to false if parameter '" + param2 +
                    "' is set by the user");
+}
+
+void
+PhysicsBase::checkSecondParamSetOnlyIfFirstOneSet(const std::string & param1,
+                                                  const std::string & param2) const
+{
+  if (!isParamSetByUser(param1) && isParamSetByUser(param2))
+    paramError(param2,
+               "Parameter '" + param2 + "' should not be set if parameter '" + param1 +
+                   "' is not specified.");
 }
 
 bool
@@ -352,44 +272,6 @@ PhysicsBase::checkRequiredTasks() const
 }
 
 void
-PhysicsBase::checkSecondParamSetOnlyIfFirstOneTrue(const std::string & param1,
-                                                   const std::string & param2) const
-{
-  mooseAssert(parameters().have_parameter<bool>(param1),
-              "Cannot check if parameter " + param1 +
-                  " is true if it's not a bool parameter of this object");
-  if (!getParam<bool>(param1) && isParamSetByUser(param2))
-    paramError(param2,
-               "Parameter '" + param1 + "' cannot be set to false if parameter '" + param2 +
-                   "' is set by the user");
-}
-
-void
-PhysicsBase::checkSecondParamSetOnlyIfFirstOneSet(const std::string & param1,
-                                                  const std::string & param2) const
-{
-  if (!isParamSetByUser(param1) && isParamSetByUser(param2))
-    paramError(param2,
-               "Parameter '" + param2 + "' should not be set if parameter '" + param1 +
-                   "' is not specified.");
-}
-
-bool
-PhysicsBase::nonLinearVariableExists(const VariableName & var_name, bool error_if_aux) const
-{
-  if (_problem->getNonlinearSystemBase().hasVariable(var_name))
-    return true;
-  else if (error_if_aux && _problem->getAuxiliarySystem().hasVariable(var_name))
-    mooseError("Variable '",
-               var_name,
-               "' is supposed to be nonlinear for physics '",
-               name(),
-               "' but it's already defined as auxiliary");
-  else
-    return false;
-}
-
-void
 PhysicsBase::errorDependentParameter(const std::string & param1,
                                      const std::string & value_not_set,
                                      std::vector<std::string> dependent_params) const
@@ -410,19 +292,6 @@ PhysicsBase::assignBlocks(InputParameters & params, const std::vector<SubdomainN
   // functions
   if (std::find(blocks.begin(), blocks.end(), "ANY_BLOCK_ID") == blocks.end())
     params.set<std::vector<SubdomainName>>("block") = blocks;
-}
-
-void
-PhysicsBase::copyVariablesFromMesh(std::vector<VariableName> variables_to_copy)
-{
-  if (getParam<bool>("initialize_variables_from_mesh_file"))
-  {
-    SystemBase & system = getProblem().getNonlinearSystemBase();
-
-    for (const auto & var_name : variables_to_copy)
-      system.addVariableToCopy(
-          var_name, var_name, getParam<std::string>("initial_from_file_timestep"));
-  }
 }
 
 void

@@ -55,22 +55,6 @@ protected:
   /// Return the maximum dimension of the blocks the Physics is active on
   unsigned int dimension() const;
 
-  /// Get the factory for this physics
-  /// The factory lets you get the parameters for objects
-  Factory & getFactory() const { return _factory; }
-  /// Get the problem for this physics
-  /// Useful to add objects to the simulation
-  virtual FEProblemBase & getProblem()
-  {
-    mooseAssert(_problem, "Requesting the problem too early");
-    return *_problem;
-  }
-  virtual const FEProblemBase & getProblem() const
-  {
-    mooseAssert(_problem, "Requesting the problem too early");
-    return *_problem;
-  }
-
   /// Tell the app if we want to use Exodus restart
   void prepareCopyNodalVariables() const;
   /// Copy variables from the mesh file
@@ -144,27 +128,15 @@ protected:
     mooseAssert(_problem, "Requesting the problem too early");
     return *_problem;
   }
-  /// Get the mesh for this physics
-  /// This could be set by a component
-  /// NOTE: hopefully we will not need this
-  // virtual const MooseMesh & getMesh() const override { return *_mesh; }
-  /// Tell the app if we want to use Exodus restart
-  void prepareCopyNodalVariables() const;
-  /// Copy variables from the mesh file
-  void copyVariablesFromMesh(std::vector<VariableName> variables_to_copy);
 
   /// Utilities to check parameters
   /// These will be replaced by being baked into the validParams() logic, one day
-  /// Check in debug mode that this parameter has been added to the validParams
-  template <typename T>
-  void assertParamDefined(const std::string & param1) const;
-  /// Check that the two vector parameters are of the same length
-  template <typename T, typename S>
-  void checkVectorParamsSameLength(const std::string & param1, const std::string & param2) const;
   /// Check that this vector parameter (param1) has the same length as the MultiMooseEnum (param2)
   template <typename T>
   void checkVectorParamAndMultiMooseEnumLength(const std::string & param1,
-                                               const std::string & param2) const;
+                                               const std::string & param2) const
+  {
+  }
   /// Check that the two vector of vector parameters are the same length
   template <typename T, typename S>
   void checkTwoDVectorParamsSameLength(const std::string & param1,
@@ -172,9 +144,6 @@ protected:
   template <typename T, typename S>
   void checkTwoDVectorParamInnerSameLengthAsOneDVector(const std::string & param1,
                                                        const std::string & param2) const;
-  /// Check that there is no overlap between the two vector parameters
-  template <typename T>
-  void checkVectorParamsNoOverlap(const std::vector<std::string> & param_vec) const;
   bool nonLinearVariableExists(const VariableName & var_name, bool error_if_aux) const;
   /// Check that the user did not pass an empty vector
   template <typename T>
@@ -182,7 +151,7 @@ protected:
   /// Check that two vector parameters are the same length if both are set
   template <typename T, typename S>
   void checkVectorParamsSameLengthIfSet(const std::string & param1,
-                                        const std::string & param2) const;
+                                        const std::string & param2) const {};
 
   template <typename T, typename S, typename U>
   void checkVectorParamLengthSameAsCombinedOthers(const std::string & param1,
@@ -190,9 +159,9 @@ protected:
                                                   const std::string & param3) const;
 
   /// Check that two parameters are either both set or both not set
-  void checkParamsBothSetOrNotSet(const std::string & param1, const std::string & param2) const;
-  void checkSecondParamSetOnlyIfFirstOneTrue(const std::string & param1,
-                                             const std::string & param2) const;
+  // void checkParamsBothSetOrNotSet(const std::string & param1, const std::string & param2) const;
+  // void checkSecondParamSetOnlyIfFirstOneTrue(const std::string & param1,
+  //                                            const std::string & param2) const;
   void checkSecondParamSetOnlyIfFirstOneSet(const std::string & param1,
                                             const std::string & param2) const;
   /// Check if the user commited errors during the definition of block-wise parameters
@@ -223,24 +192,6 @@ protected:
   template <typename T>
   std::map<T, MooseEnum> createMapFromVectorAndMultiMooseEnum(std::vector<T> keys,
                                                               MultiMooseEnum values) const;
-
-  /// Use prefix() to disambiguate names
-  std::string prefix() const { return name() + "_"; }
-
-  /// TODO: interaction with components
-  void processMesh(){};
-
-  /// Return the list of nonlinear variables in this physics
-  std::vector<VariableName> nonlinearVariableNames() const { return _nl_var_names; };
-  /// Keep track of the name of a nonlinear variable defined in the Physics
-  void saveNonlinearVariableName(const VariableName & var_name) { _nl_var_names.push_back(var_name); }
-
-  /// Whether to output additional information
-  const bool _verbose;
-
-  // The block restrictable interface is not adapted to keeping track of a growing list of blocks as
-  // we add more parameters
-  std::vector<SubdomainName> _blocks;
 
 private:
   /// Gathers additional parameters for the relationship managers from the Physics
@@ -322,16 +273,6 @@ PhysicsBase::assertParamDefined(const std::string & libmesh_dbg_var(param)) cons
 {
   mooseAssert(parameters().have_parameter<T>(param),
               "Parameter '" + param + "' is not defined with type '" +
-                  MooseUtils::prettyCppType<T>() + "' in object type '" +
-                  MooseUtils::prettyCppType(type()) + "'. Check your code.");
-}
-
-template <typename T>
-void
-PhysicsBase::assertParamDefined(const std::string & libmesh_dbg_var(param1)) const
-{
-  mooseAssert(parameters().have_parameter<T>(param1),
-              "Parameter '" + param1 + "' is not defined with type '" +
                   MooseUtils::prettyCppType<T>() + "' in object type '" +
                   MooseUtils::prettyCppType(type()) + "'. Check your code.");
 }

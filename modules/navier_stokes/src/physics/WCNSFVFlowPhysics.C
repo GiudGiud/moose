@@ -124,9 +124,6 @@ WCNSFVFlowPhysics::WCNSFVFlowPhysics(const InputParameters & parameters)
 void
 WCNSFVFlowPhysics::addNonlinearVariables()
 {
-  // Process parameters necessary to handle block-restriction
-  processMesh();
-
   // Velocities
   for (const auto d : make_range(dimension()))
   {
@@ -747,7 +744,7 @@ WCNSFVFlowPhysics::addINSOutletBC()
       {
         const std::string bc_type = "PINSFVMomentumAdvectionOutflowBC";
         InputParameters params = getFactory().getValidParams(bc_type);
-        params.set<std::vector<BoundaryName>>("boundary") = {_outlet_boundaries[bc_ind]};
+        params.set<std::vector<BoundaryName>>("boundary") = {outlet_bdy};
         params.set<MooseFunctorName>(NS::porosity) = _flow_porosity_functor_name;
         params.set<UserObjectName>("rhie_chow_user_object") = rhieChowUOName();
         params.set<MooseFunctorName>(NS::density) = _density_name;
@@ -760,8 +757,7 @@ WCNSFVFlowPhysics::addINSOutletBC()
           params.set<NonlinearVariableName>("variable") = _velocity_names[d];
           params.set<MooseEnum>("momentum_component") = NS::directions[d];
 
-          getProblem().addFVBC(
-              bc_type, _velocity_names[d] + "_" + _outlet_boundaries[bc_ind], params);
+          getProblem().addFVBC(bc_type, _velocity_names[d] + "_" + outlet_bdy, params);
         }
       }
       else
