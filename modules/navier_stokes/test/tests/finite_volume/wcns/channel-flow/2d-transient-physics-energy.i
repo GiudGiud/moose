@@ -56,53 +56,26 @@ inlet_v = 0.001
     []
     [WCNSFVHeatAdvection]
       [energy]
-        compressibility = 'weakly-compressible'
-
         coupled_flow_physics = flow
 
-        velocity_variable = 'vel_x vel_y'
-
-        density = 'rho'
-        dynamic_viscosity = 'mu'
         thermal_conductivity = 'k'
         specific_heat = 'cp'
 
         initial_temperature = '${inlet_temp}'
 
-        inlet_boundaries = 'left'
-        momentum_inlet_types = 'fixed-velocity'
         energy_inlet_types = 'fixed-temperature'
         energy_inlet_functors = '${inlet_temp}'
-
-        wall_boundaries = 'top bottom'
-        momentum_wall_types = 'noslip noslip'
         energy_wall_types = 'heatflux heatflux'
         energy_wall_functors = '0 0'
 
-        outlet_boundaries = 'right'
-        momentum_outlet_types = 'fixed-pressure'
-
         external_heat_source = 'power_density'
-
         energy_advection_interpolation = 'average'
       []
     []
     [WCNSFVTurbulence]
       [turbulence]
-        compressibility = 'weakly-compressible'
-
-        block = 0
-
         coupled_flow_physics = flow
         heat_advection_physics = energy
-
-        velocity_variable = 'vel_x vel_y'
-
-        density = 'rho'
-        dynamic_viscosity = 'mu'
-
-        inlet_boundaries = 'left'
-        momentum_inlet_types = 'fixed-velocity'
       []
     []
   []
