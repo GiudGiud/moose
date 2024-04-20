@@ -87,7 +87,9 @@ non_unity_dirs := %.libs %/src $(app_non_unity_dirs)
 # The idea is that files grouped withing a subdirectory are closely related
 # and will benefit from a Unity build
 srcsubdirs := $(shell find $(APPLICATION_DIR)/src -maxdepth 1 -type d -not -path '*/.libs*')
+srcsubdirs := ${srcsubdirs} $(shell find $(APPLICATION_DIR)/test/src -maxdepth 1 -type d -not -path '*/.libs*')
 allsrcsubdirs := $(shell find $(APPLICATION_DIR)/src -type d -not -path '*/.libs*')
+allsrcsubdirs := ${allsrcsubdirs} $(shell find $(APPLICATION_DIR)/test/src -type d -not -path '*/.libs*')
 
 # Filter out the paths we don't want to Unity build
 unity_srcsubdirs := $(filter-out $(non_unity_dirs), $(srcsubdirs))
