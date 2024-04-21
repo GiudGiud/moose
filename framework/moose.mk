@@ -235,8 +235,8 @@ moose_LIBS := $(moose_LIB) $(pcre_LIB) $(hit_LIB)
 ifeq ($(MOOSE_UNITY),true)
 
 # Top level source directories in MOOSE
-srcsubdirs := $(shell find $(FRAMEWORK_DIR)/src -mindepth 1 -maxdepth 1 -type d -not -path '*/.libs*')
-allsrcsubdirs := $(shell find $(FRAMEWORK_DIR)/src -type d -not -path '*/.libs*')
+srcsubdirs := $(shell find $(FRAMEWORK_DIR)/src $(FRAMEWORK_DIR)/test/src -mindepth 1 -maxdepth 1 -type d -not -path '*/.libs*')
+allsrcsubdirs := $(shell find $(FRAMEWORK_DIR)/src $(FRAMEWORK_DIR)/test/src -type d -not -path '*/.libs*')
 
 # This folder does not build with unity
 moose_non_unity := %/utils_nonunity
