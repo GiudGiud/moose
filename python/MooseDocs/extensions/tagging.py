@@ -55,10 +55,6 @@ class TaggingExtension(command.CommandExtension):
                              "Javascript file used for filtering / search page.")
         config['csv_file'] = (None, "CSV file used for examining the tag database")
         config['landing_page'] = ("filter/index.html", "Landing page for the search engine")
-        config['automatic_keys'] = ([], "List of the hard-coded (in tagging.py) keys containing first the type of the automatic key "\
-                                        "(currently only based on the folder name, or the file name), "\
-                                        ", then the name to use to display each of these, and finally the allowed values. "\
-                                        "If no allowed values are specified, all values found are allowed.")
 
         # Disable by default
         config['active'] = (False, config['active'][1])
@@ -71,7 +67,6 @@ class TaggingExtension(command.CommandExtension):
     def __init__(self, *args, **kwargs):
         command.CommandExtension.__init__(self, *args, **kwargs)
         self._allowed_keys = self['allowed_keys']
-        self._automatic_keys = self['automatic_keys']
 
         if self['js_file'] is None:
             msg = "No javascript file identified. The tagging extension will be disabled."
@@ -92,10 +87,6 @@ class TaggingExtension(command.CommandExtension):
     @property
     def allowed_keys(self):
         return self._allowed_keys
-
-    @property
-    def automatic_keys(self):
-        return self._automatic_keys
 
     def postExecute(self):
         """
@@ -240,9 +231,8 @@ class TaggingCommand(command.CommandComponent):
             name=settings['name']
         if settings['pairs'] is None:
             keylist=''
-            if self.extension.automatic_keys is None:
-                msg = "%s: No key:value pairs provided; check markdown file and add desired pairs."
-                LOG.error(msg, page.name)
+            msg = "%s: No key:value pairs provided; check markdown file and add desired pairs."
+            LOG.error(msg, page.name)
         else:
             keylist=settings['pairs'].split()
         # Downstream javascript does not support empty fields
