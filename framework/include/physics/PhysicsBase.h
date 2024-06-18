@@ -81,15 +81,15 @@ public:
   template <typename T>
   const std::vector<T *> getCoupledPhysics(const bool allow_fail = false) const;
 
-  /// Return the list of nonlinear variables in this physics
-  const std::vector<VariableName> & nonlinearVariableNames() const { return _nl_var_names; };
-
   // Coupling with Components //
   /// Get a component with the requested name
   const ActionComponent & getComponent(const ComponentName & comp_name);
   /// Check that the component is of the desired type
   template <typename T>
   void checkComponentType(const ActionComponent & component) const;
+  /// Most basic way of adding a component: simply adding the blocks to the block
+  /// restriction of the Physics. More complex behavior should be implemented by overriding
+  virtual void addComponent(const ActionComponent & component);
 
 protected:
   /// Return whether the Physics is solved using a transient
