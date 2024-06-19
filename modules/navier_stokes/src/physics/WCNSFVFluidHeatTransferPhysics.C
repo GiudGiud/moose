@@ -183,7 +183,7 @@ WCNSFVFluidHeatTransferPhysics::addINSEnergyTimeKernels()
   if (_porous_medium_treatment)
   {
     params.set<MooseFunctorName>(NS::porosity) =
-        _flow_equations_physics->getPorosityFunctorName(false);
+        _flow_equations_physics->getPorosityFunctorName(/*smoothed=*/false);
     if (getProblem().hasFunctor(NS::time_deriv(_density_name),
                                 /*thread_id=*/0))
     {
@@ -219,7 +219,7 @@ WCNSFVFluidHeatTransferPhysics::addWCNSEnergyTimeKernels()
   {
     params.set<MooseFunctorName>(NS::cp) = _specific_heat_name;
     params.set<MooseFunctorName>(NS::porosity) =
-        _flow_equations_physics->getPorosityFunctorName(false);
+        _flow_equations_physics->getPorosityFunctorName(/*smoothed=*/false);
     params.set<bool>("is_solid") = false;
   }
 
