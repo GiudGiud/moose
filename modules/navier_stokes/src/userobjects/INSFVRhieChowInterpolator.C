@@ -340,7 +340,7 @@ INSFVRhieChowInterpolator::meshChanged()
   // - the boundary elements may have changed
   // - some elements may have been refined
   _elements_to_push_pull.clear();
-  _a.clear();
+  _a.getMap().clear();
 }
 
 void
@@ -354,10 +354,10 @@ INSFVRhieChowInterpolator::initialize()
   // Dont reset if not in current system
   // IDEA: clear them derivatives
   if (_u->sys().number() == _fe_problem.currentNlSysNum())
-    for (auto & pair : _a)
+    for (auto & pair : _a.getMap())
       pair.second = 0;
   else
-    for (auto & pair : _a)
+    for (auto & pair : _a.getMap())
     {
       auto & a_val = pair.second;
       a_val = MetaPhysicL::raw_value(a_val);
@@ -433,8 +433,8 @@ INSFVRhieChowInterpolator::finalize()
   {
     const auto id = elem->id();
     const auto pid = elem->processor_id();
-    auto it = _a.find(id);
-    mooseAssert(it != _a.end(), "We definitely should have found something");
+    auto it = _a.getMap().find(id);
+    mooseAssert(it != _a.getMap().end(), "We definitely should have found something");
     push_data[pid].push_back(std::make_pair(id, it->second));
   }
 
@@ -459,7 +459,7 @@ INSFVRhieChowInterpolator::finalize()
     {
       mooseAssert(pid != this->processor_id(), "We do not send messages to ourself here");
       for (const auto & pr : sent_data)
-        _a[pr.first] += pr.second;
+        _a.getMap()[pr.first] += pr.second;
     };
     TIMPI::push_parallel_vector_data(_communicator, push_data, action_functor);
   }
@@ -475,8 +475,8 @@ INSFVRhieChowInterpolator::finalize()
       for (const auto i : index_range(elem_ids))
       {
         const auto id = elem_ids[i];
-        auto it = _a.find(id);
-        mooseAssert(it != _a.end(), "We should hold the value for this locally");
+        auto it = _a.getMap().find(id);
+        mooseAssert(it != _a.getMap().end(), "We should hold the value for this locally");
         data_to_fill[i] = it->second;
       }
     };
@@ -488,7 +488,7 @@ INSFVRhieChowInterpolator::finalize()
       mooseAssert(pid != this->processor_id(), "The request filler shouldn't have been ourselves");
       mooseAssert(elem_ids.size() == filled_data.size(), "I think these should be the same size");
       for (const auto i : index_range(elem_ids))
-        _a[elem_ids[i]] = filled_data[i];
+        _a.getMap()[elem_ids[i]] = filled_data[i];
     };
     TIMPI::pull_parallel_vector_data(
         _communicator, pull_requests, gather_functor, action_functor, &example);

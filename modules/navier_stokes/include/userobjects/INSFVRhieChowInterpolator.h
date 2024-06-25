@@ -11,6 +11,7 @@
 
 #include "RhieChowInterpolatorBase.h"
 #include "CellCenteredMapFunctor.h"
+#include "CellCenteredRestartableMapFunctor.h"
 #include "VectorComponentFunctor.h"
 #include "VectorCompositeFunctor.h"
 
@@ -129,7 +130,7 @@ protected:
   std::unique_ptr<ConstElemRange> _elem_range;
 
   /// A map from element IDs to 'a' coefficient data
-  CellCenteredMapFunctor<ADRealVectorValue, std::unordered_map<dof_id_type, ADRealVectorValue>> _a;
+  CellCenteredRestartableMapFunctor<ADRealVectorValue, dof_id_type, ADRealVectorValue> _a;
 
   /**
    * @name 'a' component functors
@@ -218,7 +219,7 @@ INSFVRhieChowInterpolator::addToA(const Elem * const elem,
   if (elem->processor_id() != this->processor_id())
     _elements_to_push_pull.insert(elem);
 
-  _a[elem->id()](component) += value;
+  _a.getMap()[elem->id()](component) += value;
 }
 
 inline bool
