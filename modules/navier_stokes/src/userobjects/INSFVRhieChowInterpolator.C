@@ -114,6 +114,7 @@ INSFVRhieChowInterpolator::INSFVRhieChowInterpolator(const InputParameters & par
   : RhieChowInterpolatorBase(params),
     _vel(libMesh::n_threads()),
     _a(_moose_mesh, blockIDs(), "a", /*extrapolated_boundary*/ true),
+    _transient_term(_moose_mesh, "trying"),
     _ax(_a, 0),
     _ay(_a, 1),
     _az(_a, 2),
@@ -341,6 +342,7 @@ INSFVRhieChowInterpolator::meshChanged()
   // - some elements may have been refined
   _elements_to_push_pull.clear();
   _a.getMap().clear();
+  _transient_term.clear();
 }
 
 void
@@ -354,14 +356,25 @@ INSFVRhieChowInterpolator::initialize()
   // Dont reset if not in current system
   // IDEA: clear them derivatives
   if (_u->sys().number() == _fe_problem.currentNlSysNum())
+  {
     for (auto & pair : _a.getMap())
       pair.second = 0;
+    for (auto & pair : _transient_term)
+      pair.second = 0;
+  }
   else
+  {
     for (auto & pair : _a.getMap())
     {
       auto & a_val = pair.second;
       a_val = MetaPhysicL::raw_value(a_val);
     }
+    for (auto & pair : _transient_term)
+    {
+      auto & t_val = pair.second;
+      t_val = MetaPhysicL::raw_value(t_val);
+    }
+  }
 }
 
 void
@@ -727,9 +740,9 @@ INSFVRhieChowInterpolator::getVelocity(const Moose::FV::InterpMethod m,
   };
 
   // Volumetric Correction Method #2: volume-based correction
-  // In thery, pressure and velocity cannot be decoupled when a body force is present
-  // Hence, we can de-activate the RC cofficient in faces that have a normal volume force
-  // In the method we mark the faces with a non-zero volume force with recpect to the baseline
+  // In theory, pressure and velocity cannot be decoupled when a body force is present
+  // Hence, we can de-activate the RC coefficient in faces that have a normal volume force
+  // In the method we mark the faces with a non-zero volume force with respect to the baseline
   auto vf_indicator_force_based = [this, &time, &fi, &correct_skewness](Point & face_normal)
   {
     Real value = 0.0;
@@ -799,7 +812,8 @@ INSFVRhieChowInterpolator::getVelocity(const Moose::FV::InterpMethod m,
   for (const auto i : make_range(_dim))
   {
     // "Standard" pressure-based RC interpolation
-    velocity(i) -= face_D(i) * face_eps * (grad_p(i) - unc_grad_p(i));
+    velocity(i) -=
+        face_D(i) * face_eps * (grad_p(i) - unc_grad_p(i)); // + _transient_term(face, time);
 
     if (_bool_correct_vf)
     {

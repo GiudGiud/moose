@@ -119,7 +119,7 @@ ADReal
 PINSFVMomentumFriction::computeFrictionWCoefficient(const Moose::ElemArg & elem_arg,
                                                     const Moose::StateArg & state)
 {
-  // Forward declaration of the coeffcients to be used and returned by the model
+  // Forward declaration of the coefficients to be used and returned by the model
   ADReal coefficient = 0.0;
   ADReal speed = 0.0;
   ADReal rho = 0.0;
@@ -147,7 +147,7 @@ PINSFVMomentumFriction::computeFrictionWCoefficient(const Moose::ElemArg & elem_
     }
   }
 
-  /// Fluid properies
+  /// Fluid properties
   if (_use_Darcy_friction_model && _standard_friction_formulation)
   {
     mu = (*_mu)(elem_arg, state);

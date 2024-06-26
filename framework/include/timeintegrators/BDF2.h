@@ -55,7 +55,7 @@ BDF2::computeTimeDerivativeHelper(T & u_dot,
                                   const T3 & u_old,
                                   const T4 & u_older) const
 {
-  if (_t_step == 1)
+  if (_t_step == 1 && !_app.isRestarting())
   {
     u_dot -= u_old;
     u_dot *= 1 / _dt;

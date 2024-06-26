@@ -32,7 +32,7 @@ BDF2::BDF2(const InputParameters & parameters)
 void
 BDF2::preStep()
 {
-  if (_t_step > 1)
+  if (_t_step > 1 || _app.isRestarting())
   {
     Real sum = _dt + _dt_old;
     _weight[0] = 1. + _dt / sum;
@@ -49,7 +49,7 @@ BDF2::computeTimeDerivatives()
                "uDotRequested() to true in FEProblemBase befor requesting `u_dot`.");
 
   NumericVector<Number> & u_dot = *_sys.solutionUDot();
-  if (_t_step == 1)
+  if (_t_step == 1 && !_app.isRestarting())
   {
     u_dot = *_solution;
     _du_dot_du = 1. / _dt;
@@ -69,7 +69,7 @@ BDF2::computeADTimeDerivatives(ADReal & ad_u_dot,
                                ADReal & /*ad_u_dotdot*/) const
 {
   auto ad_sln = ad_u_dot;
-  if (_t_step != 1)
+  if (_t_step != 1 || _app.isRestarting())
     ad_u_dot = 0;
   computeTimeDerivativeHelper(ad_u_dot, ad_sln, _solution_old(dof), _solution_older(dof));
 }

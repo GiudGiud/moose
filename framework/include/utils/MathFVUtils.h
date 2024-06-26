@@ -35,19 +35,19 @@ namespace FV
 enum class InterpMethod
 {
   /// gc*elem+(1-gc)*neighbor
-  Average,
+  Average = 0,
   /// 1/(gc/elem+(1-gc)/neighbor)
-  HarmonicAverage,
+  HarmonicAverage = 1,
   /// (gc*elem+(1-gc)*neighbor)+gradient*(rf-rf')
-  SkewCorrectedAverage,
+  SkewCorrectedAverage = 2,
   /// weighted
-  Upwind,
+  Upwind = 3,
   // Rhie-Chow
-  RhieChow,
-  VanLeer,
-  MinMod,
-  SOU,
-  QUICK
+  RhieChow = 4,
+  VanLeer = 5,
+  MinMod = 6,
+  SOU = 7,
+  QUICK = 8
 };
 
 enum class LinearFVComputationMode

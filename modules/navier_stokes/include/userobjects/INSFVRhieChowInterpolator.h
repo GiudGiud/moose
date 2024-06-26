@@ -12,6 +12,7 @@
 #include "RhieChowInterpolatorBase.h"
 #include "CellCenteredMapFunctor.h"
 #include "CellCenteredRestartableMapFunctor.h"
+#include "FaceCenteredMapFunctor.h"
 #include "VectorComponentFunctor.h"
 #include "VectorCompositeFunctor.h"
 
@@ -131,6 +132,10 @@ protected:
 
   /// A map from element IDs to 'a' coefficient data
   CellCenteredRestartableMapFunctor<ADRealVectorValue, dof_id_type, ADRealVectorValue> _a;
+
+  /// Additional term in the RC interpolation defined by 15.201 in Moukallad
+  FaceCenteredMapFunctor<ADRealVectorValue, std::unordered_map<dof_id_type, ADRealVectorValue>>
+      _transient_term;
 
   /**
    * @name 'a' component functors
