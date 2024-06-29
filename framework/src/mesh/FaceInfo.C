@@ -84,3 +84,14 @@ FaceInfo::skewnessCorrectionVector() const
 
   return _face_centroid - r_intersection;
 }
+
+std::string
+FaceInfo::print() const
+{
+  std::string out = "";
+  out += "Elem:\n" + _elem_info->print(false) + "\n";
+  out += "Neighbor:\n" + (_neighbor_info ? _neighbor_info->print(false) : "null") + "\n";
+  out += "Element side id: " + std::to_string(_elem_side_id) + "\n";
+  out += "Neighbor side id: " + (_neighbor_info ? std::to_string(_neighbor_side_id) : "N/A") + "\n";
+  return out;
+}

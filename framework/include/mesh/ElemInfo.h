@@ -42,6 +42,9 @@ public:
   /// We return the subdomain ID of the corresponding libmesh element.
   SubdomainID subdomain_id() const { return _elem->subdomain_id(); }
 
+  /// Return a summary of the element info, for debugging purposes
+  std::string print(bool print_full_elem_info) const;
+
 protected:
   /// Reference to the element in libmesh
   const Elem * const _elem;

@@ -166,6 +166,11 @@ public:
    */
   void computeBoundaryCoefficients();
 
+  /**
+   * Returns a brief summary of the FaceInfo, mostly for debugging purposes
+   */
+  std::string print() const;
+
 private:
   /// Getter for the face type for every stored variable.
   /// This will be a friend of MooseMesh to make sure we can only access it from there.
@@ -216,7 +221,8 @@ FaceInfo::neighbor() const
 {
   mooseAssert(_neighbor_info,
               "FaceInfo object 'const Elem & neighbor()' is called but neighbor element pointer "
-              "is null. This occurs for faces at the domain boundary");
+              "is null. This occurs for faces at the domain boundary.\n" +
+                  print());
   return *(_neighbor_info->elem());
 }
 
@@ -243,7 +249,8 @@ FaceInfo::neighborCentroid() const
 {
   mooseAssert(_neighbor_info,
               "The neighbor is not defined on this faceInfo! A possible explanation is that the "
-              "face is a (physical/processor) boundary face.");
+              "face is a (physical/processor) boundary face.\n" +
+                  print());
   return _neighbor_info->centroid();
 }
 
@@ -258,6 +265,7 @@ FaceInfo::neighborVolume() const
 {
   mooseAssert(_neighbor_info,
               "The neighbor is not defined on this faceInfo! A possible explanation is that the "
-              "face is a (physical/processor) boundary face.");
+              "face is a (physical/processor) boundary face.\n" +
+                  print());
   return _neighbor_info->volume();
 }
