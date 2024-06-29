@@ -21,11 +21,13 @@ velocity_interp_method = 'rc'
     dim = 2
     xmin = 0
     xmax = 5
-    ymin = -1
+    ymin = 0
     ymax = 1
     nx = 50
     ny = 20
   []
+  coord_type = RZ
+  rz_coord_axis = X
 []
 
 [GlobalParams]
@@ -249,15 +251,52 @@ velocity_interp_method = 'rc'
   []
 []
 
+[AuxVariables]
+  [au]
+    type = MooseVariableFVReal
+  []
+  [av]
+    type = MooseVariableFVReal
+  []
+[]
+
+[AuxKernels]
+  [au]
+    type = FunctorAux
+    functor = 'ax'
+    variable = 'au'
+    execute_on = 'TIMESTEP_END'
+  []
+  [av]
+    type = FunctorAux
+    functor = 'ay'
+    variable = 'av'
+    execute_on = 'TIMESTEP_END'
+  []
+[]
+
 [Executioner]
   type = Transient
   solve_type = 'NEWTON'
   petsc_options_iname = '-pc_type -pc_factor_shift_type'
   petsc_options_value = 'lu NONZERO'
   line_search = 'none'
-  nl_rel_tol = 7e-13
-  dt = 0.4
-  end_time = 0.8
+  nl_rel_tol = 1e-12
+  nl_abs_tol = 1e-11
+
+  end_time = 110
+  [TimeStepper]
+    type = FunctionDT
+    function = dts
+  []
+[]
+
+[Functions]
+  [dts]
+    type = PiecewiseConstant
+    x = '10 15 100 101'
+    y = '1  10 0.001 0.001'
+  []
 []
 
 [Outputs]
