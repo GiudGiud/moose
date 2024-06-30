@@ -256,8 +256,9 @@ velocity_interp_method = 'rc'
   petsc_options_value = 'lu NONZERO'
   line_search = 'none'
   nl_rel_tol = 7e-13
-  dt = 0.4
-  end_time = 0.8
+  nl_abs_tol = 5e-13
+  dt = 0.1
+  end_time = 200
 []
 
 [Outputs]
