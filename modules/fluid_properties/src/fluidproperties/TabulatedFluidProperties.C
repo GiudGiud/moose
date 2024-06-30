@@ -931,7 +931,12 @@ TabulatedFluidProperties::p_from_v_e(Real v, Real e) const
 {
   if (!_construct_pT_from_ve)
     mooseError("You must construct pT from ve tables when calling p_from_v_e.");
-  return _p_from_v_e_ipol->sample(v, e);
+  auto p = _p_from_v_e_ipol->sample(v, e);
+  if (p < _pressure_min)
+    p = _pressure_min;
+  if (p > _pressure_max)
+    p = _pressure_max;
+  return p;
 }
 
 void
@@ -940,6 +945,18 @@ TabulatedFluidProperties::p_from_v_e(Real v, Real e, Real & p, Real & dp_dv, Rea
   if (!_construct_pT_from_ve)
     mooseError("You must construct pT from ve tables when calling p_from_v_e.");
   _p_from_v_e_ipol->sampleValueAndDerivatives(v, e, p, dp_dv, dp_de);
+  if (p < _pressure_min)
+  {
+    dp_dv = 0;
+    dp_de = 0;
+    p = _pressure_min;
+  }
+  if (p > _pressure_max)
+  {
+    dp_dv = 0;
+    dp_de = 0;
+    p = _pressure_max;
+  }
 }
 
 Real
@@ -947,7 +964,12 @@ TabulatedFluidProperties::T_from_v_e(Real v, Real e) const
 {
   if (!_construct_pT_from_ve)
     mooseError("You must construct pT from ve tables when calling T_from_v_e.");
-  return _T_from_v_e_ipol->sample(v, e);
+  auto T = _T_from_v_e_ipol->sample(v, e);
+  if (T < _temperature_min)
+    T = _temperature_min;
+  if (T > _temperature_max)
+    T = _temperature_max;
+  return T;
 }
 
 void
@@ -956,6 +978,18 @@ TabulatedFluidProperties::T_from_v_e(Real v, Real e, Real & T, Real & dT_dv, Rea
   if (!_construct_pT_from_ve)
     mooseError("You must construct pT from ve tables when calling T_from_v_e.");
   _T_from_v_e_ipol->sampleValueAndDerivatives(v, e, T, dT_dv, dT_de);
+  if (T < _temperature_min)
+  {
+    dT_dv = 0;
+    dT_de = 0;
+    T = _temperature_min;
+  }
+  if (T > _temperature_max)
+  {
+    dT_dv = 0;
+    dT_de = 0;
+    T = _temperature_max;
+  }
 }
 
 Real
