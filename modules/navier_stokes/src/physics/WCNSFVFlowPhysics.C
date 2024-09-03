@@ -138,7 +138,8 @@ WCNSFVFlowPhysics::validParams()
 }
 
 WCNSFVFlowPhysics::WCNSFVFlowPhysics(const InputParameters & parameters)
-  : NavierStokesPhysicsBase(parameters),
+  : PhysicsBase(parameters),
+    NavierStokesPhysicsBase(parameters),
     _has_flow_equations(getParam<bool>("add_flow_equations")),
     _compressibility(getParam<MooseEnum>("compressibility")),
     _porous_medium_treatment(getParam<bool>("porous_medium_treatment")),

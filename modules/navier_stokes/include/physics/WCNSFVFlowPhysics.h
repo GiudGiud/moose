@@ -15,7 +15,7 @@
 /**
  * Creates all the objects needed to solve the Navier Stokes mass and momentum equations
  */
-class WCNSFVFlowPhysics final : public NavierStokesPhysicsBase
+class WCNSFVFlowPhysics : public NavierStokesPhysicsBase
 {
 public:
   static InputParameters validParams();
@@ -70,13 +70,14 @@ protected:
   void initializePhysicsAdditional() override;
   void actOnAdditionalTasks() override;
 
-private:
   void addNonlinearVariables() override;
   void addInitialConditions() override;
-  void addFVKernels() override;
-  void addFVBCs() override;
   void addMaterials() override;
   void addUserObjects() override;
+
+private:
+  void addFVKernels() override;
+  void addFVBCs() override;
   void addCorrectors() override;
   void addPostprocessors() override;
 
