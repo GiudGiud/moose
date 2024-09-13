@@ -82,8 +82,6 @@ WCNSFVFluidHeatTransferPhysics::WCNSFVFluidHeatTransferPhysics(const InputParame
         getParam<std::vector<std::vector<SubdomainName>>>("ambient_convection_blocks")),
     _ambient_convection_alpha(getParam<std::vector<MooseFunctorName>>("ambient_convection_alpha")),
     _ambient_temperature(getParam<std::vector<MooseFunctorName>>("ambient_temperature")),
-    _energy_inlet_types(getParam<MultiMooseEnum>("energy_inlet_types")),
-    _energy_inlet_functors(getParam<std::vector<MooseFunctorName>>("energy_inlet_functors")),
     _energy_wall_types(getParam<MultiMooseEnum>("energy_wall_types")),
     _energy_wall_functors(getParam<std::vector<MooseFunctorName>>("energy_wall_functors"))
 {
@@ -97,6 +95,15 @@ WCNSFVFluidHeatTransferPhysics::WCNSFVFluidHeatTransferPhysics(const InputParame
   // This should probably be done for all the coupled physics, tbd
   if (!isParamSetByUser("block"))
     _blocks = _flow_equations_physics->blocks();
+
+  // Set boundary condition maps
+  _energy_inlet_types = Moose::createMapFromVectorAndMultiMooseEnum<BoundaryName>(
+      _flow_equations_physics->getInletBoundaries(),
+      getParam<MultiMooseEnum>("energy_inlet_types"));
+  if (isParamSetByUser("energy_inlet_functors"))
+    _energy_inlet_functors = Moose::createMapFromVectors<BoundaryName, MooseFunctorName>(
+        _flow_equations_physics->getInletBoundaries(),
+        getParam<std::vector<MooseFunctorName>>("energy_inlet_functors"));
 
   // Parameter checks
   checkVectorParamsSameLengthIfSet<MooseFunctorName, MooseFunctorName>("ambient_convection_alpha",
@@ -381,6 +388,18 @@ WCNSFVFluidHeatTransferPhysics::addFVBCs()
 }
 
 void
+WCNSFVFluidHeatTransferPhysics::addInletBoundary(const BoundaryName & boundary_name,
+                                                 const MooseEnum & inlet_type,
+                                                 const MooseFunctorName & inlet_functor)
+{
+  _energy_inlet_types.insert(std::make_pair(boundary_name, inlet_type));
+  if (inlet_type == "fixed-temperature")
+    _energy_inlet_functors[boundary_name] = inlet_functor;
+  else
+    mooseError("Inlet boundary type not implemented.");
+}
+
+void
 WCNSFVFluidHeatTransferPhysics::addINSEnergyInletBC()
 {
   const auto & inlet_boundaries = _flow_equations_physics->getInletBoundaries();
@@ -398,32 +417,29 @@ WCNSFVFluidHeatTransferPhysics::addINSEnergyInletBC()
                    std::to_string(inlet_boundaries.size()) + ")");
 
   unsigned int flux_bc_counter = 0;
-  for (const auto bc_ind : index_range(_energy_inlet_types))
+  for (const auto & [inlet_boundary, energy_inlet_type] : _energy_inlet_types)
   {
-    if (_energy_inlet_types[bc_ind] == "fixed-temperature")
+    if (energy_inlet_type == "fixed-temperature")
     {
       const std::string bc_type = "FVADFunctorDirichletBC";
       InputParameters params = getFactory().getValidParams(bc_type);
       params.set<NonlinearVariableName>("variable") = _fluid_temperature_name;
-      params.set<MooseFunctorName>("functor") = _energy_inlet_functors[bc_ind];
-      params.set<std::vector<BoundaryName>>("boundary") = {inlet_boundaries[bc_ind]};
+      params.set<MooseFunctorName>("functor") = _energy_inlet_functors[inlet_boundary];
+      params.set<std::vector<BoundaryName>>("boundary") = {inlet_boundary};
 
-      getProblem().addFVBC(
-          bc_type, _fluid_temperature_name + "_" + inlet_boundaries[bc_ind], params);
+      getProblem().addFVBC(bc_type, _fluid_temperature_name + "_" + inlet_boundary, params);
     }
-    else if (_energy_inlet_types[bc_ind] == "heatflux")
+    else if (energy_inlet_type == "heatflux")
     {
       const std::string bc_type = "FVFunctionNeumannBC";
       InputParameters params = getFactory().getValidParams(bc_type);
       params.set<NonlinearVariableName>("variable") = _fluid_temperature_name;
-      params.set<FunctionName>("function") = _energy_inlet_functors[bc_ind];
-      params.set<std::vector<BoundaryName>>("boundary") = {inlet_boundaries[bc_ind]};
+      params.set<FunctionName>("function") = _energy_inlet_functors[inlet_boundary];
+      params.set<std::vector<BoundaryName>>("boundary") = {inlet_boundary};
 
-      getProblem().addFVBC(
-          bc_type, _fluid_temperature_name + "_" + inlet_boundaries[bc_ind], params);
+      getProblem().addFVBC(bc_type, _fluid_temperature_name + "_" + inlet_boundary, params);
     }
-    else if (_energy_inlet_types[bc_ind] == "flux-mass" ||
-             _energy_inlet_types[bc_ind] == "flux-velocity")
+    else if (energy_inlet_type == "flux-mass" || energy_inlet_type == "flux-velocity")
     {
       const std::string bc_type = "WCNSFVEnergyFluxBC";
       InputParameters params = getFactory().getValidParams(bc_type);
@@ -433,15 +449,15 @@ WCNSFVFluidHeatTransferPhysics::addINSEnergyInletBC()
 
       if (flux_inlet_directions.size())
         params.set<Point>("direction") = flux_inlet_directions[flux_bc_counter];
-      if (_energy_inlet_types[bc_ind] == "flux-mass")
+      if (energy_inlet_type == "flux-mass")
       {
         params.set<PostprocessorName>("mdot_pp") = flux_inlet_pps[flux_bc_counter];
-        params.set<PostprocessorName>("area_pp") = "area_pp_" + inlet_boundaries[bc_ind];
+        params.set<PostprocessorName>("area_pp") = "area_pp_" + inlet_boundary;
       }
       else
         params.set<PostprocessorName>("velocity_pp") = flux_inlet_pps[flux_bc_counter];
 
-      params.set<PostprocessorName>("temperature_pp") = _energy_inlet_functors[bc_ind];
+      params.set<PostprocessorName>("temperature_pp") = _energy_inlet_functors[inlet_boundary];
       params.set<MooseFunctorName>(NS::density) = _density_name;
       params.set<MooseFunctorName>(NS::cp) = _specific_heat_name;
       params.set<MooseFunctorName>(NS::T_fluid) = _fluid_temperature_name;
@@ -449,10 +465,9 @@ WCNSFVFluidHeatTransferPhysics::addINSEnergyInletBC()
       for (const auto d : make_range(dimension()))
         params.set<MooseFunctorName>(NS::velocity_vector[d]) = _velocity_names[d];
 
-      params.set<std::vector<BoundaryName>>("boundary") = {inlet_boundaries[bc_ind]};
+      params.set<std::vector<BoundaryName>>("boundary") = {inlet_boundary};
 
-      getProblem().addFVBC(
-          bc_type, _fluid_temperature_name + "_" + inlet_boundaries[bc_ind], params);
+      getProblem().addFVBC(bc_type, _fluid_temperature_name + "_" + inlet_boundary, params);
       flux_bc_counter += 1;
     }
   }

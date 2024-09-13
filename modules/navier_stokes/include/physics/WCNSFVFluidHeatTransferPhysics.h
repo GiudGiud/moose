@@ -16,8 +16,8 @@
 /**
  * Creates all the objects needed to solve the Navier Stokes energy equation
  */
-class WCNSFVFluidHeatTransferPhysics final : public NavierStokesPhysicsBase,
-                                             public WCNSFVCoupledAdvectionPhysicsHelper
+class WCNSFVFluidHeatTransferPhysics : public NavierStokesPhysicsBase,
+                                       public WCNSFVCoupledAdvectionPhysicsHelper
 {
 public:
   static InputParameters validParams();
@@ -45,13 +45,17 @@ public:
   bool hasEnergyEquation() const { return _has_energy_equation; }
 
 protected:
-private:
+  void addInletBoundary(const BoundaryName & boundary_name,
+                        const MooseEnum & inlet_type,
+                        const MooseFunctorName & inlet_functor);
+
   void addNonlinearVariables() override;
   void addInitialConditions() override;
   void addFVKernels() override;
   void addFVBCs() override;
   void addMaterials() override;
 
+private:
   unsigned short getNumberAlgebraicGhostingLayersNeeded() const override;
 
   /**
@@ -95,9 +99,9 @@ private:
   std::vector<MooseFunctorName> _ambient_temperature;
 
   /// Energy inlet boundary types
-  MultiMooseEnum _energy_inlet_types;
+  std::map<BoundaryName, MooseEnum> _energy_inlet_types;
   /// Functors describing the inlet boundary values. See energy_inlet_types for what the functors actually represent
-  std::vector<MooseFunctorName> _energy_inlet_functors;
+  std::map<BoundaryName, MooseFunctorName> _energy_inlet_functors;
   /// Energy wall boundary types
   MultiMooseEnum _energy_wall_types;
   /// Functors describing the wall boundary values. See energy_wall_types for what the functors actually represent
