@@ -59,7 +59,7 @@ LinearAssemblySegregatedSolve::validParams()
   params.addParam<unsigned int>(
       "active_scalar_l_max_its",
       10000,
-      "The maximum allowed iterations in the linear solver of the turbulence equation.");
+      "The maximum allowed iterations in the linear solver of the scalar equation.");
 
   params.addParamNamesToGroup(
       "active_scalar_systems active_scalar_equation_relaxation active_scalar_petsc_options "
