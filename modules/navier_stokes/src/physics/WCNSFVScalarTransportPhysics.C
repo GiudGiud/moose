@@ -12,6 +12,7 @@
 #include "WCNSFVFlowPhysics.h"
 #include "NSFVBase.h"
 #include "NS.h"
+#include "MapConversionUtils.h"
 
 registerNavierStokesPhysicsBaseTasks("NavierStokesApp", WCNSFVScalarTransportPhysics);
 registerWCNSFVScalarTransportBaseTasks("NavierStokesApp", WCNSFVScalarTransportPhysics);
@@ -76,9 +77,6 @@ WCNSFVScalarTransportPhysics::WCNSFVScalarTransportPhysics(const InputParameters
     _passive_scalar_names(getParam<std::vector<NonlinearVariableName>>("passive_scalar_names")),
     _has_scalar_equation(isParamValid("add_scalar_equation") ? getParam<bool>("add_scalar_equation")
                                                              : !usingNavierStokesFVSyntax()),
-    _passive_scalar_inlet_types(getParam<MultiMooseEnum>("passive_scalar_inlet_types")),
-    _passive_scalar_inlet_functors(
-        getParam<std::vector<std::vector<MooseFunctorName>>>("passive_scalar_inlet_functors")),
     _passive_scalar_sources(getParam<std::vector<MooseFunctorName>>("passive_scalar_source")),
     _passive_scalar_coupled_sources(
         getParam<std::vector<std::vector<MooseFunctorName>>>("passive_scalar_coupled_source")),
@@ -113,9 +111,49 @@ WCNSFVScalarTransportPhysics::WCNSFVScalarTransportPhysics(const InputParameters
     checkTwoDVectorParamsSameLength<MooseFunctorName, Real>("passive_scalar_coupled_source",
                                                             "passive_scalar_coupled_source_coeff");
 
+  if (!_flow_equations_physics)
+    mooseError("Flow physics should be set");
   if (_porous_medium_treatment)
     _flow_equations_physics->paramError("porous_medium_treatment",
                                         "Porous media scalar advection is currently unimplemented");
+
+  // Create maps for boundary-restricted parameters
+  _passive_scalar_inlet_types.resize(_passive_scalar_names.size());
+  _passive_scalar_inlet_functors.resize(_passive_scalar_names.size());
+  const auto & inlet_boundaries = _flow_equations_physics->getInletBoundaries();
+  // Re-organize data from (inlet, scalar) indexing to (scalar, inlet) indexing
+  if (isParamValid("passive_scalar_inlet_types"))
+  {
+    const auto & all_inlet_types = getParam<MultiMooseEnum>("passive_scalar_inlet_types");
+    const auto num_scalars = _passive_scalar_names.size();
+    const auto num_inlets = inlet_boundaries.size();
+    if (num_scalars * num_inlets != all_inlet_types.size())
+      paramError("passive_scalar_inlet_types",
+                 "The number of scalar inlet types (" + std::to_string(all_inlet_types.size()) +
+                     ") is not equal to the number of inlet boundaries (" +
+                     std::to_string(num_inlets) + ") times the number of passive scalars (" +
+                     std::to_string(num_scalars) + ")");
+
+    for (const auto scalar_i : index_range(_passive_scalar_names))
+    {
+      auto inlet_types = std::vector<MooseEnum>();
+      for (const auto i : index_range(inlet_boundaries))
+        inlet_types.push_back(all_inlet_types[i * num_scalars + scalar_i]);
+      _passive_scalar_inlet_types[scalar_i] =
+          Moose::createMapFromVectors<BoundaryName, MooseEnum>(inlet_boundaries, inlet_types);
+      if (isParamSetByUser("passive_scalar_inlet_functors"))
+      {
+        const auto & all_inlet_functors =
+            getParam<std::vector<std::vector<MooseFunctorName>>>("passive_scalar_inlet_functors");
+        auto inlet_functors = std::vector<MooseFunctorName>();
+        for (const auto i : index_range(inlet_boundaries))
+          inlet_functors.push_back(all_inlet_functors[i][scalar_i]);
+        _passive_scalar_inlet_functors[scalar_i] =
+            Moose::createMapFromVectors<BoundaryName, MooseFunctorName>(inlet_boundaries,
+                                                                        inlet_functors);
+      }
+    }
+  }
 }
 
 void
@@ -301,22 +339,20 @@ WCNSFVScalarTransportPhysics::addScalarInletBC()
                      std::to_string(_passive_scalar_inlet_functors[name_i].size()) + ")");
 
     unsigned int flux_bc_counter = 0;
-    unsigned int num_inlets = inlet_boundaries.size();
-    for (unsigned int bc_ind = 0; bc_ind < num_inlets; ++bc_ind)
+    for (const auto & boundary : inlet_boundaries)
     {
-      if (_passive_scalar_inlet_types[name_i * num_inlets + bc_ind] == "fixed-value")
+      if (libmesh_map_find(_passive_scalar_inlet_types[name_i], boundary) == "fixed-value")
       {
         const std::string bc_type = "FVFunctionDirichletBC";
         InputParameters params = getFactory().getValidParams(bc_type);
         params.set<NonlinearVariableName>("variable") = _passive_scalar_names[name_i];
-        params.set<FunctionName>("function") = _passive_scalar_inlet_functors[name_i][bc_ind];
-        params.set<std::vector<BoundaryName>>("boundary") = {inlet_boundaries[bc_ind]};
+        params.set<FunctionName>("function") = _passive_scalar_inlet_functors[name_i][boundary];
+        params.set<std::vector<BoundaryName>>("boundary") = {boundary};
 
-        getProblem().addFVBC(
-            bc_type, _passive_scalar_names[name_i] + "_" + inlet_boundaries[bc_ind], params);
+        getProblem().addFVBC(bc_type, _passive_scalar_names[name_i] + "_" + boundary, params);
       }
-      else if (_passive_scalar_inlet_types[name_i * num_inlets + bc_ind] == "flux-mass" ||
-               _passive_scalar_inlet_types[name_i * num_inlets + bc_ind] == "flux-velocity")
+      else if (libmesh_map_find(_passive_scalar_inlet_types[name_i], boundary) == "flux-mass" ||
+               libmesh_map_find(_passive_scalar_inlet_types[name_i], boundary) == "flux-velocity")
       {
         const auto flux_inlet_directions = _flow_equations_physics->getFluxInletDirections();
         const auto flux_inlet_pps = _flow_equations_physics->getFluxInletPPs();
@@ -327,33 +363,46 @@ WCNSFVScalarTransportPhysics::addScalarInletBC()
         params.set<MooseFunctorName>("passive_scalar") = _passive_scalar_names[name_i];
         if (flux_inlet_directions.size())
           params.set<Point>("direction") = flux_inlet_directions[flux_bc_counter];
-        if (_passive_scalar_inlet_types[name_i * num_inlets + bc_ind] == "flux-mass")
+        if (libmesh_map_find(_passive_scalar_inlet_types[name_i], boundary) == "flux-mass")
         {
           params.set<PostprocessorName>("mdot_pp") = flux_inlet_pps[flux_bc_counter];
-          params.set<PostprocessorName>("area_pp") = "area_pp_" + inlet_boundaries[bc_ind];
+          params.set<PostprocessorName>("area_pp") = "area_pp_" + boundary;
         }
         else
           params.set<PostprocessorName>("velocity_pp") = flux_inlet_pps[flux_bc_counter];
 
         params.set<MooseFunctorName>(NS::density) = _density_name;
         params.set<PostprocessorName>("scalar_value_pp") =
-            _passive_scalar_inlet_functors[name_i][bc_ind];
-        params.set<std::vector<BoundaryName>>("boundary") = {inlet_boundaries[bc_ind]};
+            _passive_scalar_inlet_functors[name_i][boundary];
+        params.set<std::vector<BoundaryName>>("boundary") = {boundary};
 
+        params.set<unsigned int>("dimension") = dimension();
         params.set<MooseFunctorName>(NS::velocity_x) = _velocity_names[0];
         if (dimension() > 1)
           params.set<MooseFunctorName>(NS::velocity_y) = _velocity_names[1];
         if (dimension() > 2)
           params.set<MooseFunctorName>(NS::velocity_z) = _velocity_names[2];
 
-        getProblem().addFVBC(bc_type,
-                             prefix() + _passive_scalar_names[name_i] + "_" +
-                                 inlet_boundaries[bc_ind],
-                             params);
+        getProblem().addFVBC(
+            bc_type, prefix() + _passive_scalar_names[name_i] + "_" + boundary, params);
         flux_bc_counter += 1;
       }
     }
   }
+}
+
+void
+WCNSFVScalarTransportPhysics::addInletBoundary(const BoundaryName & boundary,
+                                               const MooseEnum & inlet_type,
+                                               const MooseFunctorName & inlet_functor,
+                                               const unsigned int scalar_index)
+{
+  _passive_scalar_inlet_types[scalar_index].insert(std::make_pair(boundary, inlet_type));
+  if (inlet_type == "fixed-value" || inlet_type == "flux-mass" || inlet_type == "flux-velocity")
+    _passive_scalar_inlet_functors[scalar_index][boundary] = inlet_functor;
+  else
+    mooseError("Unsupported inlet type on boundary " + boundary +
+               (inlet_functor.empty() ? "" : ("\nInlet functor: " + inlet_functor)));
 }
 
 void

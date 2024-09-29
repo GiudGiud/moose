@@ -39,8 +39,21 @@ public:
   bool hasScalarEquations() const { return _has_scalar_equation; }
 
 protected:
+  virtual void addNonlinearVariables() override;
+  virtual void addInitialConditions() override;
   virtual void addFVKernels() override;
   virtual void addFVBCs() override;
+
+  /**
+   * Add a boundary condition on the specified boundary
+   * @param boundary_name the name of the boundary
+   * @param inlet_type the type of the inlet
+   * @param inlet_functor the functor setting the boundary condition
+   */
+  void addInletBoundary(const BoundaryName & boundary_name,
+                        const MooseEnum & inlet_type,
+                        const MooseFunctorName & inlet_functor,
+                        const unsigned int scalar_index);
 
   /// Names of the passive scalar variables
   std::vector<NonlinearVariableName> _passive_scalar_names;
@@ -49,14 +62,11 @@ protected:
   const bool _has_scalar_equation;
 
   /// Passive scalar inlet boundary types
-  MultiMooseEnum _passive_scalar_inlet_types;
+  std::vector<std::map<BoundaryName, MooseEnum>> _passive_scalar_inlet_types;
   /// Functors describing the inlet boundary values. See passive_scalar_inlet_types for what the functors actually represent
-  std::vector<std::vector<MooseFunctorName>> _passive_scalar_inlet_functors;
+  std::vector<std::map<BoundaryName, MooseFunctorName>> _passive_scalar_inlet_functors;
 
 private:
-  void addNonlinearVariables() override;
-  void addInitialConditions() override;
-
   unsigned short getNumberAlgebraicGhostingLayersNeeded() const override;
 
   /**
