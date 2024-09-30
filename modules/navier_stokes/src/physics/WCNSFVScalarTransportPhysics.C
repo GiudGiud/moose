@@ -80,8 +80,8 @@ WCNSFVScalarTransportPhysics::WCNSFVScalarTransportPhysics(const InputParameters
     _passive_scalar_sources(getParam<std::vector<MooseFunctorName>>("passive_scalar_source")),
     _passive_scalar_coupled_sources(
         getParam<std::vector<std::vector<MooseFunctorName>>>("passive_scalar_coupled_source")),
-    _passive_scalar_sources_coef(
-        getParam<std::vector<std::vector<Real>>>("passive_scalar_coupled_source_coeff"))
+    _passive_scalar_coupled_sources_coefs(
+        getParam<std::vector<std::vector<MooseFunctorName>>>("passive_scalar_coupled_source_coeff"))
 {
   for (const auto & scalar_name : _passive_scalar_names)
     saveNonlinearVariableName(scalar_name);
@@ -107,9 +107,9 @@ WCNSFVScalarTransportPhysics::WCNSFVScalarTransportPhysics(const InputParameters
     checkTwoDVectorParamMultiMooseEnumSameLength<MooseFunctorName>(
         "passive_scalar_inlet_functors", "passive_scalar_inlet_types", false);
 
-  if (_passive_scalar_sources_coef.size())
-    checkTwoDVectorParamsSameLength<MooseFunctorName, Real>("passive_scalar_coupled_source",
-                                                            "passive_scalar_coupled_source_coeff");
+  if (_passive_scalar_coupled_sources_coefs.size())
+    checkTwoDVectorParamsSameLength<MooseFunctorName, MooseFunctorName>(
+        "passive_scalar_coupled_source", "passive_scalar_coupled_source_coeff");
 
   if (!_flow_equations_physics)
     mooseError("Flow physics should be set");
@@ -265,6 +265,20 @@ WCNSFVScalarTransportPhysics::addScalarSourceKernels()
   InputParameters params = getFactory().getValidParams(kernel_type);
   assignBlocks(params, _blocks);
 
+  // Check the size of the scalar sources inputs
+  for (const auto scalar_i : index_range(_passive_scalar_names))
+  {
+    if (_passive_scalar_coupled_sources_blocks.size() != _passive_scalar_coupled_sources[scalar_i].size())
+      paramError("passive_scalar_coupled_source",
+                 "Number of coupled sources does not match the number of groups of blocks "
+                 "specified for the coupled sources");
+    if (_passive_scalar_coupled_sources_coefs[scalar_i].size() !=
+        _passive_scalar_coupled_sources[scalar_i].size())
+      paramError(
+          "passive_scalar_coupled_source_coeff",
+          "Number of coupled sources does not match the number of coupled sources coefficients");
+  }
+
   for (const auto scalar_i : index_range(_passive_scalar_names))
   {
     params.set<NonlinearVariableName>("variable") = _passive_scalar_names[scalar_i];
@@ -281,8 +295,12 @@ WCNSFVScalarTransportPhysics::addScalarSourceKernels()
       for (const auto i : index_range(_passive_scalar_coupled_sources[scalar_i]))
       {
         params.set<MooseFunctorName>("v") = _passive_scalar_coupled_sources[scalar_i][i];
-        if (_passive_scalar_sources_coef.size())
-          params.set<Real>("coef") = _passive_scalar_sources_coef[scalar_i][i];
+        if (_passive_scalar_coupled_sources_coefs.size())
+          params.set<MooseFunctorName>("functor_coef") =
+              _passive_scalar_coupled_sources_coefs[scalar_i][i];
+        if (_passive_scalar_coupled_sources_blocks.size())
+          params.set<std::vector<SubdomainName>>("block") =
+              _passive_scalar_coupled_sources_blocks[i];
 
         getProblem().addFVKernel(kernel_type,
                                  prefix() + "ins_" + _passive_scalar_names[scalar_i] +
@@ -403,6 +421,17 @@ WCNSFVScalarTransportPhysics::addInletBoundary(const BoundaryName & boundary,
   else
     mooseError("Unsupported inlet type on boundary " + boundary +
                (inlet_functor.empty() ? "" : ("\nInlet functor: " + inlet_functor)));
+}
+
+void
+WCNSFVScalarTransportPhysics::addExternalScalarSources(
+    std::vector<SubdomainName> blocks,
+    std::vector<MooseFunctorName> scalar_sources,
+    std::vector<MooseFunctorName> scalar_sources_coefs)
+{
+  _passive_scalar_coupled_sources_blocks.push_back(blocks);
+  _passive_scalar_coupled_sources.push_back(scalar_sources);
+  _passive_scalar_coupled_sources_coefs.push_back(scalar_sources_coefs);
 }
 
 void

@@ -55,6 +55,15 @@ protected:
                         const MooseFunctorName & inlet_functor,
                         const unsigned int scalar_index);
 
+  /** Add scalar sources on the specified blocks for all the scalars at once
+   * @param blocks subdomains to add the sources on
+   * @param scalar_sources vector of the sources, for each passive scalar
+   * @param scalar_sources_coefs vector of the functor coefficients multiplying each source
+   */
+  void addExternalScalarSources(std::vector<SubdomainName> blocks,
+                                std::vector<MooseFunctorName> scalar_sources,
+                                std::vector<MooseFunctorName> scalar_sources_coefs);
+
   /// Names of the passive scalar variables
   std::vector<NonlinearVariableName> _passive_scalar_names;
   /// A boolean to help compatibility with the old Modules/NavierStokesFV syntax
@@ -89,8 +98,10 @@ private:
 
   /// Functors for the passive scalar sources. Indexing is scalar variable index
   std::vector<MooseFunctorName> _passive_scalar_sources;
+  /// Subdomains for the passive scalar coupled sources
+  std::vector<std::vector<SubdomainName>> _passive_scalar_coupled_sources_blocks;
   /// Functors for the passive scalar (coupled) sources. Inner indexing is scalar variable index
   std::vector<std::vector<MooseFunctorName>> _passive_scalar_coupled_sources;
   /// Coefficients multiplying for the passive scalar sources. Inner indexing is scalar variable index
-  std::vector<std::vector<Real>> _passive_scalar_sources_coef;
+  std::vector<std::vector<MooseFunctorName>> _passive_scalar_coupled_sources_coefs;
 };

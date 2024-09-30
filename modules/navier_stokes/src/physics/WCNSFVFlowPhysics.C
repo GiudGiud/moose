@@ -1329,7 +1329,7 @@ WCNSFVFlowPhysics::addNonPorousMediumSpeedMaterial()
   assignBlocks(params, _blocks);
 
   const std::vector<std::string> param_names{"x_functor", "y_functor", "z_functor"};
-  for (unsigned int dim_i = 0; dim_i < dimension(); ++dim_i)
+  for (const auto dim_i : make_range(dimension()))
     params.set<MooseFunctorName>(param_names[dim_i]) = _velocity_names[dim_i];
   params.set<MooseFunctorName>("vector_magnitude_name") = NS::speed;
 
