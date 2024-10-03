@@ -55,7 +55,7 @@ HeatConductionPhysics::HeatConductionPhysics(const InputParameters & parameters)
   : PhysicsBase(parameters), _temperature_name(getParam<VariableName>("temperature_name"))
 {
   // Save variables (for initialization from file for example)
-  saveNonlinearVariableName(_temperature_name);
+  saveSolverVariableName(_temperature_name);
 
   // Parameter checking
   checkVectorParamsSameLength<BoundaryName, MooseFunctorName>("heat_flux_boundaries",
