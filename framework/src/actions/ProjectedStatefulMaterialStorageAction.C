@@ -75,6 +75,10 @@ ProjectedStatefulMaterialStorageAction::act()
   {
     // loop over all supported property types
     Moose::typeLoop<ProcessProperty>(SupportedTypes{}, this, prop_name);
+
+    // loop over vector properties
+    processProperty<std::vector<Real>, false>(prop_name);
+    // processProperty<std::vector<Real>, true>(prop_name);
   }
 }
 

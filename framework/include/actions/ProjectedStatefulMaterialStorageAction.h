@@ -86,14 +86,28 @@ void
 ProjectedStatefulMaterialStorageAction::processProperty(const MaterialPropertyName & prop_name)
 {
   // check if a property of type T exists
-  const auto & block_data = _problem->getMaterialData(Moose::BLOCK_MATERIAL_DATA);
+  auto & block_data = _problem->getMaterialData(Moose::BLOCK_MATERIAL_DATA);
   const auto & boundary_data = _problem->getMaterialData(Moose::BOUNDARY_MATERIAL_DATA);
   if (!block_data.haveGenericProperty<T, is_ad>(prop_name) &&
       !boundary_data.haveGenericProperty<T, is_ad>(prop_name))
     return;
 
+  // get a dummy mooseObject mo, actions cannot be requestors
+  // using the problem for now to request the properties
+
   // number of scalar components
-  const auto size = Moose::SerialAccess<T>::size();
+  auto size = 0;
+  // TODO: use is vector
+  if constexpr (std::is_same_v<std::vector<Real>, T>)
+    // find the size of the vector material property
+    size = block_data.getProperty<T>(prop_name, 0, *_problem).size();
+  // TODO Property handle AD : use GenericRealVector<is_ad>
+  else if constexpr (std::is_same_v<std::vector<ADReal>, T>)
+    // find the size of the vector material property
+    size = block_data.getProperty<T>(prop_name, 0, *_problem).size();
+  else
+    // use this only for supported types
+    size = Moose::SerialAccess<T>::size();
 
   // generate variable names
   std::vector<VariableName> vars;
