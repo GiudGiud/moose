@@ -14,6 +14,7 @@ registerMooseObject("MooseApp", InterpolatedStatefulMaterialReal);
 registerMooseObject("MooseApp", InterpolatedStatefulMaterialRealVectorValue);
 registerMooseObject("MooseApp", InterpolatedStatefulMaterialRankTwoTensor);
 registerMooseObject("MooseApp", InterpolatedStatefulMaterialRankFourTensor);
+registerMooseObject("MooseApp", InterpolatedStatefulMaterialStdVectorReal);
 
 template <typename T>
 InputParameters
@@ -43,6 +44,23 @@ InterpolatedStatefulMaterialTempl<T>::InterpolatedStatefulMaterialTempl(
               "Internal error. Old and older coupled variable vectors should have the same size.");
 }
 
+template <>
+InterpolatedStatefulMaterialTempl<std::vector<Real>>::InterpolatedStatefulMaterialTempl(
+    const InputParameters & parameters)
+  : Material(parameters),
+    _old_state(coupledValuesOld("old_state")),
+    _older_state(coupledValuesOlder("old_state")),
+    _size(coupledComponents("old_state")), // TODO check!!
+    _prop_name(getParam<MaterialPropertyName>("prop_name")),
+    _prop_old(declareProperty<std::vector<Real>>(_prop_name + _interpolated_old)),
+    _prop_older(declareProperty<std::vector<Real>>(_prop_name + _interpolated_older))
+{
+  if (_old_state.size() != _size)
+    paramError("old_state", "Wrong number of component AuxVariables passed in.");
+  mooseAssert(_old_state.size() == _older_state.size(),
+              "Internal error. Old and older coupled variable vectors should have the same size.");
+}
+
 template <typename T>
 void
 InterpolatedStatefulMaterialTempl<T>::computeQpProperties()
@@ -56,7 +74,21 @@ InterpolatedStatefulMaterialTempl<T>::computeQpProperties()
     v = (*_older_state[index++])[_qp];
 }
 
+template <>
+void
+InterpolatedStatefulMaterialTempl<std::vector<Real>>::computeQpProperties()
+{
+  std::size_t index = 0;
+  for (auto & v : _prop_old[_qp])
+    v = (*_old_state[index++])[_qp];
+
+  index = 0;
+  for (auto & v : _prop_older[_qp])
+    v = (*_older_state[index++])[_qp];
+}
+
 template class InterpolatedStatefulMaterialTempl<Real>;
 template class InterpolatedStatefulMaterialTempl<RealVectorValue>;
 template class InterpolatedStatefulMaterialTempl<RankTwoTensor>;
 template class InterpolatedStatefulMaterialTempl<RankFourTensor>;
+template class InterpolatedStatefulMaterialTempl<std::vector<Real>>;

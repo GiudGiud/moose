@@ -47,15 +47,24 @@ protected:
   MaterialProperty<T> & _prop_older;
 };
 
+template <>
+InterpolatedStatefulMaterialTempl<std::vector<Real>>::InterpolatedStatefulMaterialTempl(
+    const InputParameters & parameters);
+template <>
+void InterpolatedStatefulMaterialTempl<std::vector<Real>>::computeQpProperties();
+
 typedef InterpolatedStatefulMaterialTempl<Real> InterpolatedStatefulMaterialReal;
 typedef InterpolatedStatefulMaterialTempl<RealVectorValue>
     InterpolatedStatefulMaterialRealVectorValue;
 typedef InterpolatedStatefulMaterialTempl<RankTwoTensor> InterpolatedStatefulMaterialRankTwoTensor;
 typedef InterpolatedStatefulMaterialTempl<RankFourTensor>
     InterpolatedStatefulMaterialRankFourTensor;
+typedef InterpolatedStatefulMaterialTempl<std::vector<Real>>
+    InterpolatedStatefulMaterialStdVectorReal;
 
 // Prevent implicit instantiation in other translation units where these classes are used
 extern template class InterpolatedStatefulMaterialTempl<Real>;
 extern template class InterpolatedStatefulMaterialTempl<RealVectorValue>;
 extern template class InterpolatedStatefulMaterialTempl<RankTwoTensor>;
 extern template class InterpolatedStatefulMaterialTempl<RankFourTensor>;
+extern template class InterpolatedStatefulMaterialTempl<std::vector<Real>>;
