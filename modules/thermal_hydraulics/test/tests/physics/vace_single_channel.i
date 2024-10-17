@@ -18,7 +18,7 @@
 
 [Physics]
   [ThermalHydraulics]
-    [VACESinglePhase]
+    [CompressibleEuler]
       [all]
         fp = fp
 
@@ -31,7 +31,7 @@
 
 [Components]
   [inlet]
-    type = PhysicsInletMassFlowRateTemperature
+    type =InletMassFlowRateTemperature1Phase
     input = 'pipe:in'
     m_dot = 2
     T = 500
