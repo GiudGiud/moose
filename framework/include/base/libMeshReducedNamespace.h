@@ -328,6 +328,9 @@ namespace Utility
 namespace Parallel
 {
 }
+namespace TIMPI
+{
+}
 }
 namespace MeshTools = libMesh::MeshTools;
 namespace Predicates = libMesh::Predicates;
@@ -335,6 +338,7 @@ namespace TensorTools = libMesh::TensorTools;
 namespace Threads = libMesh::Threads;
 namespace Utility = libMesh::Utility;
 namespace Parallel = libMesh::Parallel;
+namespace TIMPI = libMesh::TIMPI;
 
 // Added to pass downstream app tests
 // All these are all prefaced with 'libMesh::' in the framework and modules
