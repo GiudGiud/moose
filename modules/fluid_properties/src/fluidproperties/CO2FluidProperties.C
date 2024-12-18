@@ -447,7 +447,7 @@ CO2FluidProperties::p_from_rho_T(Real density, Real temperature) const
 {
   // Check that the input parameters are within the region of validity
   if (temperature < 216.0 || temperature > 1100.0 || density <= 0.0)
-    throw MooseException("Parameters out of range in " + name() + ": pressure()");
+    throw MooseException("Parameters out of range in " + name() + ": pressure(). \nTemperature: " + std::to_string(temperature) + "\nDensity: " + std::to_string(density));
 
   Real pressure = 0.0;
 
@@ -470,6 +470,7 @@ CO2FluidProperties::p_from_rho_T(Real density, Real temperature) const
 Real
 CO2FluidProperties::rho_from_p_T(Real pressure, Real temperature) const
 {
+  _console << pressure << " " << temperature << std::endl;
   // Check that the input parameters are within the region of validity
   if (temperature < 216.0 || temperature > 1100.0 || pressure <= 0.0)
     throw MooseException("Parameters out of range in " + name() + ": rho_from_p_T()");

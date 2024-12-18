@@ -41,6 +41,8 @@ public:
   virtual Real e_from_p_T(Real pressure, Real temperature) const override;
   virtual void e_from_p_T(Real p, Real T, Real & e, Real & de_dp, Real & de_dT) const override;
 
+  virtual Real e_from_p_rho(Real pressure, Real density) const override;
+
   virtual Real c_from_p_T(Real pressure, Real temperature) const override;
 
   virtual Real cp_from_p_T(Real pressure, Real temperature) const override;
@@ -63,6 +65,18 @@ public:
    * @return pressure (Pa)
    */
   virtual Real p_from_rho_T(Real rho, Real T) const;
+  virtual Real p_from_v_e(Real v, Real e) const override;
+  virtual void p_from_v_e(Real v, Real e, Real & p, Real & dp_dv, Real & dp_de) const override;
+
+  /**
+   * Temperature as a function of pressure and density
+   *
+   * @param p pressure (Pa)
+   * @param rho density (kg/m^3)
+   * @return temperature (K)
+   */
+  virtual Real T_from_p_rho(Real pressure, Real density) const;
+  virtual Real T_from_v_e(Real v, Real e) const override;
 
 protected:
   /**

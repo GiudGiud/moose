@@ -95,6 +95,18 @@ HelmholtzFluidProperties::e_from_p_T(
 }
 
 Real
+HelmholtzFluidProperties::e_from_p_rho(Real pressure, Real density) const
+{
+  // Obtain temperature
+  const Real temperature = T_from_p_rho(pressure, density);
+  // Scale the input density and temperature
+  const Real delta = density / criticalDensity();
+  const Real tau = criticalTemperature() / temperature;
+
+  return _R * temperature * tau * dalpha_dtau(delta, tau) / molarMass();
+}
+
+Real
 HelmholtzFluidProperties::c_from_p_T(Real pressure, Real temperature) const
 {
   // Require density first
@@ -224,4 +236,51 @@ HelmholtzFluidProperties::p_from_rho_T(Real density, Real temperature) const
   const Real tau = criticalTemperature() / temperature;
 
   return _R * density * temperature * delta * dalpha_ddelta(delta, tau) / molarMass();
+}
+
+Real
+HelmholtzFluidProperties::T_from_p_rho(Real pressure, Real density) const
+{
+  auto lambda = [&](Real p, Real current_T, Real & new_rho, Real & drho_dp, Real & drho_dT)
+  { rho_from_p_T(p, current_T, new_rho, drho_dp, drho_dT); };
+  return FluidPropertiesUtils::NewtonSolve(
+               pressure, density, _T_initial_guess, _tolerance, lambda, name() + "::T_from_p_rho").first;
+}
+
+Real
+HelmholtzFluidProperties::T_from_v_e(Real v, Real e) const
+{
+  // Scale the input density and temperature
+  const Real delta = 1. / v / criticalDensity();
+  const Real dalpha_dtau = e / _R / criticalTemperature() * molarMass();
+  const Real h = (e + v * _R / v * delta * (- criticalTemperature() * dalpha_dtau / delta)) / (molarMass() * (1- delta / v));
+  const Real dalpha_ddelta_times_T = h * molarMass() / _R - criticalTemperature() * dalpha_dtau / delta;
+
+  const Real T_sq = h / _R / (criticalTemperature() * dalpha_dtau + delta * dalpha_ddelta_times_T) /
+         molarMass();
+  return std::sqrt(T_sq);
+  // (h - e) / v = _R * density * delta * dalpha_ddelta_times_T / molarMass();
+  // h = e + v * _R * density * delta * (h * molarMass() / _R - criticalTemperature() * dalpha_dtau / delta) / molarMass();
+}
+
+Real
+HelmholtzFluidProperties::p_from_v_e(Real v, Real e) const
+{
+  const Real temperature = T_from_v_e(v, e);
+  return p_from_rho_T(1./v, temperature);
+}
+
+void
+HelmholtzFluidProperties::p_from_v_e(Real v, Real e, Real & p, Real & dp_dv, Real & dp_de) const
+{
+  const Real temperature = T_from_v_e(v, e);
+  p = p_from_rho_T(1./v, temperature);
+  // Analytical derivatives should be possible in future works
+  const Real eps = 1e-6;
+  const Real temperature_at_dv = T_from_v_e(v * (1. + eps), e);
+  const Real p_at_dv = p_from_rho_T(1./v / (1. + eps), temperature_at_dv);
+  dp_dv = (p_at_dv - p) / eps / v; 
+  const Real temperature_at_de = T_from_v_e(v, e * (1 + eps));
+  const Real p_at_de = p_from_rho_T(1./v, temperature_at_de);
+  dp_de = (p_at_de - p) / eps / e;
 }
