@@ -39,9 +39,16 @@ MooseVariableData<OutputType>::MooseVariableData(const MooseVariableField<Output
     _var_num(var.number()),
     _assembly(_subproblem.assembly(_tid, var.kind() == Moose::VAR_SOLVER ? sys.number() : 0)),
     _element_type(element_type),
+    _is_transient(_subproblem.isTransient()),
     _ad_zero(0),
     _need_ad_u_dot(false),
     _need_ad_u_dotdot(false),
+    _need_ad(false),
+    _need_ad_u(false),
+    _need_ad_grad_u(false),
+    _need_ad_grad_u_dot(false),
+    _need_ad_second_u(false),
+    _has_dof_indices(false),
     _need_second(false),
     _need_second_old(false),
     _need_second_older(false),
@@ -52,12 +59,6 @@ MooseVariableData<OutputType>::MooseVariableData(const MooseVariableField<Output
     _need_div(false),
     _need_div_old(false),
     _need_div_older(false),
-    _need_ad(false),
-    _need_ad_u(false),
-    _need_ad_grad_u(false),
-    _need_ad_grad_u_dot(false),
-    _need_ad_second_u(false),
-    _has_dof_indices(false),
     _qrule(qrule_in),
     _qrule_face(qrule_face_in),
     _use_dual(var.useDual()),
@@ -424,7 +425,6 @@ MooseVariableData<OutputType>::computeValues()
   if (num_dofs > 0)
     fetchDoFValues();
 
-  bool is_transient = _subproblem.isTransient();
   unsigned int nqp = _current_qrule->n_points();
   auto && active_coupleable_matrix_tags = _subproblem.getActiveFEVariableCoupleableMatrixTags(_tid);
 
@@ -450,19 +450,23 @@ MooseVariableData<OutputType>::computeValues()
   if (_need_curl)
   {
     _curl_u.resize(nqp);
-    for (unsigned int i = 0; i < nqp; ++i)
+    #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
       _curl_u[i] = 0;
     for (unsigned int i = 0; i < num_dofs; i++)
-      for (unsigned int qp = 0; qp < nqp; qp++)
+      #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
         _curl_u[qp] +=  (*_current_curl_phi)[i][qp] * _vector_tags_dof_u[_solution_tag][i];
   }
   if (_need_curl_old)
   {
     _curl_u_old.resize(nqp);
-    for (unsigned int i = 0; i < nqp; ++i)
+    #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
       _curl_u_old[i] = 0;
     for (unsigned int i = 0; i < num_dofs; i++)
-      for (unsigned int qp = 0; qp < nqp; qp++)
+      #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
         _curl_u_old[qp] +=  (*_current_curl_phi)[i][qp] * _vector_tags_dof_u[_old_solution_tag][i];
   }
 
@@ -470,19 +474,23 @@ MooseVariableData<OutputType>::computeValues()
   if (_need_div)
   {
     _div_u.resize(nqp);
-    for (unsigned int i = 0; i < nqp; ++i)
+  #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
       _div_u[i] = 0;
     for (unsigned int i = 0; i < num_dofs; i++)
-      for (unsigned int qp = 0; qp < nqp; qp++)
+      #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
         _div_u[qp] +=  (*_current_div_phi)[i][qp] * _vector_tags_dof_u[_solution_tag][i];
   }
-  if (is_transient && _need_div_old)
+  if (_is_transient && _need_div_old)
   {
     _div_u_old.resize(nqp);
-    for (unsigned int i = 0; i < nqp; ++i)
+  #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
       _div_u_old[i] = 0;
     for (unsigned int i = 0; i < num_dofs; i++)
-      for (unsigned int qp = 0; qp < nqp; qp++)
+      #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
         _div_u_old[qp] +=  (*_current_div_phi)[i][qp] * _vector_tags_dof_u[_old_solution_tag][i];
   }
 
@@ -490,42 +498,50 @@ MooseVariableData<OutputType>::computeValues()
   if (_need_second)
   {
     _second_u.resize(nqp);
-    for (unsigned int i = 0; i < nqp; ++i)
+  #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
       _second_u[i] = 0;
     for (unsigned int i = 0; i < num_dofs; i++)
-      for (unsigned int qp = 0; qp < nqp; qp++)
+      #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
         _second_u[qp].add_scaled((*_current_second_phi)[i][qp], _vector_tags_dof_u[_solution_tag][i]);
   }
   if (_need_second_previous_nl)
   {
     _second_u_previous_nl.resize(nqp);
-    for (unsigned int i = 0; i < nqp; ++i)
+  #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
       _second_u_previous_nl[i] = 0;
     for (unsigned int i = 0; i < num_dofs; i++)
-      for (unsigned int qp = 0; qp < nqp; qp++)
+      #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
         _second_u_previous_nl[qp].add_scaled((*_current_second_phi)[i][qp],
                                               _vector_tags_dof_u[_previous_nl_solution_tag][i]);
 
   }
-  if (is_transient)
+  if (_is_transient)
   {
     if (_need_second_old)
     {
       _second_u_old.resize(nqp);
-      for (unsigned int i = 0; i < nqp; ++i)
+    #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
         _second_u_old[i] = 0;
       for (unsigned int i = 0; i < num_dofs; i++)
-        for (unsigned int qp = 0; qp < nqp; qp++)
+        #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
           _second_u_old[qp].add_scaled((*_current_second_phi)[i][qp], _vector_tags_dof_u[_old_solution_tag][i]);
     }
 
     if (_need_second_older)
     {
       _second_u_older.resize(nqp);
-      for (unsigned int i = 0; i < nqp; ++i)
+    #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
         _second_u_older[i] = 0;
       for (unsigned int i = 0; i < num_dofs; i++)
-        for (unsigned int qp = 0; qp < nqp; qp++)
+        #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
           _second_u_older[qp].add_scaled((*_current_second_phi)[i][qp], _vector_tags_dof_u[_older_solution_tag][i]);
     }
   }
@@ -536,19 +552,23 @@ MooseVariableData<OutputType>::computeValues()
     if (_need_vector_tag_u[tag] && _sys.hasVector(tag) && _sys.getVector(tag).closed())
     {
       _vector_tag_u[tag].resize(nqp);
-      for (unsigned int i = 0; i < nqp; ++i)
+    #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
         _vector_tag_u[tag][i] = 0;
       for (unsigned int i = 0; i < num_dofs; i++)
-        for (unsigned int qp = 0; qp < nqp; qp++)
+        #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
           _vector_tag_u[tag][qp] += (*_current_phi)[i][qp] * _vector_tags_dof_u[tag][i];
     }
     if (_need_vector_tag_grad[tag] && _sys.hasVector(tag) && _sys.getVector(tag).closed())
     {
       _vector_tag_grad[tag].resize(nqp);
-      for (unsigned int i = 0; i < nqp; ++i)
+    #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
         _vector_tag_grad[tag][i] = 0;
       for (unsigned int i = 0; i < num_dofs; i++)
-        for (unsigned int qp = 0; qp < nqp; qp++)
+        #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
           _vector_tag_grad[tag][qp].add_scaled( (*_current_grad_phi)[i][qp], _vector_tags_dof_u[tag][i]);
     }
   }
@@ -557,92 +577,110 @@ MooseVariableData<OutputType>::computeValues()
     if (_need_matrix_tag_u[tag])
     {
       _matrix_tag_u[tag].resize(nqp);
-      for (unsigned int i = 0; i < nqp; ++i)
+    #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
         _matrix_tag_u[tag][i] = 0;
       for (unsigned int i = 0; i < num_dofs; i++)
-        for (unsigned int qp = 0; qp < nqp; qp++)
+        #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
           _matrix_tag_u[tag][qp] += (*_current_phi)[i][qp] * _matrix_tags_dof_u[tag][i];
     }
 
-  if (is_transient)
+  if (_is_transient)
   {
     if (_need_u_dot)
     {
       _u_dot.resize(nqp);
-      for (unsigned int i = 0; i < nqp; ++i)
+    #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
         _u_dot[i] = 0;
       for (unsigned int i = 0; i < num_dofs; i++)
-        for (unsigned int qp = 0; qp < nqp; qp++)
+        #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
           _u_dot[qp] += (*_current_phi)[i][qp] * _dof_values_dot[i];
     }
 
     if (_need_u_dotdot)
     {
       _u_dotdot.resize(nqp);
-      for (unsigned int i = 0; i < nqp; ++i)
+    #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
         _u_dotdot[i] = 0;
       for (unsigned int i = 0; i < num_dofs; i++)
-        for (unsigned int qp = 0; qp < nqp; qp++)
+        #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
           _u_dotdot[qp] += (*_current_phi)[i][qp] * _dof_values_dotdot[i];
     }
 
     if (_need_u_dot_old)
     {
       _u_dot_old.resize(nqp);
-      for (unsigned int i = 0; i < nqp; ++i)
+    #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
         _u_dot_old[i] = 0;
       for (unsigned int i = 0; i < num_dofs; i++)
-        for (unsigned int qp = 0; qp < nqp; qp++)
+        #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
           _u_dot_old[qp] += (*_current_phi)[i][qp] * _dof_values_dot_old[i];
     }
 
     if (_need_u_dotdot_old)
     {
       _u_dotdot_old.resize(nqp);
-      for (unsigned int i = 0; i < nqp; ++i)
+    #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
         _u_dotdot_old[i] = 0;
       for (unsigned int i = 0; i < num_dofs; i++)
-        for (unsigned int qp = 0; qp < nqp; qp++)
+        #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
           _u_dotdot_old[qp] += (*_current_phi)[i][qp] * _dof_values_dotdot_old[i];
     }
 
     if (_need_du_dot_du)
     {
       _du_dot_du.resize(nqp);
-      for (unsigned int i = 0; i < nqp; ++i)
+    #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
         _du_dot_du[i] = 0;
       for (unsigned int i = 0; i < num_dofs; i++)
-        for (unsigned int qp = 0; qp < nqp; qp++)
+        #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
           _du_dot_du[qp] = _dof_du_dot_du[i];
     }
 
     if (_need_du_dotdot_du)
     {
       _du_dotdot_du.resize(nqp);
-      for (unsigned int i = 0; i < nqp; ++i)
+    #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
         _du_dotdot_du[i] = 0;
       for (unsigned int i = 0; i < num_dofs; i++)
-        for (unsigned int qp = 0; qp < nqp; qp++)
+        #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
           _du_dotdot_du[qp] = _dof_du_dotdot_du[i];
     }
 
     if (_need_grad_dot)
     {
       _grad_u_dot.resize(nqp);
-      for (unsigned int i = 0; i < nqp; ++i)
+    #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
         _grad_u_dot[i] = 0;
       for (unsigned int i = 0; i < num_dofs; i++)
-        for (unsigned int qp = 0; qp < nqp; qp++)
+        #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
           _grad_u_dot[qp].add_scaled((*_current_grad_phi)[i][qp], _dof_values_dot[i]);
     }
 
     if (_need_grad_dotdot)
     {
       _grad_u_dotdot.resize(nqp);
-      for (unsigned int i = 0; i < nqp; ++i)
+    #pragma omp simd
+for (unsigned int i = 0; i < nqp; ++i)
         _grad_u_dotdot[i] = 0;
       for (unsigned int i = 0; i < num_dofs; i++)
-        for (unsigned int qp = 0; qp < nqp; qp++)
+        #pragma omp simd
+  for (unsigned int qp = 0; qp < nqp; ++qp)
           _grad_u_dotdot[qp].add_scaled((*_current_grad_phi)[i][qp], _dof_values_dotdot[i]);
     }
   }
@@ -661,7 +699,6 @@ MooseVariableData<RealEigenVector>::computeValues()
   if (num_dofs > 0)
     fetchDoFValues();
 
-  bool is_transient = _subproblem.isTransient();
   unsigned int nqp = _current_qrule->n_points();
   auto && active_coupleable_matrix_tags = _subproblem.getActiveFEVariableCoupleableMatrixTags(_tid);
 
@@ -715,7 +752,7 @@ MooseVariableData<RealEigenVector>::computeValues()
   if (_need_second_previous_nl)
     _second_u_previous_nl.resize(nqp);
 
-  if (is_transient)
+  if (_is_transient)
   {
     if (_need_u_dot)
       _u_dot.resize(nqp);
@@ -780,7 +817,7 @@ MooseVariableData<RealEigenVector>::computeValues()
     if (_need_second_previous_nl)
       _second_u_previous_nl[i].setZero(_count, LIBMESH_DIM * LIBMESH_DIM);
 
-    if (is_transient)
+    if (_is_transient)
     {
       if (_need_u_dot)
         _u_dot[i].setZero(_count);
@@ -832,7 +869,7 @@ MooseVariableData<RealEigenVector>::computeValues()
       const OutputShape phi_local = (*_current_phi)[i][qp];
       const OutputShapeGradient dphi_qp = (*_current_grad_phi)[i][qp];
 
-      if (is_transient)
+      if (_is_transient)
       {
         if (_need_u_dot)
           _u_dot[qp] += phi_local * _dof_values_dot[i];
@@ -879,7 +916,7 @@ MooseVariableData<RealEigenVector>::computeValues()
               _second_u_previous_nl[qp].col(d++) +=
                   d2phi_local(d1, d2) * _vector_tags_dof_u[_previous_nl_solution_tag][i];
 
-        if (is_transient)
+        if (_is_transient)
         {
           if (_need_second_old)
             for (unsigned int d = 0, d1 = 0; d1 < LIBMESH_DIM; ++d1)
@@ -904,7 +941,7 @@ MooseVariableData<RealEigenVector>::computeValues()
         if (_need_curl)
           _curl_u[qp] += curl_phi_local * _vector_tags_dof_u[_solution_tag][i];
 
-        if (is_transient && _need_curl_old)
+        if (_is_transient && _need_curl_old)
           _curl_u_old[qp] += curl_phi_local * _vector_tags_dof_u[_old_solution_tag][i];
       }
 
@@ -918,7 +955,7 @@ MooseVariableData<RealEigenVector>::computeValues()
         if (_need_div)
           _div_u[qp] += div_phi_local * _vector_tags_dof_u[_solution_tag][i];
 
-        if (is_transient && _need_div_old)
+        if (_is_transient && _need_div_old)
           _div_u_old[qp] += div_phi_local * _vector_tags_dof_u[_old_solution_tag][i];
       }
 
@@ -953,7 +990,6 @@ MooseVariableData<OutputType>::computeMonomialValues()
     return;
   }
 
-  bool is_transient = _subproblem.isTransient();
   unsigned int nqp = _current_qrule->n_points();
 
   if (_need_second)
@@ -962,7 +998,7 @@ MooseVariableData<OutputType>::computeMonomialValues()
   if (_need_second_previous_nl)
     _second_u_previous_nl.resize(nqp);
 
-  if (is_transient)
+  if (_is_transient)
   {
     if (_need_u_dot)
       _u_dot.resize(nqp);
@@ -989,7 +1025,7 @@ MooseVariableData<OutputType>::computeMonomialValues()
       _second_u_older.resize(nqp);
   }
 
-  if (is_transient)
+  if (_is_transient)
   {
     if (_need_dof_values_dot)
       _dof_values_dot.resize(1);
@@ -1009,7 +1045,7 @@ MooseVariableData<OutputType>::computeMonomialValues()
   const Real & du_dot_du = _sys.duDotDu(_var_num);
   const Real & du_dotdot_du = _sys.duDotDotDu();
 
-  if (is_transient)
+  if (_is_transient)
   {
     if (_sys.solutionUDot())
       u_dot = (*_sys.solutionUDot())(idx);
@@ -1029,7 +1065,7 @@ MooseVariableData<OutputType>::computeMonomialValues()
 
   auto phi = (*_current_phi)[0][0];
 
-  if (is_transient)
+  if (_is_transient)
   {
     if (_need_u_dot)
       _u_dot[0] = phi * u_dot;
@@ -1052,7 +1088,7 @@ MooseVariableData<OutputType>::computeMonomialValues()
 
   for (unsigned qp = 1; qp < nqp; ++qp)
   {
-    if (is_transient)
+    if (_is_transient)
     {
       if (_need_u_dot)
         _u_dot[qp] = _u_dot[0];
@@ -1094,7 +1130,8 @@ MooseVariableData<OutputType>::computeMonomialValues()
     {
       _vector_tag_u[tag].resize(nqp);
       auto v = phi * _vector_tags_dof_u[tag][0];
-      for (unsigned int qp = 0; qp < nqp; ++qp)
+    #pragma omp simd
+for (unsigned int qp = 0; qp < nqp; ++qp)
         _vector_tag_u[tag][qp] = v;
     }
     if (_need_vector_tag_grad[tag])

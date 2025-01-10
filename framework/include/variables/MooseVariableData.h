@@ -461,7 +461,7 @@ private:
   void assignADNodalValue(const ADReal & value, const unsigned int & component);
   void fetchADNodalValues();
 
-  const libMesh::FEType & _fe_type;
+  const libMesh::FEType _fe_type;
 
   const unsigned int _var_num;
 
@@ -485,28 +485,15 @@ private:
   /// AD nodal value
   typename Moose::ADType<OutputType>::type _ad_nodal_value;
 
+  /// whether the variable is being used in a transient problem
+  const bool _is_transient;
+
   /// A zero AD variable
   ADReal _ad_zero;
 
   /// AD u dot flags
   mutable bool _need_ad_u_dot;
   mutable bool _need_ad_u_dotdot;
-
-  /// SolutionState second_u flags
-  mutable bool _need_second;
-  mutable bool _need_second_old;
-  mutable bool _need_second_older;
-  mutable bool _need_second_previous_nl;
-
-  /// curl flags
-  mutable bool _need_curl;
-  mutable bool _need_curl_old;
-  mutable bool _need_curl_older;
-
-  /// divergence flags
-  mutable bool _need_div;
-  mutable bool _need_div_old;
-  mutable bool _need_div_older;
 
   /// AD flags
   mutable bool _need_ad;
@@ -517,24 +504,30 @@ private:
 
   bool _has_dof_indices;
 
-  /// grad_u dots
-  FieldVariableGradient _grad_u_dot;
-  FieldVariableGradient _grad_u_dotdot;
-
   /// second_u
+  mutable bool _need_second;
   FieldVariableSecond _second_u;
+  mutable bool _need_second_old;
   FieldVariableSecond _second_u_old;
+  mutable bool _need_second_older;
   FieldVariableSecond _second_u_older;
+  mutable bool _need_second_previous_nl;
   FieldVariableSecond _second_u_previous_nl;
 
   /// curl_u
+  mutable bool _need_curl;
   FieldVariableCurl _curl_u;
+  mutable bool _need_curl_old;
   FieldVariableCurl _curl_u_old;
+  mutable bool _need_curl_older;
   FieldVariableCurl _curl_u_older;
 
   /// divergence_u
+  mutable bool _need_div;
   FieldVariableDivergence _div_u;
+  mutable bool _need_div_old;
   FieldVariableDivergence _div_u_old;
+  mutable bool _need_div_older;
   FieldVariableDivergence _div_u_older;
 
   /// AD u
@@ -561,6 +554,10 @@ private:
 
   /// u_dotdot_old (second time derivative)
   FieldVariableValue _u_dotdot_old, _u_dotdot_old_bak;
+
+  /// grad_u dots
+  FieldVariableGradient _grad_u_dot;
+  FieldVariableGradient _grad_u_dotdot;
 
   /// derivative of u_dot wrt u
   VariableValue _du_dot_du;

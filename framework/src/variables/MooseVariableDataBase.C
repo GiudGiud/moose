@@ -29,10 +29,6 @@ MooseVariableDataBase<OutputType>::MooseVariableDataBase(const MooseVariableFiel
     _old_solution_tag(Moose::INVALID_TAG_ID),
     _older_solution_tag(Moose::INVALID_TAG_ID),
     _previous_nl_solution_tag(Moose::INVALID_TAG_ID),
-    _need_u_dot(false),
-    _need_u_dotdot(false),
-    _need_u_dot_old(false),
-    _need_u_dotdot_old(false),
     _need_du_dot_du(false),
     _need_du_dotdot_du(false),
     _need_grad_dot(false),
@@ -43,6 +39,10 @@ MooseVariableDataBase<OutputType>::MooseVariableDataBase(const MooseVariableFiel
     _need_dof_values_dotdot_old(false),
     _need_dof_du_dot_du(false),
     _need_dof_du_dotdot_du(false),
+    _need_u_dot(false),
+    _need_u_dotdot(false),
+    _need_u_dot_old(false),
+    _need_u_dotdot_old(false),
     _var(var)
 {
   auto num_vector_tags = _subproblem.numVectorTags();
@@ -368,6 +368,7 @@ MooseVariableDataBase<OutputType>::setNodalValue(const OutputType & value, unsig
 
   // Update the qp values as well
   auto & u = _vector_tag_u[_solution_tag];
+#pragma omp simd
   for (unsigned int qp = 0; qp < u.size(); qp++)
     u[qp] = value;
 }

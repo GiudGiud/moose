@@ -216,20 +216,20 @@ protected:
   /// The dof indices for the current element
   std::vector<dof_id_type> _dof_indices;
 
-  mutable std::vector<bool> _need_vector_tag_dof_u;
-  mutable std::vector<bool> _need_matrix_tag_dof_u;
 
   // Dof values of tagged vectors
+  mutable std::vector<bool> _need_vector_tag_dof_u;
   std::vector<DoFValue> _vector_tags_dof_u;
   // Dof values of the diagonal of tagged matrices
+  mutable std::vector<bool> _need_matrix_tag_dof_u;
   std::vector<DoFValue> _matrix_tags_dof_u;
 
-  std::vector<FieldVariableValue> _vector_tag_u;
   mutable std::vector<bool> _need_vector_tag_u;
-  std::vector<FieldVariableGradient> _vector_tag_grad;
+  std::vector<FieldVariableValue> _vector_tag_u;
   mutable std::vector<bool> _need_vector_tag_grad;
-  std::vector<FieldVariableValue> _matrix_tag_u;
+  std::vector<FieldVariableGradient> _vector_tag_grad;
   mutable std::vector<bool> _need_matrix_tag_u;
+  std::vector<FieldVariableValue> _matrix_tag_u;
 
   /// Nodal values
   OutputType _nodal_value;
@@ -243,10 +243,6 @@ protected:
   MooseArray<OutputType> _nodal_value_older_array;
 
   /// u dot flags
-  mutable bool _need_u_dot;
-  mutable bool _need_u_dotdot;
-  mutable bool _need_u_dot_old;
-  mutable bool _need_u_dotdot_old;
   mutable bool _need_du_dot_du;
   mutable bool _need_du_dotdot_du;
 
@@ -255,34 +251,38 @@ protected:
   mutable bool _need_grad_dotdot;
 
   /// local solution flags
-  mutable bool _need_dof_values_dot;
-  mutable bool _need_dof_values_dotdot;
-  mutable bool _need_dof_values_dot_old;
-  mutable bool _need_dof_values_dotdot_old;
-  mutable bool _need_dof_du_dot_du;
-  mutable bool _need_dof_du_dotdot_du;
 
   /// time derivative of the solution values
+  mutable bool _need_dof_values_dot;
   DoFValue _dof_values_dot;
   /// second time derivative of the solution values
+  mutable bool _need_dof_values_dotdot;
   DoFValue _dof_values_dotdot;
   /// the previous time step's solution value time derivative
+  mutable bool _need_dof_values_dot_old;
   DoFValue _dof_values_dot_old;
   /// the previous time step's solution value second time derivative
+  mutable bool _need_dof_values_dotdot_old;
   DoFValue _dof_values_dotdot_old;
   /// derivatives of the solution value time derivative with respect to the degrees of freedom
+  mutable bool _need_dof_du_dot_du;
   MooseArray<libMesh::Number> _dof_du_dot_du;
   /// derivatives of the solution value second time derivative with respect to the degrees of
   /// freedom
+  mutable bool _need_dof_du_dotdot_du;
   MooseArray<libMesh::Number> _dof_du_dotdot_du;
 
   /// nodal values of u_dot
+  mutable bool _need_u_dot;
   OutputType _nodal_value_dot;
   /// nodal values of u_dotdot
+  mutable bool _need_u_dotdot;
   OutputType _nodal_value_dotdot;
   /// nodal values of u_dot_old
+  mutable bool _need_u_dot_old;
   OutputType _nodal_value_dot_old;
   /// nodal values of u_dotdot_old
+  mutable bool _need_u_dotdot_old;
   OutputType _nodal_value_dotdot_old;
 
   /// The set of vector tags (residual + solution) we need to evaluate
