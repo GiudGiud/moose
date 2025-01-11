@@ -56,15 +56,26 @@ VectorizedKernel::computeResidual()
     return;
 
   prepareVectorTag(_assembly, _var.number());
-  _nqp = _qrule->n_points();
+  const unsigned int nqp = _qrule->n_points();
 
   precalculateResidual();
   for (_i = 0; _i < _test.size(); _i++)
   {
     computeQpResiduals();
-    #pragma omp simd reduction(+: _local_re) private(_qp_residuals)
-    for (unsigned int qp = 0; qp < _nqp; ++qp)
-      _local_re(_i) += _JxW[qp] * _coord[qp] * _qp_residuals[qp];
+    MooseArray<Real> qp_residuals(_nqp);
+    qp_residuals = _qp_residuals;
+    Real local_re = 0.;
+    const auto * const A = _JxW.data();
+    const auto * const B = _coord.data();
+    const auto * const C = qp_residuals.data();
+
+#pragma clang loop vectorize(enable) interleave(enable)
+    for (unsigned int qp = 0; qp < 4; ++qp)
+    {
+      Real temp = A[qp]* B[qp];
+      local_re +=  temp * C[qp];
+    }
+    _local_re(_i) += local_re;
   }
 
   accumulateTaggedLocalResidual();
@@ -81,9 +92,11 @@ VectorizedKernel::computeJacobian()
     for (_j = 0; _j < _phi.size(); _j++)
     {
       computeQpJacobians();
-      #pragma omp simd reduction(+: _local_ke) private(_qp_jacobians)
-      for (unsigned int qp = 0; qp < _nqp; ++qp)
-        _local_ke(_i, _j) += _JxW[qp] * _coord[qp] * _qp_jacobians[qp];
+      Real local_ke = 0.;
+      #pragma omp simd reduction(+: local_ke)
+      for (unsigned int qp = 0; qp < 4; ++qp)
+        local_ke += _JxW[qp] * _coord[qp] * _qp_jacobians[qp];
+      _local_ke(_i, _j) += local_ke;
     }
 
   accumulateTaggedLocalMatrix();
