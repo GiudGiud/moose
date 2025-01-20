@@ -28,7 +28,6 @@ CONTACT                   := no
 FLUID_PROPERTIES          := no
 # heat_conduction is required by Steps 5+
 HEAT_TRANSFER             := yes
-LINEAR_ELASTICITY         := no
 MISC                      := no
 NAVIER_STOKES             := no
 # phase_field is required by Step 10.
