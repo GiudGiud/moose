@@ -32,4 +32,3 @@ Requirements:
     external_petsc_solver:
         directories:
             - ${MOOSE_DIR}/modules/external_petsc_solver
-        log_duplicate_requirement: WARNING

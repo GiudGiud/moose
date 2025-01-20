@@ -32,4 +32,3 @@ Requirements:
     functional_expansion_tools:
         directories:
             - ${MOOSE_DIR}/modules/functional_expansion_tools
-        log_missing: WARNING

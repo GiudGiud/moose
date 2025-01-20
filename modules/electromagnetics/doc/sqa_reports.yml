@@ -24,5 +24,3 @@ Requirements:
     electromagnetics:
         directories:
             - ${MOOSE_DIR}/modules/electromagnetics/test
-        log_default: WARNING
-        show_warning: false

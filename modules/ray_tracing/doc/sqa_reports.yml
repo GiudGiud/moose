@@ -31,5 +31,3 @@ Requirements:
     ray_tracing:
         directories:
             - ${ROOT_DIR}/test
-        log_default: WARNING
-        show_warning: false

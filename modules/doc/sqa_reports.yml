@@ -47,16 +47,6 @@ Applications:
         remove:
             - framework/doc/remove.yml
 
-    geochemistry:
-        exe_directory: modules/combined
-        app_types:
-            - GeochemistryApp
-        content_directory: modules/geochemistry/doc/content
-        unregister:
-            - framework/doc/unregister.yml
-        remove:
-            - framework/doc/remove.yml
-
     fluid_properties:
         exe_directory: modules/combined
         app_types:
@@ -82,6 +72,16 @@ Applications:
         app_types:
             - FunctionalExpansionToolsApp
         content_directory: modules/functional_expansion_tools/doc/content
+        unregister:
+            - framework/doc/unregister.yml
+        remove:
+            - framework/doc/remove.yml
+
+    geochemistry:
+        exe_directory: modules/combined
+        app_types:
+            - GeochemistryApp
+        content_directory: modules/geochemistry/doc/content
         unregister:
             - framework/doc/unregister.yml
         remove:
@@ -206,6 +206,17 @@ Applications:
         remove:
             - framework/doc/remove.yml
 
+    solid_mechanics:
+        exe_directory: modules/combined
+        app_types:
+            - SolidMechanicsApp
+        content_directory: modules/solid_mechanics/doc/content
+        remove:
+            - framework/doc/remove.yml
+        unregister:
+            - framework/doc/unregister.yml
+        log_stub_files: WARNING
+
     solid_properties:
         exe_directory: modules/combined
         app_types:
@@ -226,17 +237,6 @@ Applications:
         remove:
             - framework/doc/remove.yml
             - modules/stochastic_tools/doc/remove.yml
-
-    solid_mechanics:
-        exe_directory: modules/combined
-        app_types:
-            - SolidMechanicsApp
-        content_directory: modules/solid_mechanics/doc/content
-        remove:
-            - framework/doc/remove.yml
-        unregister:
-            - framework/doc/unregister.yml
-        log_stub_files: WARNING
 
     THM:
         exe_directory: modules/combined
@@ -301,7 +301,6 @@ Requirements:
     python:
         directories:
             - python
-        log_missing: WARNING
 
     combined:
         directories:

@@ -6,8 +6,6 @@ Applications:
             - ${MOOSE_DIR}/framework/doc/unregister.yml
         remove:
             - ${MOOSE_DIR}/framework/doc/remove.yml
-        log_default: WARNING
-        show_warning: false
 
 Documents:
     software_requirements_specification: sqa/scalar_transport_srs.md
@@ -26,5 +24,3 @@ Requirements:
     scalar_transport:
         directories:
             - ${MOOSE_DIR}/modules/scalar_transport/test
-        log_default: WARNING
-        show_warning: false

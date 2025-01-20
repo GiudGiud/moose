@@ -8,7 +8,7 @@ Applications:
             - ${MOOSE_DIR}/framework/doc/unregister.yml
         remove:
             - ${MOOSE_DIR}/framework/doc/remove.yml
-        log_stub_files: WARNING
+
 Documents:
     software_quality_plan: sqa/inl_records.md#software_quality_plan
     enterprise_architecture_entry: sqa/inl_records.md#enterprise_architecture_entry
@@ -33,5 +33,3 @@ Requirements:
     misc:
         directories:
             - ${MOOSE_DIR}/modules/misc
-        log_duplicate_requirement: WARNING
-        log_missing: WARNING

@@ -33,4 +33,3 @@ Requirements:
     level_set:
         directories:
             - ${MOOSE_DIR}/modules/level_set
-        log_missing: WARNING

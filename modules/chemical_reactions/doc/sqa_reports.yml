@@ -33,4 +33,3 @@ Requirements:
     chemical_reactions:
         directories:
             - ${MOOSE_DIR}/modules/chemical_reactions
-        log_missing: WARNING

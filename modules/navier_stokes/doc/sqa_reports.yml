@@ -8,7 +8,6 @@ Applications:
             - ${MOOSE_DIR}/framework/doc/remove.yml
         unregister:
             - ${MOOSE_DIR}/framework/doc/unregister.yml
-        log_stub_files: WARNING
 
 Documents:
     software_quality_plan: sqa/inl_records.md#software_quality_plan
@@ -34,4 +33,3 @@ Requirements:
     navier_stokes:
         directories:
             - ${MOOSE_DIR}/modules/navier_stokes
-        log_missing: WARNING

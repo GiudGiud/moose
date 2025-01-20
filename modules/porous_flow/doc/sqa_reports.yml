@@ -34,8 +34,3 @@ Requirements:
     porous_flow:
         directories:
             - ${MOOSE_DIR}/modules/porous_flow
-        log_duplicate_requirement: WARNING
-        log_missing: WARNING
-        log_issue_format: WARNING
-        log_design_files: WARNING
-        log_testable: WARNING
