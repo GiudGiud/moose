@@ -62,8 +62,8 @@ h_cv = 100
       energy_inlet_functors = '300'
 
       # Top and bottom are fixed temperature 'inlets' in the reference kernel-based input
-      energy_wall_types = 'fixed-temperature fixed-temperature'
-      energy_wall_functors = '300 300'
+      energy_wall_types = 'heatflux heatflux'
+      energy_wall_functors = '0 0'
 
       external_heat_source = 0
 

@@ -348,7 +348,16 @@ WCNSLinearFVFluidHeatTransferPhysics::addEnergyWallBC()
       }
     }
     else if (_energy_wall_types[bc_ind] == "heatflux")
-      paramError("energy_wall_types", "Heat flux wall boundary conditions not yet supported");
+    {
+      const auto var_name = _solve_for_enthalpy ? _fluid_enthalpy_name : _fluid_temperature_name;
+      const std::string bc_type = "LinearFVAdvectionDiffusionFunctorNeumannBC";
+      InputParameters params = getFactory().getValidParams(bc_type);
+      params.set<LinearVariableName>("variable") = var_name;
+      params.set<MooseFunctorName>("functor") = _energy_wall_functors[bc_ind];
+      params.set<std::vector<BoundaryName>>("boundary") = {wall_boundaries[bc_ind]};
+
+      getProblem().addLinearFVBC(bc_type, var_name + "_" + wall_boundaries[bc_ind], params);
+    }
     // We add this boundary condition here to facilitate the input of wall boundaries / functors for
     // energy. If there are too many turbulence options and this gets out of hand we will have to
     // move this to the turbulence Physics
