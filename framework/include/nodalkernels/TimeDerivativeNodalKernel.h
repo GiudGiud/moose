@@ -28,4 +28,7 @@ protected:
   virtual Real computeQpResidual() override;
 
   virtual Real computeQpJacobian() override;
+
+  /// Local node mass
+  const VariableValue * const _nodal_mass;
 };

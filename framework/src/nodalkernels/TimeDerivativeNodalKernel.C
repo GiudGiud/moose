@@ -18,22 +18,30 @@ TimeDerivativeNodalKernel::validParams()
   params.addClassDescription(
       "Forms the contribution to the residual and jacobian of the time derivative term from an ODE "
       "being solved at all nodes.");
+  params.addCoupledVar("nodal_mass", "If specified, multiplies by nodal mass");
   return params;
 }
 
 TimeDerivativeNodalKernel::TimeDerivativeNodalKernel(const InputParameters & parameters)
-  : TimeNodalKernel(parameters)
+  : TimeNodalKernel(parameters),
+    _nodal_mass(isCoupled("nodal_mass") ? &coupledValue("nodal_mass") : nullptr)
 {
 }
 
 Real
 TimeDerivativeNodalKernel::computeQpResidual()
 {
-  return _u_dot[_qp];
+  if (_nodal_mass)
+    return _u_dot[_qp] * (*_nodal_mass)[_qp];
+  else
+    return _u_dot[_qp];
 }
 
 Real
 TimeDerivativeNodalKernel::computeQpJacobian()
 {
-  return _du_dot_du[_qp];
+  if (_nodal_mass)
+    return _du_dot_du[_qp] * (*_nodal_mass)[_qp];
+  else
+    return _du_dot_du[_qp];
 }
