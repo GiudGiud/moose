@@ -30,10 +30,10 @@ ParsedAux::validParams()
   params.addParam<std::vector<MaterialPropertyName>>(
       "ad_material_properties", {}, "AD material properties (ADReal-valued) in the expression");
 
-  params.addParam<bool>(
-      "use_xyzt",
-      false,
-      "Make coordinate (x,y,z) and time (t) variables available in the function expression.");
+  params.addParam<bool>("use_xyzt",
+                        false,
+                        "Make coordinate (x,y,z), time (t) and element id (elem_id) variables "
+                        "available in the function expression.");
   params.addParam<std::vector<std::string>>(
       "constant_names",
       {},
@@ -106,8 +106,11 @@ ParsedAux::ParsedAux(const InputParameters & parameters)
 
   // positions and time
   if (_use_xyzt)
+  {
     for (auto & v : _xyzt)
       variables += (variables.empty() ? "" : ",") + v;
+    variables += ",elem_id";
+  }
 
   // Create parsed function
   _func_F = std::make_shared<SymFunction>();
@@ -168,6 +171,7 @@ ParsedAux::computeValue()
       _func_params[_nargs + _n_functors + _n_matprops + _n_ad_matprops + j] =
           isNodal() ? (*_current_node)(j) : _q_point[_qp](j);
     _func_params[_nargs + _n_functors + _n_matprops + _n_ad_matprops + 3] = _t;
+    _func_params[_nargs + _n_functors + _n_matprops + _n_ad_matprops + 4] = _current_elem->id();
   }
 
   return evaluate(_func_F);
