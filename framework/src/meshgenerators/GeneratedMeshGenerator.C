@@ -18,6 +18,7 @@
 #include "libmesh/periodic_boundary_base.h"
 #include "libmesh/unstructured_mesh.h"
 #include "libmesh/elem.h"
+#include "libmesh/face_c0polygon.h"
 
 // C++ includes
 #include <cmath> // provides round, not std::round (see http://www.cplusplus.com/reference/cmath/round/)
@@ -168,16 +169,187 @@ GeneratedMeshGenerator::generate()
                                         _gauss_lobatto_grid);
       break;
     case 2:
-      MeshTools::Generation::build_square(static_cast<UnstructuredMesh &>(*mesh),
-                                          _nx,
-                                          _ny,
-                                          _xmin,
-                                          _xmax,
-                                          _ymin,
-                                          _ymax,
-                                          elem_type,
-                                          _gauss_lobatto_grid);
+    {
+      if (elem_type_enum != "C0POLYGON")
+      {
+        MeshTools::Generation::build_square(static_cast<UnstructuredMesh &>(*mesh),
+                                            _nx,
+                                            _ny,
+                                            _xmin,
+                                            _xmax,
+                                            _ymin,
+                                            _ymax,
+                                            elem_type,
+                                            _gauss_lobatto_grid);
+      }
+      else
+      {
+        // Build a 2D paving using hexagons (center), quads (part of y-boundary) and triangles
+        // (x-boundaries).
+        // To re-use previously created nodes
+        std::vector<Node *> node_list;
+
+        // Start with a layer of triangles on the boundary
+        const auto dx_tri = (_xmax - _xmin) / (_nx);
+        const auto dy_tri = (_ymax - _ymin) / (_ny + 1);
+        std::unique_ptr<Elem> new_elem;
+        for (const auto i : make_range(_nx + 1))
+        {
+          // Make new nodes for bottom layer of triangles
+          Node *node0, *node1, *node2;
+          if (i == 0)
+          {
+            node0 = mesh->add_point(Point(0., 0, 0.));
+            node1 = mesh->add_point(Point(0., dy_tri / 2., 0.));
+            node2 = mesh->add_point(Point(dx_tri / 2., 0., 0.));
+            node_list.push_back(node0);
+            node_list.push_back(node1);
+            node_list.push_back(node2);
+          }
+          else if (i < _nx)
+          {
+            node0 = node_list.back();
+            node1 = mesh->add_point(Point((i)*dx_tri, dy_tri / 2., 0.));
+            node2 = mesh->add_point(Point((i + 1. / 2.) * dx_tri, 0., 0.));
+            node_list.push_back(node1);
+            node_list.push_back(node2);
+          }
+          else
+          {
+            node0 = node_list.back();
+            node1 = mesh->add_point(Point((i)*dx_tri, dy_tri / 2., 0.));
+            node2 = mesh->add_point(Point((i)*dx_tri, 0., 0.));
+            node_list.push_back(node1);
+            node_list.push_back(node2);
+          }
+
+          new_elem = std::make_unique<Tri3>();
+          new_elem->set_node(0, node0);
+          new_elem->set_node(1, node1);
+          new_elem->set_node(2, node2);
+          mesh->add_elem(std::move(new_elem));
+        }
+        // Start with the second node to build hexagons
+        unsigned int running_index = 1;
+
+        // Build layers of hexagons
+        const auto dx_hex = (_xmax - _xmin) / _nx;
+        const auto dy_hex = (_ymax - _ymin) / _ny;
+        const auto hex_side =
+            (_ymax - _ymin - (_ny == 1 ? dy_tri : (1. + (_ny - 1) / 2.) * dy_tri)) / _ny;
+        for (const auto j : make_range(_ny))
+        {
+          for (const auto i : make_range(_nx + (j % 2)))
+          {
+            std::cout << "Creating i=" << i << " height-index j=" << j << std::endl;
+            if ((j % 2 == 0) || ((i > 0) && (i < _nx)))
+            {
+              Node *n0, *n1, *n2, *n3, *n4, *n5;
+              n0 = node_list[running_index++];
+              n1 = node_list[running_index++];
+              n2 = node_list[running_index];
+
+              if (i == 0)
+              {
+                n3 = mesh->add_point(Point(*n0) + RealVectorValue(0, hex_side, 0));
+                node_list.push_back(n3);
+              }
+              else
+                n3 = node_list.back();
+
+              n4 = mesh->add_point(Point(*n1) + RealVectorValue(0, hex_side + dy_tri, 0));
+              n5 = mesh->add_point(Point(*n2) + RealVectorValue(0, hex_side, 0));
+              node_list.push_back(n4);
+              node_list.push_back(n5);
+
+              new_elem = std::make_unique<libMesh::C0Polygon>(6);
+              new_elem->set_node(0, n0);
+              new_elem->set_node(1, n1);
+              new_elem->set_node(2, n2);
+              new_elem->set_node(3, n5);
+              new_elem->set_node(4, n4);
+              new_elem->set_node(5, n3);
+              std::cout << *new_elem << std::endl;
+              mesh->add_elem(std::move(new_elem));
+            }
+            // The hexagons are offset, so we build on a quad on each external side to fill
+            else if (i == 0 || i == _nx)
+            {
+              Node *n0, *n1, *n2, *n3;
+              n0 = node_list[running_index++];
+              n1 = node_list[running_index];
+
+              if (i == 0)
+              {
+                n2 = mesh->add_point(Point(*n0) + RealVectorValue(0, hex_side + dy_tri, 0));
+                node_list.push_back(n2);
+                n3 = mesh->add_point(Point(*n1) + RealVectorValue(0, hex_side, 0));
+              }
+              else
+              {
+                n2 = node_list.back();
+                n3 = mesh->add_point(Point(*n1) + RealVectorValue(0, hex_side + dy_tri, 0));
+              }
+              node_list.push_back(n3);
+
+              new_elem = std::make_unique<Quad4>();
+              new_elem->set_node(0, n0);
+              new_elem->set_node(1, n1);
+              new_elem->set_node(3, n2);
+              new_elem->set_node(2, n3);
+              std::cout << *new_elem << std::endl;
+              mesh->add_elem(std::move(new_elem));
+            }
+            else
+              mooseAssert(false, "Should not reach here");
+          }
+          // Increment once to switch to next 'row' of nodes
+          running_index++;
+
+          // Skip lower right corner node
+          if (j == 0)
+            running_index++;
+        }
+
+        // Build a final layer of triangles
+        std::cout << "Triangles " << std::endl;
+        const bool ny_odd = (_ny % 2 == 1);
+        for (const auto i : make_range(_nx + ny_odd))
+        {
+          // Use existing nodes, except at the corners
+          Node *node0, *node1, *node2;
+          if (i == 0 && ny_odd)
+          {
+            node0 = mesh->add_point(Point(0., _ymax, 0.));
+            node1 = node_list[running_index++];
+            node2 = node_list[running_index];
+          }
+          else if (i < _nx)
+          {
+            node0 = node_list[running_index++];
+            node1 = node_list[running_index++];
+            node2 = node_list[running_index];
+          }
+          // This case only reached if ny is odd and we are using a triangle in top right corner
+          else
+          {
+            node0 = node_list[running_index++];
+            node1 = node_list[running_index];
+            node2 = mesh->add_point(Point(_xmax, _ymax, 0.));
+          }
+          std::cout << "0 : " << *node0 << std::endl;
+          std::cout << "1 : " << *node1 << std::endl;
+          std::cout << "2 : " << *node2 << std::endl;
+
+          new_elem = std::make_unique<Tri3>();
+          new_elem->set_node(0, node0);
+          new_elem->set_node(1, node1);
+          new_elem->set_node(2, node2);
+          mesh->add_elem(std::move(new_elem));
+        }
+      }
       break;
+    }
     case 3:
       MeshTools::Generation::build_cube(static_cast<UnstructuredMesh &>(*mesh),
                                         _nx,
@@ -235,19 +407,19 @@ GeneratedMeshGenerator::generate()
   BoundaryInfo & boundary_info = mesh->get_boundary_info();
 
   // Copy, since we're modifying the container mid-iteration
-  const auto mesh_boundary_ids = boundary_info.get_global_boundary_ids();
-  for (auto rit = mesh_boundary_ids.rbegin(); rit != mesh_boundary_ids.rend(); ++rit)
-  {
-    const std::string old_sideset_name = boundary_info.sideset_name(*rit);
-    const std::string old_nodeset_name = boundary_info.nodeset_name(*rit);
+  // const auto mesh_boundary_ids = boundary_info.get_global_boundary_ids();
+  // for (auto rit = mesh_boundary_ids.rbegin(); rit != mesh_boundary_ids.rend(); ++rit)
+  // {
+  //   const std::string old_sideset_name = boundary_info.sideset_name(*rit);
+  //   const std::string old_nodeset_name = boundary_info.nodeset_name(*rit);
 
-    MeshTools::Modification::change_boundary_id(*mesh, *rit, *rit + _boundary_id_offset);
+  //   MeshTools::Modification::change_boundary_id(*mesh, *rit, *rit + _boundary_id_offset);
 
-    boundary_info.sideset_name(*rit + _boundary_id_offset) =
-        _boundary_name_prefix + old_sideset_name;
-    boundary_info.nodeset_name(*rit + _boundary_id_offset) =
-        _boundary_name_prefix + old_nodeset_name;
-  }
+  //   boundary_info.sideset_name(*rit + _boundary_id_offset) =
+  //       _boundary_name_prefix + old_sideset_name;
+  //   boundary_info.nodeset_name(*rit + _boundary_id_offset) =
+  //       _boundary_name_prefix + old_nodeset_name;
+  // }
 
   // Apply the bias if any exists
   if (_bias_x != 1.0 || _bias_y != 1.0 || _bias_z != 1.0)
