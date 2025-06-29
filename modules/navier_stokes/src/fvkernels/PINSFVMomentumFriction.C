@@ -143,7 +143,7 @@ PINSFVMomentumFriction::computeFrictionWCoefficient(const Moose::ElemArg & elem_
     speed = NS::computeSpeed<ADReal>(superficial_velocity);
     if (_is_porous_medium)
     {
-      speed *= (1 / _epsilon(elem_arg, state));
+      speed *= (1. / _epsilon(elem_arg, state));
     }
   }
 
