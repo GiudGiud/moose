@@ -77,23 +77,23 @@ findUStar(const T & mu, const T & rho, const T & u, const Real dist)
   const T nu = mu / rho;
 
   // Wall-function linearized guess
-  const Real a_c = 1 / NS::von_karman_constant;
-  const T b_c = 1.0 / NS::von_karman_constant * (std::log(NS::E_turb_constant * dist / mu) + 1.0);
+  static constexpr Real a_c = 1. / NS::von_karman_constant;
+  const T b_c = a_c * (std::log(NS::E_turb_constant * dist / mu) + 1.0);
   const T & c_c = u;
 
-  /// This is important to reduce the number of nonlinear iterations
-  T u_star = std::max(1e-20, (-b_c + std::sqrt(std::pow(b_c, 2) + 4.0 * a_c * c_c)) / (2.0 * a_c));
+  /// This initialization is important to reduce the number of Newton iterations
+  T u_star =
+      std::max(1e-20, (-b_c + std::sqrt(Utility::pow<2>(b_c) + 4.0 * a_c * c_c)) / (2.0 * a_c));
 
   // Newton-Raphson method to solve for u_star (friction velocity).
   for (int i = 0; i < MAX_ITERS; ++i)
   {
-    T residual =
-        u_star / NS::von_karman_constant * std::log(NS::E_turb_constant * u_star * dist / nu) - u;
-    T deriv = (1.0 + std::log(NS::E_turb_constant * u_star * dist / nu)) / NS::von_karman_constant;
+    T residual = a_c * u_star * std::log(NS::E_turb_constant * u_star * dist / nu) - u;
+    T deriv = (1.0 + std::log(NS::E_turb_constant * u_star * dist / nu)) * a_c;
     T new_u_star = std::max(1e-20, u_star - residual / deriv);
 
     Real rel_err =
-        std::abs(MetaPhysicL::raw_value(new_u_star - u_star) / MetaPhysicL::raw_value(new_u_star));
+        std::abs(MetaPhysicL::raw_value(new_u_star) - MetaPhysicL::raw_value(u_star)) / MetaPhysicL::raw_value(new_u_star));
 
     u_star = new_u_star;
     if (rel_err < REL_TOLERANCE)
