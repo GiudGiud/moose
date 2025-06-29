@@ -186,14 +186,14 @@ LinearFVTKEDSourceSink::computeRightHandSideContribution()
         NS::computeShearStrainRateNormSquared<Real>(_u_var, _v_var, _w_var, elem_arg, state);
     Real production = _mu_t(elem_arg, state) * symmetric_strain_tensor_sq_norm;
 
-    // Limit TKE production (needed for flows with stagnation zones)
+    // Limit TKED production (needed for flows with stagnation zones)
     const Real production_limit = _C_pl * rho * TKED;
     production = std::min(production, production_limit);
 
     // Compute production - recasted with mu_t definition to avoid division by epsilon
     const auto production_epsilon = _C1_eps * production * TKED / TKE;
 
-    // Assign to matrix (term gets multiplied by TKED)
+    // Assign to matrix
     return production_epsilon * _current_elem_volume;
   }
 }

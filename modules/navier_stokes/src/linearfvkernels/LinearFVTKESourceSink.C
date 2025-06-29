@@ -154,9 +154,9 @@ LinearFVTKESourceSink::computeMatrixContribution()
       const Real wall_mut = _mu_t(facearg, state);
       const Real wall_mu = _mu(facearg, state);
       const auto tau_w = (wall_mut + wall_mu) * velocity_grad_norm_vec[i];
-      const auto destruction_visc = 2.0 * wall_mu / Utility::pow<2>(distance_vec[i]) / tot_weight;
+      const auto destruction_visc = 2.0 * wall_mu / Utility::pow<2>(distance_vec[i]);
       const auto destruction_log = std::pow(_C_mu, 0.75) * rho * std::pow(TKE, 0.5) /
-                                   (NS::von_karman_constant * distance_vec[i]) / tot_weight;
+                                   (NS::von_karman_constant * distance_vec[i]);
 
       if (y_plus < 11.25)
         destruction += destruction_visc;
@@ -164,12 +164,12 @@ LinearFVTKESourceSink::computeMatrixContribution()
       {
         destruction += destruction_log;
         production += tau_w * std::pow(_C_mu, 0.25) / std::sqrt(TKE) /
-                      (NS::von_karman_constant * distance_vec[i]) / tot_weight;
+                      (NS::von_karman_constant * distance_vec[i]);
       }
     }
 
     // Assign terms to matrix to solve implicitly (they get multiplied by TKE)
-    return (destruction - production) * _current_elem_volume;
+    return (destruction - production) * _current_elem_volume / tot_weight;
   }
   else
   {
