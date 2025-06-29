@@ -69,6 +69,6 @@ protected:
   const NS::WallTreatmentEnum _wall_treatment;
 
   // Mu_t evaluated at y+=30 for blending purposes
-  static constexpr Real _mut_30 =
+  const Real _mut_30 =
       (NS::von_karman_constant * 30.0 / std::log(NS::E_turb_constant * 30.0) - 1.0);
 };
