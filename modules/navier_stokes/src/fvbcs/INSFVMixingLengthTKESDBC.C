@@ -33,10 +33,9 @@ INSFVMixingLengthTKESDBC::INSFVMixingLengthTKESDBC(const InputParameters & param
 }
 
 ADReal
-INSFVMixingLengthTKESDBC::boundaryValue(const FaceInfo & fi) const
+INSFVMixingLengthTKESDBC::boundaryValue(const FaceInfo & fi, const Moose::StateArg & state) const
 {
   const auto boundary_face = singleSidedFaceArg(&fi);
-  const auto state = determineState();
 
   return std::sqrt(_k(boundary_face, state)) /
          (0.07 * _characteristic_length(boundary_face, state));
