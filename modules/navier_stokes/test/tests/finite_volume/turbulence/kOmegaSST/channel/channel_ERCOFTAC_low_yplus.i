@@ -469,6 +469,7 @@ vortex_stretching_modficiation = false
   pressure_l_tol = 0.0
   turbulence_l_tol = 0.0
   print_fields = false
+  continue_on_max_its = true
 []
 
 [Outputs]
