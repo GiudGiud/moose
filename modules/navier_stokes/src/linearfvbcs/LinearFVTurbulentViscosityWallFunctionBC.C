@@ -56,16 +56,16 @@ LinearFVTurbulentViscosityWallFunctionBC::computeTurbulentViscosity() const
                           ? _current_face_info->neighborPtr()
                           : _current_face_info->elemPtr();
   const auto re = makeElemArg(elem);
-  const auto old_state = Moose::StateArg(1, Moose::SolutionIterationType::Nonlinear);
-  const auto mu = _mu(re, old_state);
-  const auto rho = _rho(re, old_state);
+  const auto current_state = Moose::StateArg(0, Moose::SolutionIterationType::Nonlinear);
+  const auto mu = _mu(re, current_state);
+  const auto rho = _rho(re, current_state);
 
   // Get the velocity vector
-  RealVectorValue velocity(_u_var(re, old_state));
+  RealVectorValue velocity(_u_var(re, current_state));
   if (_v_var)
-    velocity(1) = (*_v_var)(re, old_state);
+    velocity(1) = (*_v_var)(re, current_state);
   if (_w_var)
-    velocity(2) = (*_w_var)(re, old_state);
+    velocity(2) = (*_w_var)(re, current_state);
 
   // Compute the velocity and direction of the velocity component that is parallel to the wall
   const auto parallel_speed = NS::computeSpeed<Real>(
@@ -105,7 +105,7 @@ LinearFVTurbulentViscosityWallFunctionBC::computeTurbulentViscosity() const
   else if (_wall_treatment == NS::WallTreatmentEnum::NEQ)
   {
     // Assign non-equilibrium wall function value
-    y_plus = std::pow(_C_mu, 0.25) * wall_dist * std::sqrt(_k(re, old_state)) * rho / mu;
+    y_plus = std::pow(_C_mu, 0.25) * wall_dist * std::sqrt(_k(re, current_state)) * rho / mu;
     mu_wall = mu * (NS::von_karman_constant * y_plus /
                     std::log(std::max(NS::E_turb_constant * y_plus, 1.0 + 1e-4)));
   }
@@ -147,7 +147,8 @@ LinearFVTurbulentViscosityWallFunctionBC::computeBoundaryNormalGradient() const
                                         ? _current_face_info->elemPtr()
                                         : _current_face_info->neighborPtr());
   const Real distance = computeCellToFaceDistance();
-  return (this->computeTurbulentViscosity() - raw_value(_var(elem_arg, determineState()))) /
+  return (this->computeTurbulentViscosity() -
+          MetaPhysicL::raw_value(_var(elem_arg, determineState()))) /
          distance;
 }
 
