@@ -11,6 +11,7 @@
 #include "MooseMesh.h"
 #include "HexagonalLatticeUtils.h"
 #include "Positions.h"
+#include "RotationMatrix.h"
 
 #include "libmesh/elem.h"
 
@@ -133,6 +134,10 @@ HexagonalGridDivision::divisionIndex(const Point & pt) const
   else
     pc = pt - _center;
 
+  // Rotate around the center if specified
+  RealVectorValue rotation(std::sqrt(3) / 2, 0.5, 0.);
+  pc = RotationMatrix::rotVec2DToX(rotation) * pc;
+
   // Get radial division index, using the channel as the pins are 0-radius
   // The logic in get pin index requires getting the point in the plane of the pin centers
   auto ir = _hex_latt->pinIndex(pc);
@@ -181,5 +186,6 @@ HexagonalGridDivision::divisionIndex(const Point & pt) const
   mooseAssert(iz != not_found, "We should have found a mesh division bin in Z");
 
   const auto n_radial = _hex_latt->totalPins(_nr);
+  // std::cout << offset << " " << ir << " " << iz << " " << n_radial << std::endl;
   return offset + ir + iz * n_radial;
 }
