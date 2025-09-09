@@ -29,14 +29,14 @@ ErrorMaterial::ErrorMaterial(const InputParameters & parameters)
     _prop_value(declareProperty<Real>("matp"))
 {
   // Get the boundary ids
-  _boundary_ids_to_error = MooseMeshUtils::getBoundaryIDs(_mesh.getMesh(), getParam<std::vector<BoundaryName>>("sidesets_to_error_on"));
+  _boundary_ids_to_error = MooseMeshUtils::getBoundaryIDs(_mesh.getMesh(), getParam<std::vector<BoundaryName>>("sidesets_to_error_on"), false);
 }
 
 void
 ErrorMaterial::computeQpProperties()
 {
   // Just to check that got evaluated
-  _prop_value[_qp] = 2.
+  _prop_value[_qp] = 2.;
 
   // Check where we are, and error if needed
   if (_bnd)
@@ -50,6 +50,6 @@ ErrorMaterial::computeQpProperties()
                           _boundary_ids_to_error.begin(),_boundary_ids_to_error.end(),
                           back_inserter(erroring_on_bid));
     if (erroring_on_bid.size())
-      mooseError("Erroring on boundary '" + MooseMeshUtils::getBoundaryNames(erroring_on_bid) + "' as requested");
+      mooseError("Erroring on boundary '" + _mesh.getBoundaryName(erroring_on_bid[0]) + "' as requested");
   }
 }
