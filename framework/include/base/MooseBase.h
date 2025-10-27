@@ -33,7 +33,6 @@ class Node;
   using MooseBase::isParamValid;                                                                   \
   using MooseBase::isParamSetByUser;                                                               \
   using MooseBase::paramError;                                                                     \
-  using MooseBase::paramWarning;                                                                   \
   using MooseBase::paramInfo;                                                                      \
   using MooseBase::_app;                                                                           \
   using MooseBase::_type;                                                                          \
@@ -236,7 +235,7 @@ public:
    * back to the normal behavior of mooseWarning - only printing a message using the given args.
    */
   template <typename... Args>
-  void paramWarning(const std::string & param, Args... args) const;
+  void untrackedParamWarning(const std::string & param, Args... args) const;
 
   /**
    * Emits an informational message prefixed with the file and line number of the given param
@@ -296,7 +295,7 @@ public:
    * Emits a warning prefixed with object name and type.
    */
   template <typename... Args>
-  void mooseWarning(Args &&... args) const
+  void untrackedMooseWarning(Args &&... args) const
   {
     moose::internal::mooseWarningStream(_console, messagePrefix(true), std::forward<Args>(args)...);
   }
@@ -305,13 +304,13 @@ public:
    * Emits a warning without the prefixing included in mooseWarning().
    */
   template <typename... Args>
-  void mooseWarningNonPrefixed(Args &&... args) const
+  void untrackedMooseWarningNonPrefixed(Args &&... args) const
   {
     moose::internal::mooseWarningStream(_console, std::forward<Args>(args)...);
   }
 
   template <typename... Args>
-  void mooseDeprecated(Args &&... args) const
+  void untrackedMooseDeprecated(Args &&... args) const
   {
     moose::internal::mooseDeprecatedStream(
         _console, false, true, messagePrefix(true), std::forward<Args>(args)...);
@@ -443,7 +442,7 @@ MooseBase::paramError(const std::string & param, Args... args) const
 
 template <typename... Args>
 void
-MooseBase::paramWarning(const std::string & param, Args... args) const
+MooseBase::untrackedParamWarning(const std::string & param, Args... args) const
 {
   mooseWarning(_pars.paramMessage(param, std::forward<Args>(args)...));
 }

@@ -72,28 +72,28 @@ public:
   template <typename... Args>
   void mooseWarning(Args &&... args) const
   {
-    _si_moose_base.MooseBase::mooseWarning(std::forward<Args>(args)...);
+    _si_moose_base.MooseBase::untrackedMooseWarning(std::forward<Args>(args)...);
     flagSolutionWarningMultipleRegistration(_si_moose_base.name() + ": warning");
   }
 
   template <typename... Args>
   void mooseWarningNonPrefixed(Args &&... args) const
   {
-    _si_moose_base.MooseBase::mooseWarningNonPrefixed(std::forward<Args>(args)...);
+    _si_moose_base.MooseBase::untrackedMooseWarningNonPrefixed(std::forward<Args>(args)...);
     flagSolutionWarningMultipleRegistration(_si_moose_base.name() + ": warning");
   }
 
   template <typename... Args>
   void mooseDeprecated(Args &&... args) const
   {
-    _si_moose_base.MooseBase::mooseDeprecated(std::forward<Args>(args)...);
+    _si_moose_base.MooseBase::untrackedMooseDeprecated(std::forward<Args>(args)...);
     flagSolutionWarningMultipleRegistration(_si_moose_base.name() + ": deprecation");
   }
 
   template <typename... Args>
   void paramWarning(const std::string & param, Args... args) const
   {
-    _si_moose_base.MooseBase::paramWarning(param, std::forward<Args>(args)...);
+    _si_moose_base.MooseBase::untrackedParamWarning(param, std::forward<Args>(args)...);
     flagSolutionWarningMultipleRegistration(_si_moose_base.name() + ": warning for parameter '" +
                                             param + "'");
   }
