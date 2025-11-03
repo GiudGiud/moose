@@ -16,8 +16,8 @@
 
 SolutionInvalidInterface::SolutionInvalidInterface(const MooseBase * const moose_base,
                                                    const InputParameters & parameters)
-  : _si_moose_base(*moose_base),
-    _si_problem(
+  : _moose_base(*moose_base),
+    _fe_problem_base(
         parameters.isParamValid("_fe_problem_base") ?
                                                     // MooseObjects get the problem that way
             parameters.get<FEProblemBase *>("_fe_problem_base")
@@ -30,7 +30,7 @@ SolutionInvalidInterface::SolutionInvalidInterface(const MooseBase * const moose
 #ifdef MOOSE_KOKKOS_ENABLED
 SolutionInvalidInterface::SolutionInvalidInterface(const SolutionInvalidInterface & object,
                                                    const Moose::Kokkos::FunctorCopy &)
-  : _si_moose_base(object._si_moose_base), _si_problem(object._si_problem)
+  : _moose_base(object._moose_base), _fe_problem_base(object._fe_problem_base)
 {
 }
 #endif
@@ -44,9 +44,9 @@ SolutionInvalidInterface::flagInvalidSolutionInternal(
   mooseAssert(
       warning == moose::internal::getSolutionInvalidityRegistry().item(invalid_solution_id).warning,
       "Inconsistent warning flag");
-  auto & solution_invalidity = _si_moose_base.getMooseApp().solutionInvalidity();
+  auto & solution_invalidity = _moose_base.getMooseApp().solutionInvalidity();
   if constexpr (!warning)
-    if (!_si_problem || _si_problem->immediatelyPrintInvalidSolution())
+    if (!_fe_problem_base || _fe_problem_base->immediatelyPrintInvalidSolution())
       solution_invalidity.printDebug(invalid_solution_id);
   return solution_invalidity.flagInvalidSolutionInternal(invalid_solution_id);
 }
@@ -56,7 +56,7 @@ SolutionInvalidInterface::registerInvalidSolutionInternal(const std::string & me
                                                           const bool warning) const
 {
   return moose::internal::getSolutionInvalidityRegistry().registerInvalidity(
-      _si_moose_base.type(), message, warning);
+      _moose_base.type(), message, warning);
 }
 
 template void SolutionInvalidInterface::flagInvalidSolutionInternal<true>(

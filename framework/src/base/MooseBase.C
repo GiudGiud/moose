@@ -14,6 +14,7 @@
 #include "Factory.h"
 #include "InputParameterWarehouse.h"
 #include "AppFactory.h"
+#include "MooseVerbosityHelper.h"
 
 const std::string MooseBase::type_param = "_type";
 const std::string MooseBase::name_param = "_object_name";
@@ -36,6 +37,7 @@ MooseBase::validParams()
 
 MooseBase::MooseBase(MooseApp & app, const InputParameters & params)
   : ConsoleStreamInterface(app),
+    MooseVerbosityHelper(this, parameters),
     _app(app),
     _type(params.getObjectType()),
     _name(params.getObjectName()),

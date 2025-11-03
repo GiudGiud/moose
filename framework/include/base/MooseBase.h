@@ -15,6 +15,7 @@
 #include "MooseError.h"
 #include "MooseObjectName.h"
 #include "MooseObjectParameterName.h"
+#include "MooseVerbosityHelper.h"
 
 class MooseApp;
 
@@ -33,6 +34,7 @@ class Node;
   using MooseBase::isParamValid;                                                                   \
   using MooseBase::isParamSetByUser;                                                               \
   using MooseBase::paramError;                                                                     \
+  using MooseBase::paramWarning;                                                                   \
   using MooseBase::paramInfo;                                                                      \
   using MooseBase::_app;                                                                           \
   using MooseBase::_type;                                                                          \
@@ -45,7 +47,8 @@ class Node;
  * - MooseObject for an object created within a system
  * - Action for a class performing a setup task, like creating objects
  */
-class MooseBase : public ConsoleStreamInterface
+class MooseBase : public ConsoleStreamInterface,
+                  public MooseVerbosityHelper
 {
 public:
   /// The name of the parameter that contains the object type
@@ -219,138 +222,6 @@ public:
                                  const std::string & object_name,
                                  const std::string & object_parameter) const;
 
-  /**
-   * Emits an error prefixed with the file and line number of the given param (from the input
-   * file) along with the full parameter path+name followed by the given args as the message.
-   * If this object's parameters were not created directly by the Parser, then this function falls
-   * back to the normal behavior of mooseError - only printing a message using the given args.
-   */
-  template <typename... Args>
-  [[noreturn]] void paramError(const std::string & param, Args... args) const;
-
-  /**
-   * Emits a warning prefixed with the file and line number of the given param (from the input
-   * file) along with the full parameter path+name followed by the given args as the message.
-   * If this object's parameters were not created directly by the Parser, then this function falls
-   * back to the normal behavior of mooseWarning - only printing a message using the given args.
-   */
-  template <typename... Args>
-  void untrackedParamWarning(const std::string & param, Args... args) const;
-
-  /**
-   * Emits an informational message prefixed with the file and line number of the given param
-   * (from the input file) along with the full parameter path+name followed by the given args as
-   * the message.  If this object's parameters were not created directly by the Parser, then this
-   * function falls back to the normal behavior of mooseInfo - only printing a message using
-   * the given args.
-   */
-  template <typename... Args>
-  void paramInfo(const std::string & param, Args... args) const;
-
-  /**
-   * @returns A prefix to be used in messages that contain the input
-   * file location associated with this object (if any) and the
-   * name and type of the object.
-   */
-  std::string messagePrefix(const bool hit_prefix = true) const
-  {
-    return messagePrefix(_pars, hit_prefix);
-  }
-
-  /**
-   * Deprecated message prefix; the error type is no longer used
-   */
-  std::string errorPrefix(const std::string &) const { return messagePrefix(); }
-
-  /**
-   * Emits an error prefixed with object name and type and optionally a file path
-   * to the top-level block parameter if available.
-   */
-  template <typename... Args>
-  [[noreturn]] void mooseError(Args &&... args) const
-  {
-    callMooseError(argumentsToString(std::forward<Args>(args)...), /* with_prefix = */ true);
-  }
-
-  template <typename... Args>
-  [[noreturn]] void mooseDocumentedError(const std::string & repo_name,
-                                         const unsigned int issue_num,
-                                         Args &&... args) const
-  {
-    callMooseError(moose::internal::formatMooseDocumentedError(
-                       repo_name, issue_num, argumentsToString(std::forward<Args>(args)...)),
-                   /* with_prefix = */ true);
-  }
-
-  /**
-   * Emits an error without the prefixing included in mooseError().
-   */
-  template <typename... Args>
-  [[noreturn]] void mooseErrorNonPrefixed(Args &&... args) const
-  {
-    callMooseError(argumentsToString(std::forward<Args>(args)...), /* with_prefix = */ false);
-  }
-
-  /**
-   * Emits a warning prefixed with object name and type.
-   */
-  template <typename... Args>
-  void untrackedMooseWarning(Args &&... args) const
-  {
-    moose::internal::mooseWarningStream(_console, messagePrefix(true), std::forward<Args>(args)...);
-  }
-
-  /**
-   * Emits a warning without the prefixing included in mooseWarning().
-   */
-  template <typename... Args>
-  void untrackedMooseWarningNonPrefixed(Args &&... args) const
-  {
-    moose::internal::mooseWarningStream(_console, std::forward<Args>(args)...);
-  }
-
-  template <typename... Args>
-  void untrackedMooseDeprecated(Args &&... args) const
-  {
-    moose::internal::mooseDeprecatedStream(
-        _console, false, true, messagePrefix(true), std::forward<Args>(args)...);
-  }
-
-  template <typename... Args>
-  void mooseInfo(Args &&... args) const
-  {
-    moose::internal::mooseInfoStream(_console, messagePrefix(true), std::forward<Args>(args)...);
-  }
-
-  /**
-   * External method for calling moose error with added object context.
-   * @param msg The message
-   * @param with_prefix If true, add the prefix from messagePrefix(), which is the object
-   * information (type, name, etc)
-   * @param node Optional hit node to add file path context as a prefix
-   */
-  [[noreturn]] void
-  callMooseError(std::string msg, const bool with_prefix, const hit::Node * node = nullptr) const;
-
-  /**
-   * External method for calling moose error with added object context.
-   *
-   * Needed so that objects without the MooseBase context (InputParameters)
-   * can call errors with context
-   *
-   * @param app The app pointer (if available); adds multiapp context and clears the console
-   * @param params The parameters, needed to obtain object information
-   * @param msg The message
-   * @param with_prefix If true, add the prefix from messagePrefix(), which is the object
-   * information (type, name, etc)
-   * @param node Optional hit node to add file path context as a prefix
-   */
-  [[noreturn]] static void callMooseError(MooseApp * const app,
-                                          const InputParameters & params,
-                                          std::string msg,
-                                          const bool with_prefix,
-                                          const hit::Node * node);
-
 protected:
   /// The MOOSE application this is associated with
   MooseApp & _app;
@@ -365,14 +236,6 @@ protected:
   const InputParameters & _pars;
 
 private:
-  /**
-   * Internal method for getting the message prefix for an object (object type, name, etc).
-   *
-   * Needs to be static so that we can call it externally from InputParameters for
-   * errors that do not have context of the MooseBase
-   */
-  static std::string messagePrefix(const InputParameters & params, const bool hit_prefix);
-
   /**
    * Internal method for getting a hit node (if available) given a set of parameters
    *
@@ -433,23 +296,85 @@ MooseBase::getCheckedPointerParam(const std::string & name, const std::string & 
   return _pars.getCheckedPointerParam<T>(name, error_string);
 }
 
+// These templates for routines in MooseVerbosityHelper need to be defined here because they require
+// the declaration of a MooseBase to be known known
+template <typename... Args>
+void untrackedMooseWarning(Args &&... args) const
+{
+  moose::internal::mooseWarningStream(_moose_base._console, messagePrefix(true), std::forward<Args>(args)...);
+}
+
+template <typename... Args>
+void untrackedMooseWarningNonPrefixed(Args &&... args) const
+{
+  moose::internal::mooseWarningStream(_moose_base._console, std::forward<Args>(args)...);
+}
+
 template <typename... Args>
 [[noreturn]] void
-MooseBase::paramError(const std::string & param, Args... args) const
+MooseVerbosityHelper::paramError(const std::string & param, Args... args) const
 {
-  _pars.paramError(param, std::forward<Args>(args)...);
+  _moose_base.parameters().paramError(param, std::forward<Args>(args)...);
+}
+
+template <typename... Args>
+void MooseVerbosityHelper::untrackedMooseWarning(Args &&... args) const
+{
+  moose::internal::mooseWarningStream(_moose_base._console, messagePrefix(true), std::forward<Args>(args)...);
 }
 
 template <typename... Args>
 void
-MooseBase::untrackedParamWarning(const std::string & param, Args... args) const
+MooseVerbosityHelper::untrackedParamWarning(const std::string & param, Args... args) const
 {
-  mooseWarning(_pars.paramMessage(param, std::forward<Args>(args)...));
+  mooseWarning(_moose_base.parameters().paramMessage(param, std::forward<Args>(args)...));
 }
 
 template <typename... Args>
 void
-MooseBase::paramInfo(const std::string & param, Args... args) const
+MooseVerbosityHelper::paramInfo(const std::string & param, Args... args) const
 {
-  mooseInfo(_pars.paramMessage(param, std::forward<Args>(args)...));
+  mooseInfo(_moose_base.parameters().paramMessage(param, std::forward<Args>(args)...));
+}
+
+
+template <typename... Args>
+void untrackedMooseDeprecated(Args &&... args) const
+{
+  moose::internal::mooseDeprecatedStream(
+      _console, false, true, messagePrefix(true), std::forward<Args>(args)...);
+}
+
+template <typename... Args>
+void mooseWarning(Args &&... args) const
+{
+  untrackedMooseWarning(std::forward<Args>(args)...);
+  flagSolutionWarningMultipleRegistration(_moose_base.name() + ": warning");
+}
+
+template <typename... Args>
+void mooseWarningNonPrefixed(Args &&... args) const
+{
+  untrackedMooseWarningNonPrefixed(std::forward<Args>(args)...);
+  flagSolutionWarningMultipleRegistration(_moose_base.name() + ": warning");
+}
+
+template <typename... Args>
+void mooseDeprecated(Args &&... args) const
+{
+  untrackedMooseDeprecated(std::forward<Args>(args)...);
+  flagSolutionWarningMultipleRegistration(_moose_base.name() + ": deprecation");
+}
+
+template <typename... Args>
+void paramWarning(const std::string & param, Args... args) const
+{
+  untrackedParamWarning(param, std::forward<Args>(args)...);
+  flagSolutionWarningMultipleRegistration(_moose_base.name() + ": warning for parameter '" +
+                                          param + "'");
+}
+
+std::string messagePrefix(const bool hit_prefix = true) const
+{
+  return messagePrefix(_moose_base.parameters(), hit_prefix);
 }

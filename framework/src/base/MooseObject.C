@@ -44,7 +44,6 @@ MooseObject::validParams()
 
 MooseObject::MooseObject(const InputParameters & parameters)
   : ParallelParamObject(parameters),
-    SolutionInvalidInterface(this, parameters),
     _enabled(getParam<bool>("enable"))
 {
   if (Registry::isRegisteredObj(type()) && _app.getFactory().currentlyConstructing() != &parameters)
@@ -62,7 +61,7 @@ const std::string not_shared_error =
 #ifdef MOOSE_KOKKOS_ENABLED
 MooseObject::MooseObject(const MooseObject & object, const Moose::Kokkos::FunctorCopy &)
   : ParallelParamObject(object),
-    SolutionInvalidInterface(this, object.parameters()),
+    MooseVerbosityHelper(this, object.parameters()),
     _enabled(object._enabled)
 {
 }
