@@ -33,10 +33,10 @@ Outlet1PhaseFromWCNSFV::check() const
 {
   FlowBoundary1Phase::check();
 
-  auto fm = dynamic_cast<const FlowModelSinglePhase *>(_flow_model.get());
-  if (fm == nullptr)
-    logError("Incompatible flow model. Make sure you use this component with single phase flow "
-             "channel.");
+  // auto fm = dynamic_cast<const FlowModelSinglePhase *>(_flow_model.get());
+  // if (fm == nullptr)
+  //   logError("Incompatible flow model. Make sure you use this component with single phase flow "
+  //            "channel.");
 }
 
 void

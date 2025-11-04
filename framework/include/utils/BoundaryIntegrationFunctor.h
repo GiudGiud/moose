@@ -48,9 +48,11 @@ public:
     return true;
   }
 
+  bool supportsFaceArg() const override final { return true; }
+  bool supportsElemSideQpArg() const override final { return true; }
+
   using typename Moose::FunctorBase<T>::FunctorType;
   using typename Moose::FunctorBase<T>::ValueType;
-  using typename Moose::FunctorBase<T>::FunctorReturnType;
 
 protected:
   virtual ValueType globalValue(const Moose::StateArg & time) const;
@@ -138,7 +140,8 @@ BoundaryIntegralFunctor<T>::globalValue(const Moose::StateArg & time) const
       fi = _mesh.faceInfo(neighbor, neighbor->which_neighbor_am_i(elem));
     }
     mooseAssert(fi, "We should have a face info");
-    Moose::FaceArg face_arg = {fi, Moose::FV::LimiterType::CentralDifference, true, true, nullptr};
+    Moose::FaceArg face_arg = {
+        fi, Moose::FV::LimiterType::CentralDifference, true, true, nullptr, nullptr};
     sum += _functor(face_arg, time) * fi->faceArea() * fi->faceCoord();
   }
   return sum;
@@ -210,7 +213,6 @@ public:
 
   using typename Moose::FunctorBase<T>::FunctorType;
   using typename Moose::FunctorBase<T>::ValueType;
-  using typename Moose::FunctorBase<T>::FunctorReturnType;
   using BoundaryIntegralFunctor<T>::hasBlocks;
   using BoundaryIntegralFunctor<T>::subdomainErrorMessage;
   using BoundaryIntegralFunctor<T>::_mesh;
@@ -256,7 +258,8 @@ BoundaryAverageFunctor<T>::globalValue(const Moose::StateArg & time) const
     }
     mooseAssert(fi, "We should have a face info");
     mooseAssert(fi, "We should have a face info");
-    Moose::FaceArg face_arg = {fi, Moose::FV::LimiterType::CentralDifference, true, true, nullptr};
+    Moose::FaceArg face_arg = {
+        fi, Moose::FV::LimiterType::CentralDifference, true, true, nullptr, nullptr};
     sum += _functor(face_arg, time) * fi->faceArea() * fi->faceCoord();
     area += fi->faceArea() * fi->faceCoord();
   }

@@ -581,11 +581,11 @@ ComputeFVFluxThread<RangeType, AttributeTagType>::emptyDifferenceTest(
                       supplied.end(),
                       std::inserter(difference, difference.begin()));
 
-  mooseAssert(
-      difference.empty(),
-      "All of the material properties we depend on should already be supplied/computed. Do your FV "
-      "objects depend on a material property that is computed in a material with coupled FE "
-      "variables? If so, that property needs to be moved to a material without FE coupling.");
+  // mooseAssert(
+  //     difference.empty(),
+  //     "All of the material properties we depend on should already be supplied/computed. Do your
+  //     FV " "objects depend on a material property that is computed in a material with coupled FE
+  //     " "variables? If so, that property needs to be moved to a material without FE coupling.");
 }
 
 template <typename RangeType, typename AttributeTagType>

@@ -16,8 +16,7 @@ InputParameters
 PhysicsOutlet::validParams()
 {
   InputParameters params = PhysicsFlowBoundary::validParams();
-  params.addRequiredParam<Real>("p", "Prescribed pressure [Pa]");
-  params.declareControllable("p");
+  params.addRequiredParam<MooseFunctorName>("p", "Prescribed pressure [Pa]");
   params.addClassDescription(
       "Boundary condition with prescribed pressure for flow channels using Physics.");
   return params;

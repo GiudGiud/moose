@@ -7274,8 +7274,9 @@ FEProblemBase::computeBounds(NonlinearImplicitSystem & libmesh_dbg_var(sys),
 
       NumericVector<Number> & _lower = _current_nl_sys->getVector("lower_bound");
       NumericVector<Number> & _upper = _current_nl_sys->getVector("upper_bound");
-      _lower.swap(lower);
-      _upper.swap(upper);
+      std::cout << "computing bounds " << _lower.size() << " " << _upper.size() << std::endl;
+      // _lower.swap(lower);
+      // _upper.swap(upper);
       for (THREAD_ID tid = 0; tid < libMesh::n_threads(); tid++)
         _all_materials.residualSetup(tid);
 

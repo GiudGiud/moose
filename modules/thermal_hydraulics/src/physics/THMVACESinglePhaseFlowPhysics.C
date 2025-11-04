@@ -904,10 +904,10 @@ THMVACESinglePhaseFlowPhysics::addInletBoundaries()
     }
     else if (boundary_type == InletTypeEnum::VelocityTemperature)
     {
-      const std::string class_name = "ADBoundaryFlux3EqnGhostVelocityTemperature";
+      const std::string class_name = "ADBoundaryFlux3EqnGhostFunctorVelocityTemperature";
       InputParameters params = _factory.getValidParams(class_name);
-      params.set<Real>("vel") = comp.getParam<Real>("vel");
-      params.set<Real>("T") = comp.getParam<Real>("T");
+      params.set<MooseFunctorName>("vel") = comp.getParam<MooseFunctorName>("vel");
+      params.set<MooseFunctorName>("T") = comp.getParam<MooseFunctorName>("T");
       params.set<Real>("normal") = comp.getNormal();
       params.set<bool>("reversible") = comp.isReversible();
       params.set<UserObjectName>("numerical_flux") =
@@ -915,8 +915,8 @@ THMVACESinglePhaseFlowPhysics::addInletBoundaries()
       params.set<UserObjectName>("fluid_properties") = comp.getFluidPropertiesName();
       params.set<ExecFlagEnum>("execute_on") = userobject_execute_on;
       _sim->addUserObject(class_name, comp.getBoundaryUOName(), params);
-      comp.connectObject(params, comp.getBoundaryUOName(), "vel");
-      comp.connectObject(params, comp.getBoundaryUOName(), "T");
+      // comp.connectObject(params, comp.getBoundaryUOName(), "vel");
+      // comp.connectObject(params, comp.getBoundaryUOName(), "T");
     }
     else if (boundary_type == InletTypeEnum::StagnationPressureTemperature)
     {
@@ -960,16 +960,16 @@ THMVACESinglePhaseFlowPhysics::addOutletBoundaries()
     // we add them in addBCs for convenience
     if (boundary_type == OutletTypeEnum::FixedPressure)
     {
-      const std::string class_name = "ADBoundaryFlux3EqnGhostPressure";
+      const std::string class_name = "ADBoundaryFlux3EqnGhostFunctorPressure";
       InputParameters params = _factory.getValidParams(class_name);
-      params.set<Real>("p") = comp.getParam<Real>("p");
+      params.set<MooseFunctorName>("p") = comp.getParam<MooseFunctorName>("p");
       params.set<Real>("normal") = comp.getNormal();
       params.set<UserObjectName>("fluid_properties") = comp.getFluidPropertiesName();
       params.set<UserObjectName>("numerical_flux") =
           libmesh_map_find(_numerical_flux_names, comp.getFluidPropertiesName());
       params.set<ExecFlagEnum>("execute_on") = userobject_execute_on;
       _sim->addUserObject(class_name, comp.getBoundaryUOName(), params);
-      comp.connectObject(params, comp.getBoundaryUOName(), "p");
+      // comp.connectObject(params, comp.getBoundaryUOName(), "p");
     }
     else if (boundary_type == OutletTypeEnum::FreeBoundary)
     {

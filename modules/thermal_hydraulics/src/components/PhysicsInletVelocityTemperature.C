@@ -18,10 +18,9 @@ InputParameters
 PhysicsInletVelocityTemperature::validParams()
 {
   InputParameters params = PhysicsFlowBoundary::validParams();
-  params.addRequiredParam<Real>("vel", "Prescribed velocity [m/s]");
-  params.addRequiredParam<Real>("T", "Prescribed temperature [K]");
+  params.addRequiredParam<MooseFunctorName>("vel", "Prescribed velocity [m/s]");
+  params.addRequiredParam<MooseFunctorName>("T", "Prescribed temperature [K]");
   params.addParam<bool>("reversible", true, "True for reversible, false for pure inlet");
-  params.declareControllable("vel T");
   params.addClassDescription("Boundary condition with prescribed velocity and temperature "
                              "for flow channels using thermal hydraulics Physics.");
   return params;
