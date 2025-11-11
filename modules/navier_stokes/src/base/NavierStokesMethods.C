@@ -241,6 +241,79 @@ template ADReal computeShearStrainRateNormSquared<ADReal>(const Moose::Functor<A
                                                           const Moose::ElemArg & elem_arg,
                                                           const Moose::StateArg & state);
 
+Real
+computeShearStrainRateTripleProductTrace(const Moose::Functor<Real> & u,
+                                         const Moose::Functor<Real> * v,
+                                         const Moose::Functor<Real> * w,
+                                         const Moose::ElemArg & elem_arg,
+                                         const Moose::StateArg & state)
+{
+  const auto & grad_u = u.gradient(elem_arg, state);
+  const Real Sxx = 2.0 * grad_u(0);
+  Real Sxy = 0.0;
+  Real Sxz = 0.0;
+  Real Syy = 0.0;
+  Real Syz = 0.0;
+  Real Szz = 0.0;
+
+  if (v) // dim >= 2
+  {
+    const auto & grad_v = (*v).gradient(elem_arg, state);
+    Sxy = grad_u(1) + grad_v(0);
+    Syy = 2.0 * grad_v(1);
+
+    if (w) // dim >= 3
+    {
+      const auto & grad_w = (*w).gradient(elem_arg, state);
+      Sxz = grad_u(2) + grad_w(0);
+      Syz = grad_v(2) + grad_w(1);
+      Szz = 2.0 * grad_w(2);
+    }
+  }
+
+  // Explicitly doing the sum. There might be a trick to optimize this like for the square norm
+  // Could do at least symmetries!
+  Real S3 = Sxx*Sxx*Sxx + Sxx*Sxy*Sxy + Sxx*Sxz*Sxz +
+            Sxy*Sxy*Sxx + Sxy*Syy*Sxy + Sxy*Syz*Sxz +
+            Sxz*Sxz*Sxx + Sxz*Syz*Sxy + Sxz*Szz*Sxz +
+            Sxy*Sxx*Sxy + Sxy*Sxy*Syy + Sxy*Sxz*Syz +
+            Syy*Sxy*Sxy + Syy*Syy*Syy + Syy*Syz*Syz +
+            Syz*Sxz*Sxy + Syz*Syz*Syy + Syz*Szz*Syz +
+            Sxz*Sxx*Sxz + Sxz*Sxy*Syz + Sxz*Sxz*Szz +
+            Syz*Sxy*Sxz + Syz*Syy*Syz + Syz*Syz*Szz +
+            Szz*Sxz*Sxz + Szz*Syz*Syz + Szz*Szz*Szz;
+  return S3;
+}
+
+Real
+computeRotationRateTensorNormSquared(const Moose::Functor<Real> & u,
+                                     const Moose::Functor<Real> * v,
+                                     const Moose::Functor<Real> * w,
+                                     const Moose::ElemArg & elem_arg,
+                                     const Moose::StateArg & state)
+{
+  const auto & grad_u = u.gradient(elem_arg, state);
+  Real Rxy = 0.0;
+  Real Rxz = 0.0;
+  Real Ryz = 0.0;
+
+  if (v) // dim >= 2
+  {
+    const auto & grad_v = (*v).gradient(elem_arg, state);
+    Rxy = grad_u(1) - grad_v(0);
+    // Ryx = grad_v(0) - grad_u(1); so we just compute one
+
+    if (w) // dim >= 3
+    {
+      const auto & grad_w = (*w).gradient(elem_arg, state);
+      Rxz = grad_u(2) + grad_w(0);
+      Ryz = grad_v(2) + grad_w(1);
+    }
+  }
+
+  return 2 * (Rxy * Rxy + Rxz * Rxz + Ryz * Ryz);
+}
+
 /// Bounded element maps for wall treatment
 void
 getWallBoundedElements(const std::vector<BoundaryName> & wall_boundary_names,

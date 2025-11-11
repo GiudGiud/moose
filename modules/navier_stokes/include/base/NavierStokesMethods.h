@@ -123,7 +123,7 @@ template <typename T>
 T computeSpeed(const libMesh::VectorValue<T> & velocity);
 
 /**
- * Utility function to compute the shear strain rate
+ * Utility function to compute the square of the norm of the shear strain rate tensor
  */
 template <typename T>
 T computeShearStrainRateNormSquared(const Moose::Functor<T> & u,
@@ -131,6 +131,26 @@ T computeShearStrainRateNormSquared(const Moose::Functor<T> & u,
                                     const Moose::Functor<T> * w,
                                     const Moose::ElemArg & elem_arg,
                                     const Moose::StateArg & state);
+
+/**
+ * Utility to compute the trace of the triple product for the shear strain rate tensor
+ */
+Real
+computeShearStrainRateTripleProductTrace(const Moose::Functor<Real> & u,
+                                         const Moose::Functor<Real> * v,
+                                         const Moose::Functor<Real> * w,
+                                         const Moose::ElemArg & elem_arg,
+                                         const Moose::StateArg & state);
+
+/**
+ * Utility to compute the square of the norm for the rotation strain rate tensor
+ */
+Real
+computeRotationRateTensorNormSquared(const Moose::Functor<Real> & u,
+                                     const Moose::Functor<Real> * v,
+                                     const Moose::Functor<Real> * w,
+                                     const Moose::ElemArg & elem_arg,
+                                     const Moose::StateArg & state);
 
 /**
  * Map marking wall bounded elements
