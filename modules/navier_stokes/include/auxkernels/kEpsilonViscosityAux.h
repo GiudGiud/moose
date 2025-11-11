@@ -51,7 +51,7 @@ protected:
   const Moose::Functor<Real> & _mu;
 
   /// C-mu closure coefficient
-  const Real _C_mu;
+  const Real _C_mu_0;
 
   // Maximum allowable mu_t_ratio : mu/mu_t
   const Real _mu_t_ratio_max;
@@ -67,6 +67,9 @@ protected:
 
   /// Method used to limit the k-e time scale
   const MooseEnum _scale_limiter;
+
+  /// Whether to use the realizable model
+  const bool _realizable;
 
   /// Whether we are using a newton solve
   const bool _newton_solve;

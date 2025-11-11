@@ -9,7 +9,7 @@ This is the auxiliary kernel used to compute the dynamic turbulent viscosity
 where:
 
 - $\rho$ is the density,
-- $C_{\mu} = 0.09$ is a closure parameter,
+- $C_{\mu}$ is a closure parameter,
 - $k$ is the turbulent kinetic energy,
 - $\epsilon$ is the turbulent kinetic energy dissipation rate.
 - $T_e = max( \frac{k}{\epsilon} , \sqrt(\frac{\nu}{\epsilon}) )$.
@@ -20,6 +20,23 @@ kernel allows us to set the value of the cells on the boundaries specified in
 from the law of the wall or non-equilibrium wall functions.
 See [INSFVTurbulentViscosityWallFunction](INSFVTurbulentViscosityWallFunction.md) for more
 details about the near-wall implementation.
+
+## Realizable k-epsilon
+
+If using the standard k-epsilon treatment, $C_\mu$ should be set to $0.09$.
+If using the realizable treatment, $C_\mu$ should not be specified, as it is computed as:
+
+!equation
+C_\mu = \dfrac{1}{A_0 + A_s * U^* * \frac{k}{\epsilon}}
+
+with:
+
+- $A_0 = 4.$
+- $A_s = \sqrt{6} * \cos(\acos(\sqrt{6. * W} / 3.))$
+- $W =  2. \sqrt(2) S_3 / (S_{ij} S_{ij} S_{ij})$
+- $U^* = \sqrt{S_{ij}S_{ji} + R_{ij}R_{ij}}$
+
+## Bulk treatment
 
 !alert note
 If the boundary conditions for the dynamic turbulent viscosity are already set via [INSFVTurbulentViscosityWallFunction](INSFVTurbulentViscosityWallFunction.md),

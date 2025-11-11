@@ -28,7 +28,7 @@ kEpsilonViscosityAux::validParams()
                                             "Coupled turbulent kinetic energy dissipation rate.");
   params.addRequiredParam<MooseFunctorName>(NS::density, "Density");
   params.addRequiredParam<MooseFunctorName>(NS::mu, "Dynamic viscosity.");
-  params.addParam<Real>("C_mu", "Coupled turbulent kinetic energy closure.");
+  params.addParam<Real>("C_mu", "Coupled turbulent kinetic energy closure (constant if standard k-epsilon).");
   params.addParam<Real>("mu_t_ratio_max", 1e5, "Maximum allowable mu_t_ratio : mu/mu_t.");
   params.addParam<std::vector<BoundaryName>>(
       "walls", {}, "Boundaries that correspond to solid walls.");
@@ -43,6 +43,7 @@ kEpsilonViscosityAux::validParams()
                              scale_limiter,
                              "The method used to limit the k-epsilon time scale."
                              "'none', 'standard'");
+  params.addParam<bool>("realizable", false, "Whether to use the realizable k-epsilon model");
   params.addParam<bool>("newton_solve", false, "Whether a Newton nonlinear solve is being used");
   params.addParamNamesToGroup("newton_solve", "Advanced");
 
@@ -59,14 +60,19 @@ kEpsilonViscosityAux::kEpsilonViscosityAux(const InputParameters & params)
     _epsilon(getFunctor<Real>(NS::TKED)),
     _rho(getFunctor<Real>(NS::density)),
     _mu(getFunctor<Real>(NS::mu)),
-    _C_mu(getParam<Real>("C_mu")),
+    _C_mu_0(isParamValid("C_mu") ? getParam<Real>("C_mu") : 1),
     _mu_t_ratio_max(getParam<Real>("mu_t_ratio_max")),
     _wall_boundary_names(getParam<std::vector<BoundaryName>>("walls")),
     _bulk_wall_treatment(getParam<bool>("bulk_wall_treatment")),
     _wall_treatment(getParam<MooseEnum>("wall_treatment").getEnum<NS::WallTreatmentEnum>()),
     _scale_limiter(getParam<MooseEnum>("scale_limiter")),
+    _realizable(getParam<bool>("realizable")),
     _newton_solve(getParam<bool>("newton_solve"))
 {
+  if (_realizable && isParamValid("C_mu"))
+    paramError("C_mu", "C_mu should not be set for the realizable k-epsilon model");
+  if (!_realizable && !isParamValid("C_mu"))
+    paramError("C_mu", "C_mu should be set for the standard k-epsilon model");
 }
 
 void
@@ -93,10 +99,28 @@ kEpsilonViscosityAux::computeValue()
   const auto mu = _mu(makeElemArg(_current_elem), state);
   const auto nu = mu / rho;
 
+  // Compute these only once
+  const auto tke = _k(elem_arg, state);
+  const auto eps = _epsilon(elem_arg, state);
+
   // Determine if the element is wall bounded
   // and if bulk wall treatment needs to be activated
   const bool wall_bounded = _wall_bounded.find(_current_elem) != _wall_bounded.end();
   Real mu_t;
+
+  // Compute C_mu
+  Real C_mu = _C_mu_0;
+  if (_realizable)
+  {
+    const auto A0 = 4.;
+    const auto S_norm_sq = NS::computeShearStrainRateNormSquared<Real>(_u_var, _v_var, _w_var, elem_arg, state);
+    const auto S_triple = NS::computeShearStrainRateTripleProductTrace(_u_var, _v_var, _w_var, elem_arg, state);
+    const auto W = (2. * sqrt(2) * S_triple) / (S_norm_sq * sqrt(S_norm_sq));
+    const auto As = sqrt(6) * cos(acos(sqrt(6. * W) / 3.));
+    const auto R_norm_sq = NS::computeRotationRateTensorNormSquared(_u_var, _v_var, _w_var, elem_arg, state);
+    const auto U_star = sqrt(S_norm_sq + R_norm_sq);
+    C_mu = 1. / (A0 + As * U_star * tke / eps);
+  }
 
   // Computing wall value for near-wall elements if bulk wall treatment is activated
   // bulk_wall_treatment should only be used for very coarse mesh problems
@@ -159,7 +183,7 @@ kEpsilonViscosityAux::computeValue()
     else if (_wall_treatment == NS::WallTreatmentEnum::NEQ)
     {
       // Assign non-equilibrium wall function value
-      y_plus = min_wall_dist * std::sqrt(std::sqrt(_C_mu) * _k(elem_arg, state)) * rho / mu;
+      y_plus = min_wall_dist * std::sqrt(std::sqrt(C_mu) * tke) * rho / mu;
       mu_wall = mu * (NS::von_karman_constant * y_plus /
                       std::log(std::max(NS::E_turb_constant * y_plus, 1 + 1e-4)));
       mut_log = mu_wall - mu;
@@ -189,18 +213,18 @@ kEpsilonViscosityAux::computeValue()
     Real time_scale;
     if (_scale_limiter == "standard")
     {
-      time_scale = std::max(_k(elem_arg, state) / _epsilon(elem_arg, state),
-                            std::sqrt(nu / _epsilon(elem_arg, state)));
+      time_scale = std::max(tke / eps,
+                            std::sqrt(nu / eps));
     }
     else
     {
-      time_scale = _k(elem_arg, state) / _epsilon(elem_arg, state);
+      time_scale = tke / eps;
     }
     // For newton solvers, epsilon might not be bounded
     if (_newton_solve)
-      time_scale = _k(elem_arg, state) / std::max(NS::epsilon_low_limit, _epsilon(elem_arg, state));
+      time_scale = tke / std::max(NS::epsilon_low_limit, eps);
 
-    const Real mu_t_nl = _rho(elem_arg, state) * _C_mu * _k(elem_arg, state) * time_scale;
+    const Real mu_t_nl = _rho(elem_arg, state) * C_mu * tke * time_scale;
     mu_t = mu_t_nl;
     if (_newton_solve)
       mu_t = std::max(mu_t, NS::mu_t_low_limit);
