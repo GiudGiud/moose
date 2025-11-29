@@ -53,11 +53,6 @@ InputParameters
 AdvancedExtruderGenerator::validParams()
 {
   InputParameters params = MeshGenerator::validParams();
-
-  MooseEnum radial_growth_methods("LINEAR CUBIC", "LINEAR");
-
-  params.addRequiredParam<MeshGeneratorName>("input", "The mesh to extrude");
-
   params.addClassDescription(
       "Extrudes a 1D mesh into 2D, or a 2D mesh into 3D, can have a variable height for each "
       "elevation, variable number of layers within each elevation, variable growth factors of "
@@ -65,44 +60,19 @@ AdvancedExtruderGenerator::validParams()
       "extra integers within each elevation as well as interface boundaries between neighboring "
       "elevation layers.");
 
+  params.addRequiredParam<MeshGeneratorName>("input", "The mesh to extrude");
+
+  // Base functionality: extruded along a straight line
   params.addParam<std::vector<Real>>("heights", {}, "The height of each elevation");
-
-  params.addRangeCheckedParam<std::vector<Real>>(
-      "biases", "biases>0.0", "The axial growth factor used for mesh biasing for each elevation.");
-
   params.addParam<std::vector<unsigned int>>(
       "num_layers",
       {},
       "The number of layers for each elevation - must be num_elevations in length!");
-
-  params.addParam<std::vector<std::vector<subdomain_id_type>>>(
-      "subdomain_swaps",
-      {},
-      "For each row, every two entries are interpreted as a pair of "
-      "'from' and 'to' to remap the subdomains for that elevation");
-
-  params.addParam<std::vector<std::vector<boundary_id_type>>>(
-      "boundary_swaps",
-      {},
-      "For each row, every two entries are interpreted as a pair of "
-      "'from' and 'to' to remap the boundaries for that elevation");
-
-  params.addParam<std::vector<std::string>>(
-      "elem_integer_names_to_swap",
-      {},
-      "Array of element extra integer names that need to be swapped during extrusion.");
-
-  params.addParam<std::vector<std::vector<std::vector<dof_id_type>>>>(
-      "elem_integers_swaps",
-      {},
-      "For each row, every two entries are interpreted as a pair of 'from' and 'to' to remap the "
-      "element extra integer for that elevation. If multiple element extra integers need to be "
-      "swapped, the enties are stacked based on the order provided in "
-      "'elem_integer_names_to_swap' to form the third dimension.");
-
   params.addParam<Point>("direction",
                          "A vector that points in the direction to extrude (note, this will be "
                          "normalized internally - so don't worry about it here)");
+
+  // Advanced functionality: extruding along a 1D mesh/curve
   params.addParam<MeshGeneratorName>("extrusion_curve", "Name of curve to be extruded along.");
   params.addParam<Point>(
       "start_extrusion_direction",
@@ -115,24 +85,43 @@ AdvancedExtruderGenerator::validParams()
       "should be the tangent vector at the LAST node of the extrusion curve. Vector will be "
       "normalized in code, so don't worry about it here.");
 
+  // ID assignments for sub-regions
+  params.addParam<std::vector<std::vector<subdomain_id_type>>>(
+      "subdomain_swaps",
+      {},
+      "For each row, every two entries are interpreted as a pair of "
+      "'from' and 'to' to remap the subdomains for that elevation");
+  params.addParam<std::vector<std::vector<boundary_id_type>>>(
+      "boundary_swaps",
+      {},
+      "For each row, every two entries are interpreted as a pair of "
+      "'from' and 'to' to remap the boundaries for that elevation");
+  params.addParam<std::vector<std::string>>(
+      "elem_integer_names_to_swap",
+      {},
+      "Array of element extra integer names that need to be swapped during extrusion.");
+  params.addParam<std::vector<std::vector<std::vector<dof_id_type>>>>(
+      "elem_integers_swaps",
+      {},
+      "For each row, every two entries are interpreted as a pair of 'from' and 'to' to remap the "
+      "element extra integer for that elevation. If multiple element extra integers need to be "
+      "swapped, the enties are stacked based on the order provided in "
+      "'elem_integer_names_to_swap' to form the third dimension.");
+
+  // Boundary assignments
   params.addParam<BoundaryName>(
       "top_boundary",
       "The boundary name to set on the top boundary. If omitted an ID will be generated.");
-
   params.addParam<BoundaryName>(
       "bottom_boundary",
       "The boundary name to set on the bottom boundary. If omitted an ID will be generated.");
-
   params.addParam<std::vector<std::vector<subdomain_id_type>>>(
       "upward_boundary_source_blocks", "Block ids used to generate upward interface boundaries.");
-
   params.addParam<std::vector<std::vector<boundary_id_type>>>("upward_boundary_ids",
                                                               "Upward interface boundary ids.");
-
   params.addParam<std::vector<std::vector<subdomain_id_type>>>(
       "downward_boundary_source_blocks",
       "Block ids used to generate downward interface boundaries.");
-
   params.addParam<std::vector<std::vector<boundary_id_type>>>("downward_boundary_ids",
                                                               "Downward interface boundary ids.");
   params.addParamNamesToGroup(
@@ -145,22 +134,28 @@ AdvancedExtruderGenerator::validParams()
                         0,
                         "Pitch for helicoidal extrusion around an axis going through the origin "
                         "following the direction vector");
-  params.addParam<libMesh::Real>(
-      "r_final", "Final radius to extrude to. Defaults to constant radius if not specified.");
+
+  // Radial expansion parameters
+  params.addRangeCheckedParam<std::vector<Real>>(
+      "biases", "biases>0.0", "The axial growth factor used for mesh biasing for each elevation.");
   params.addParam<libMesh::Real>(
       "r_start_intended",
       "Advanced parameter to be set when extruding to a final radius. It "
       "aids in the preservation of surface area when extruding. The "
       "radius is defined to be the largest distance from the center.");
-  params.addParam<MeshGeneratorName>(
-      "target_mesh",
-      "Mesh to be extruded to. If specified, a final radius is automatically calculated.");
+
+  MooseEnum radial_growth_methods("LINEAR CUBIC", "LINEAR");
   params.addParam<MooseEnum>("radial_growth_method",
                              radial_growth_methods,
                              "Functional form to change radius while extruding along curve.");
   params.addParam<Real>("start_radial_growth_rate", 0, "Starting rate of radial expansion.");
   params.addParam<Real>("end_radial_growth_rate", 0, "Ending rate of radial expansion.");
 
+  params.addParam<libMesh::Real>(
+    "r_final", "Final radius to extrude to. Defaults to constant radius if not specified.");
+  params.addParam<MeshGeneratorName>(
+    "target_mesh",
+    "Mesh to be extruded to. If specified, a final radius is automatically calculated.");
   params.addParam<bool>("correct_extrusion_to_target",
                         true,
                         "When extruding along a curve to a target radius, the extruded nodes will "
