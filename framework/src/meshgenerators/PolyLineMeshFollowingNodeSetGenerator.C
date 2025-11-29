@@ -37,6 +37,7 @@ PolyLineMeshFollowingNodeSetGenerator::validParams()
       false,
       "Ignore nodes in the nodeset that are behind the current point in the polyline");
   params.addParam<bool>("loop", false, "Whether edges should form a closed loop");
+  params.addParam<Point>("end_point", "An additional point to end the line at. If used in a loop, it will be added before closing the loop");
 
   // Discretization parameters
   // NOTE: we could have another dx as a path search parameter, and decouple the two options
@@ -187,8 +188,11 @@ PolyLineMeshFollowingNodeSetGenerator::generate()
 
 done_drawing:
 
-  const auto n_elem = n_segments * _num_edges_between_points - 1;
-  const auto max_nodes = n_segments * _num_edges_between_points - 1;
+  if (isParamValid("end_point"))
+    mesh.add_point(getParam<Point>("end_point"));
+
+  const auto n_elem = n_segments * _num_edges_between_points + isParamValid("end_point");
+  const auto max_nodes = n_segments * _num_edges_between_points + isParamValid("end_point");
   for (auto i : make_range(n_elem + _loop))
   {
     const auto ip1 = _loop ? (i + 1) % max_nodes : (i + 1);
