@@ -56,4 +56,14 @@
     exodiff = coupled_old_vector_nodal_out.e
     abs_zero = 1e-8
   []
+  [coupled_vector_value_gradient]
+    issues = '#30224'
+    requirement = 'The system shall retrieve the gradient of a vector vector through the coupling interface.'
+    design = 'Coupleable.md'
+    type = Exodiff
+    input = coupled_vector_gradient.i
+    exodiff = coupled_vector_gradient_out.e
+    # not relevant
+    recover = false
+  []
 []
