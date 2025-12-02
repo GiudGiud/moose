@@ -968,6 +968,16 @@ protected:
                                                unsigned int comp = 0) const;
 
   /**
+   * Returns second spatial derivatives of a coupled vector variable
+   * @param var_name Name of coupled vector variable
+   * @param comp Component number for vector of coupled vector variables
+   * @return Reference to a VariableSecond containing the second derivative of the coupled variable
+   * @see Kernel::second
+   */
+  virtual const VectorVariableSecond & coupledVectorSecond(const std::string & var_name,
+                                                           unsigned int comp = 0) const;
+
+  /**
    * Returns an old second spatial derivatives from previous time step of a coupled variable
    * @param var_name Name of coupled variable
    * @param comp Component number for vector of coupled variables
@@ -1487,6 +1497,9 @@ protected:
 
   /// This will always be zero because the default values for optionally coupled variables is always constant
   mutable VariableSecond _default_second;
+
+  /// This will always be zero because the default values for optionally coupled variables is always constant
+  mutable VectorVariableSecond _default_vector_second;
 
   /// This will always be zero because the default values for optionally coupled variables is always constant
   mutable MooseArray<ADRealTensorValue> _ad_default_second;

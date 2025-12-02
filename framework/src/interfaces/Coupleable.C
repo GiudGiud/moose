@@ -1865,6 +1865,22 @@ Coupleable::coupledSecond(const std::string & var_name, unsigned int comp) const
   return (_c_is_implicit) ? var->secondSlnNeighbor() : var->secondSlnOlderNeighbor();
 }
 
+const VectorVariableSecond &
+Coupleable::coupledVectorSecond(const std::string & var_name, unsigned int comp) const
+{
+  const auto * var = getVectorVar(var_name, comp);
+  if (!var)
+  {
+    _default_vector_second.resize(_coupleable_max_qps);
+    return _default_vector_second;
+  }
+  checkFuncType(var_name, VarType::Second, FuncAge::Curr);
+
+  if (!_coupleable_neighbor)
+    return (_c_is_implicit) ? var->secondSln() : var->secondSlnOlder();
+  return (_c_is_implicit) ? var->secondSlnNeighbor() : var->secondSlnOlderNeighbor();
+}
+
 const VariableSecond &
 Coupleable::coupledSecondOld(const std::string & var_name, unsigned int comp) const
 {
