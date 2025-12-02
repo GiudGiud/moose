@@ -8,7 +8,7 @@
     ny = 1
     nz = 1
   []
-  order = SECOND
+  second_order = true
 []
 
 [ICs]
