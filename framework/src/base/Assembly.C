@@ -476,6 +476,8 @@ Assembly::buildVectorFE(const FEType type) const
       _vector_fe[dim][type]->get_curl_phi();
     if (_need_div.count(type))
       _vector_fe[dim][type]->get_div_phi();
+    if (_need_second_derivative.count(type))
+      _vector_fe[dim][type]->get_d2phi();
     _vector_fe[dim][type]->get_xyz();
   }
 }
