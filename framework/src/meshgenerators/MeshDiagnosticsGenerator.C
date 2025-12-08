@@ -47,6 +47,7 @@ MeshDiagnosticsGenerator::validParams()
       chk_option,
       "whether to check that sidesets are consistently oriented using neighbor subdomains. If a "
       "sideset is inconsistently oriented within a subdomain, this will not be detected");
+  params.addRangeCheckedParam<Real>("max_sideset_angle", 90, "0<max_sideset_angle<=180", "Maximum angle in degrees between two adjacent sides in a sideset before considering an orientation issue");
   params.addParam<MooseEnum>(
       "check_for_watertight_sidesets",
       chk_option,
@@ -247,6 +248,7 @@ MeshDiagnosticsGenerator::checkSidesetsOrientation(const std::unique_ptr<MeshBas
     // We'll consider pi / 2 to be the most steep angle we'll pass
     unsigned int num_normals_flipping = 0;
     Real steepest_side_angles = 0;
+    const auto max_sideset_angle = getParam<Real>("max_sideset_angle");
     for (const auto & [elem_id, side_id, side_bid] : side_tuples)
     {
       if (side_bid != bid)
@@ -284,13 +286,13 @@ MeshDiagnosticsGenerator::checkSidesetsOrientation(const std::unique_ptr<MeshBas
             const auto & neigh_side_normal = neigh_normals[0];
 
             // Check the angle by computing the dot product
-            if (neigh_side_normal * side_normal <= 0)
+            if (neigh_side_normal * side_normal <= std::cos(max_sideset_angle / 180 * libMesh::pi))
             {
               num_normals_flipping++;
               steepest_side_angles =
                   std::max(std::acos(neigh_side_normal * side_normal), steepest_side_angles);
               if (num_normals_flipping <= _num_outputs)
-                _console << "Side normals changed by more than pi/2 for sideset "
+                _console << "Side normals changed by " + std::to_string(std::acos(neigh_side_normal * side_normal) / libMesh::pi * 180) + " (degrees) for sideset "
                          << sideset_full_name << " between side " << side_id << " of element "
                          << elem_ptr->id() << " and side " << neigh_side_index
                          << " of neighbor element " << neighbor->id() << std::endl;
@@ -304,13 +306,13 @@ MeshDiagnosticsGenerator::checkSidesetsOrientation(const std::unique_ptr<MeshBas
 
     if (num_normals_flipping)
       message = "Sideset " + sideset_full_name +
-                " has two neighboring sides with a very large angle. Largest angle detected: " +
+                " has " + std::to_string(num_normals_flipping) + " neighboring sides with a very large angle. Largest angle detected: " +
                 std::to_string(steepest_side_angles) + " rad (" +
                 std::to_string(steepest_side_angles * 180 / libMesh::pi) + " degrees).";
     else
       message = "Sideset " + sideset_full_name +
                 " does not appear to have side-to-neighbor-side orientation flips. All neighbor "
-                "sides normal differ by less than pi/2";
+                "sides normal differ by less than " + std::to_string(max_sideset_angle) + " degrees";
 
     diagnosticsLog(message, _check_sidesets_orientation, num_normals_flipping);
   }
