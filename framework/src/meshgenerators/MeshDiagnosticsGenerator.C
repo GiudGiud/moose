@@ -71,6 +71,7 @@ MeshDiagnosticsGenerator::validParams()
                              "whether to look for multiple element types in the same sub-domain");
   params.addParam<MooseEnum>(
       "examine_element_overlap", chk_option, "whether to find overlapping elements");
+  params.addParam<Real>("element_overlap_tol", TOLERANCE, "Tolerance for checking whether elements contains another element's nodes/centroid");
   params.addParam<MooseEnum>(
       "examine_nonplanar_sides", chk_option, "whether to check element sides are planar");
   params.addParam<MooseEnum>("examine_non_conformality",
@@ -547,6 +548,7 @@ MeshDiagnosticsGenerator::checkElementTypes(const std::unique_ptr<MeshBase> & me
 void
 MeshDiagnosticsGenerator::checkElementOverlap(const std::unique_ptr<MeshBase> & mesh) const
 {
+  const auto tol = getParam<Real>("element_overlap_tol");
   {
     unsigned int num_elem_overlaps = 0;
     auto pl = mesh->sub_point_locator();
@@ -559,7 +561,7 @@ MeshDiagnosticsGenerator::checkElementOverlap(const std::unique_ptr<MeshBase> & 
 
       for (auto & elem : elements)
       {
-        if (!elem->contains_point(*node))
+        if (!elem->contains_point(*node, tol))
           continue;
 
         // not overlapping inside the element if part of its nodes
@@ -606,7 +608,7 @@ MeshDiagnosticsGenerator::checkElementOverlap(const std::unique_ptr<MeshBase> & 
       for (const auto & elem_ov : overlaps)
       {
         // avoids some false positives with pyramids
-        if (!elem_ov->contains_point(v_avg, 1e-14))
+        if (!elem_ov->contains_point(v_avg, tol))
           continue;
         if (elem->id() == elem_ov->id())
           continue;
