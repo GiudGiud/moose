@@ -644,6 +644,71 @@ convert3DMeshToAllTet4(MeshBase & mesh,
     mesh.contract();
     mesh.prepare_for_use();
   }
+
+  // Check overlap there
+  {
+    unsigned int num_elem_overlaps = 0;
+    auto pl = mesh->sub_point_locator();
+    // loop on nodes, assumed replicated mesh
+    for (auto & node : mesh->node_ptr_range())
+    {
+      // find all the elements around this node
+      std::set<const Elem *> elements;
+      (*pl)(*node, elements);
+
+      for (auto & elem : elements)
+      {
+        if (!elem->contains_point(*node))
+          continue;
+
+        // not overlapping inside the element if part of its nodes
+        bool found = false;
+        for (auto & elem_node : elem->node_ref_range())
+          if (*node == elem_node)
+          {
+            found = true;
+            break;
+          }
+        // not overlapping inside the element if right on its side
+        bool on_a_side = false;
+        for (const auto & elem_side_index : elem->side_index_range())
+          if (elem->side_ptr(elem_side_index)->contains_point(*node, _non_conformality_tol))
+            on_a_side = true;
+        if (!found && !on_a_side)
+        {
+          num_elem_overlaps++;
+          if (num_elem_overlaps < _num_outputs)
+            std::cout << "Element overlap detected at : " << *node << std::endl;
+          else if (num_elem_overlaps == _num_outputs)
+            std::cout << "Maximum output reached, log is silenced" << std::endl;
+        }
+      }
+    }
+
+    std::cout << "Number of elements overlapping (node-based heuristics): " +
+                       Moose::stringify(num_elem_overlaps) << std::endl;
+    num_elem_overlaps = 0;
+
+    // loop on all elements in mesh: assumes a replicated mesh
+    for (auto & elem : mesh->active_element_ptr_range())
+    {
+      // find all the elements around the centroid of this element
+      std::set<const Elem *> overlaps;
+      (*pl)(elem->vertex_average(), overlaps);
+
+      if (overlaps.size() > 1)
+      {
+        num_elem_overlaps++;
+        if (num_elem_overlaps < _num_outputs)
+          std::cout << "Element overlap detected with element : " << elem->id() << " near point "
+                   << elem->vertex_average() << std::endl;
+        else if (num_elem_overlaps == _num_outputs)
+          std::cout << "Maximum output reached, log is silenced" << std::endl;
+      }
+    }
+     std::cout << "Number of elements overlapping (centroid-based heuristics): " +
+                       Moose::stringify(num_elem_overlaps) << std::endl;
+  }
 }
 
 void
@@ -1027,7 +1092,7 @@ transitionLayerGenerator(MeshBase & mesh,
   // It would be convenient to have a single boundary id instead of a vector.
   const auto uniform_tmp_bid = MooseMeshUtils::getNextFreeBoundaryID(mesh);
 
-  // Check the boundaries and merge them
+  // Check the input boundaries and merge them to a single boundary ID
   std::vector<boundary_id_type> boundary_ids;
   for (const auto & sideset : boundary_names)
   {
