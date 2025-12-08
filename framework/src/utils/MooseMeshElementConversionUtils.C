@@ -647,10 +647,12 @@ convert3DMeshToAllTet4(MeshBase & mesh,
 
   // Check overlap there
   {
+    unsigned int _num_outputs = 10;
+    const auto _non_conformality_tol = 1e-7;
     unsigned int num_elem_overlaps = 0;
-    auto pl = mesh->sub_point_locator();
+    auto pl = mesh.sub_point_locator();
     // loop on nodes, assumed replicated mesh
-    for (auto & node : mesh->node_ptr_range())
+    for (auto & node : mesh.node_ptr_range())
     {
       // find all the elements around this node
       std::set<const Elem *> elements;
@@ -690,7 +692,7 @@ convert3DMeshToAllTet4(MeshBase & mesh,
     num_elem_overlaps = 0;
 
     // loop on all elements in mesh: assumes a replicated mesh
-    for (auto & elem : mesh->active_element_ptr_range())
+    for (auto & elem : mesh.active_element_ptr_range())
     {
       // find all the elements around the centroid of this element
       std::set<const Elem *> overlaps;
@@ -1105,7 +1107,7 @@ transitionLayerGenerator(MeshBase & mesh,
   auto & sideset_map = mesh.get_boundary_info().get_sideset_map();
   auto side_list = mesh.get_boundary_info().build_side_list();
 
-  std::vector<std::pair<dof_id_type, std::vector<unsigned int>>> elems_list;
+  std::vector<std::pair<dof_id_type, std::set<unsigned int>>> elems_list;
   std::vector<std::set<dof_id_type>> layered_elems_list;
   layered_elems_list.push_back(std::set<dof_id_type>());
   // Need to collect the list of elements that need to be converted
@@ -1142,6 +1144,7 @@ transitionLayerGenerator(MeshBase & mesh,
           layered_elems_list.back().emplace(neighbor_ptr->id());
       }
 
+      // When converting only one layer, we keep track of the (element, all side indices on conversion bdy)
       if (conversion_element_layer_number == 1)
       {
         if (side_type == TRI3)
@@ -1152,29 +1155,31 @@ transitionLayerGenerator(MeshBase & mesh,
                                   elems_list.end(),
                                   [elem_id = std::get<0>(side_info)](const auto & p)
                                   { return p.first == elem_id; });
+          // Element was already there, add the other side involved in the boundary
           if (elems_list.size() && pit != elems_list.end())
           {
-            pit->second.push_back(std::get<1>(side_info));
+            pit->second.insert(std::get<1>(side_info));
           }
           else
             elems_list.push_back(std::make_pair(
-                std::get<0>(side_info), std::vector<unsigned int>({std::get<1>(side_info)})));
+                std::get<0>(side_info), std::set<unsigned int>({std::get<1>(side_info)})));
           if (neighbor_ptr)
           {
             auto sit = std::find_if(elems_list.begin(),
                                     elems_list.end(),
                                     [elem_id = neighbor_ptr->id()](const auto & p)
                                     { return p.first == elem_id; });
+            // Neighbor was already there, add the other side involved in the boundary
             if (elems_list.size() && sit != elems_list.end())
             {
-              sit->second.push_back(
+              sit->second.insert(
                   neighbor_ptr->which_neighbor_am_i(mesh.elem_ptr(std::get<0>(side_info))));
             }
             else
             {
               elems_list.push_back(std::make_pair(
                   neighbor_ptr->id(),
-                  std::vector<unsigned int>(
+                  std::set<unsigned int>(
                       {neighbor_ptr->which_neighbor_am_i(mesh.elem_ptr(std::get<0>(side_info)))})));
             }
           }
@@ -1190,14 +1195,17 @@ transitionLayerGenerator(MeshBase & mesh,
     }
   }
 
+  // Keep more layers of element if using multiple conversion layers
   if (conversion_element_layer_number > 1)
   {
+    // Keeps track of all the elements we have collected in any of the boundary layers
     std::set<dof_id_type> total_elems_set(layered_elems_list.back());
 
     while (layered_elems_list.back().size() &&
            layered_elems_list.size() < conversion_element_layer_number)
     {
       layered_elems_list.push_back(std::set<dof_id_type>());
+      // Go layer by layer and look at the side neighbors of the elements in the layer
       for (const auto & elem_id : *(layered_elems_list.end() - 2))
       {
         for (const auto & i_side : make_range(mesh.elem_ptr(elem_id)->n_sides()))
@@ -1229,6 +1237,8 @@ transitionLayerGenerator(MeshBase & mesh,
   // Convert at most n_layer_conversion layers of elements
   const unsigned int n_layer_conversion = layered_elems_list.size() - 1;
   for (unsigned int i = 0; i < n_layer_conversion; ++i)
+  {
+    std::cout << "Examining " << i << std::endl;
     for (const auto & elem_id : layered_elems_list[i])
     {
       // As these elements will become TET4 elements, we need to shift the subdomain ID
@@ -1239,9 +1249,12 @@ transitionLayerGenerator(MeshBase & mesh,
         mesh.elem_ptr(elem_id)->subdomain_id() += sid_shift_base;
       }
     }
+  }
 
   const subdomain_id_type block_id_to_remove = sid_shift_base * 3;
 
+  // Convert the gathered original_elems to tet4
+  std::cout << "Converting " << original_elems.size() << std::endl;
   std::vector<dof_id_type> converted_elems_ids_to_track;
   MooseMeshElementConversionUtils::convert3DMeshToAllTet4(
       mesh, original_elems, converted_elems_ids_to_track, block_id_to_remove, false);
@@ -1251,18 +1264,22 @@ transitionLayerGenerator(MeshBase & mesh,
   // TET layers)
   if (n_layer_conversion)
   {
+    // Transition layer is only at the last layer
     for (const auto & elem_id : layered_elems_list[n_layer_conversion])
     {
       for (const auto & i_side : make_range(mesh.elem_ptr(elem_id)->n_sides()))
       {
+        // Don't consider external sides: no need for a transition there
+        // Keep track of sides at interface with the previous layer
         if (mesh.elem_ptr(elem_id)->neighbor_ptr(i_side) != nullptr &&
             layered_elems_list[n_layer_conversion - 1].count(
                 mesh.elem_ptr(elem_id)->neighbor_ptr(i_side)->id()))
         {
+          // Element was already found, add this side though
           if (elems_list.size() && elems_list.back().first == elem_id)
-            elems_list.back().second.push_back(i_side);
+            elems_list.back().second.insert(i_side);
           else
-            elems_list.push_back(std::make_pair(elem_id, std::vector<unsigned int>({i_side})));
+            elems_list.push_back(std::make_pair(elem_id, std::set<unsigned int>({i_side})));
         }
       }
     }
@@ -1278,8 +1295,9 @@ transitionLayerGenerator(MeshBase & mesh,
     for (auto i = side_range.first; i != side_range.second; ++i)
       elem_side_info[i->second.first].push_back(i->second.second);
 
+    std::vector<unsigned int> side_ids_vec(elem_info.second.begin(), elem_info.second.end());
     MooseMeshElementConversionUtils::convertElem(
-        mesh, elem_info.first, elem_info.second, elem_side_info, sid_shift_base);
+        mesh, elem_info.first, side_ids_vec, elem_side_info, sid_shift_base);
   }
 
   // delete the original elements that were converted
