@@ -600,15 +600,15 @@ MeshDiagnosticsGenerator::checkElementOverlap(const std::unique_ptr<MeshBase> & 
     {
       // find all the elements around the centroid of this element
       std::set<const Elem *> overlaps;
-      const auto v_avg = elem->true_centroid();
-      (*pl)(v_avg, overlaps);
+      const auto centroid = elem->true_centroid();
+      (*pl)(centroid, overlaps);
 
       if (overlaps.size() < 2)
         continue;
       for (const auto & elem_ov : overlaps)
       {
         // avoids some false positives with pyramids
-        if (!elem_ov->contains_point(v_avg, tol))
+        if (!elem_ov->contains_point(centroid, tol))
           continue;
         if (elem->id() == elem_ov->id())
           continue;
@@ -617,7 +617,7 @@ MeshDiagnosticsGenerator::checkElementOverlap(const std::unique_ptr<MeshBase> & 
         num_overlaps_per_block[elem_ov->subdomain_id()]++;
         if (num_elem_overlaps < _num_outputs)
           _console << "Element overlap detected with element : " << elem->id() << " and " << elem_ov->id() << " near point "
-                   << elem->vertex_average() << std::endl;
+                   << centroid << std::endl;
         else if (num_elem_overlaps == _num_outputs)
           _console << "Maximum output reached, log is silenced" << std::endl;
       }

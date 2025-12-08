@@ -64,7 +64,7 @@ ParsedExtraElementIDGenerator::ParsedExtraElementIDGenerator(const InputParamete
   c_defs.push_back(std::to_string(std::exp(Real(1))));
 
   // add the extra element integers
-  std::string symbol_str = "x,y,z";
+  std::string symbol_str = "x,y,z,elem_id";
   for (const auto & eeid_name : _eeid_names)
     symbol_str += "," + eeid_name;
 
@@ -72,7 +72,7 @@ ParsedExtraElementIDGenerator::ParsedExtraElementIDGenerator(const InputParamete
   _func_F = std::make_shared<SymFunction>();
   parsedFunctionSetup(_func_F, _function, symbol_str, c_names, c_defs, comm());
 
-  _func_params.resize(3 + _eeid_names.size());
+  _func_params.resize(4 + _eeid_names.size());
 }
 
 std::unique_ptr<MeshBase>
@@ -114,8 +114,9 @@ ParsedExtraElementIDGenerator::generate()
     _func_params[0] = centroid(0);
     _func_params[1] = centroid(1);
     _func_params[2] = centroid(2);
+    _func_params[3] = elem->id();
     for (const auto i : index_range(_eeid_indices))
-      _func_params[3 + i] = elem->get_extra_integer(_eeid_indices[i]);
+      _func_params[4 + i] = elem->get_extra_integer(_eeid_indices[i]);
     const auto id_real = evaluate(_func_F);
 
     dof_id_type id = id_real;

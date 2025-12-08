@@ -45,6 +45,7 @@ ParsedSubdomainMeshGenerator::assignElemSubdomainID(Elem * elem)
   _func_params[2] = elem->vertex_average()(2);
   for (const auto i : index_range(_eeid_indices))
     _func_params[3 + i] = elem->get_extra_integer(_eeid_indices[i]);
+
   bool contains = evaluate(_func_F);
 
   if (contains && std::find(_excluded_ids.begin(), _excluded_ids.end(), elem->subdomain_id()) ==
