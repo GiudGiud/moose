@@ -591,19 +591,30 @@ MeshDiagnosticsGenerator::checkElementOverlap(const std::unique_ptr<MeshBase> & 
                    _check_element_overlap,
                    num_elem_overlaps);
     num_elem_overlaps = 0;
+    std::unordered_map<SubdomainID, unsigned int> num_overlaps_per_block(mesh->n_subdomains());
 
     // loop on all elements in mesh: assumes a replicated mesh
     for (auto & elem : mesh->active_element_ptr_range())
     {
       // find all the elements around the centroid of this element
       std::set<const Elem *> overlaps;
-      (*pl)(elem->vertex_average(), overlaps);
+      const auto v_avg = elem->true_centroid();
+      (*pl)(v_avg, overlaps);
 
-      if (overlaps.size() > 1)
+      if (overlaps.size() < 2)
+        continue;
+      for (const auto & elem_ov : overlaps)
       {
+        // avoids some false positives with pyramids
+        if (!elem_ov->contains_point(v_avg, 1e-14))
+          continue;
+        if (elem->id() == elem_ov->id())
+          continue;
+
         num_elem_overlaps++;
+        num_overlaps_per_block[elem_ov->subdomain_id()]++;
         if (num_elem_overlaps < _num_outputs)
-          _console << "Element overlap detected with element : " << elem->id() << " near point "
+          _console << "Element overlap detected with element : " << elem->id() << " and " << elem_ov->id() << " near point "
                    << elem->vertex_average() << std::endl;
         else if (num_elem_overlaps == _num_outputs)
           _console << "Maximum output reached, log is silenced" << std::endl;
@@ -613,6 +624,8 @@ MeshDiagnosticsGenerator::checkElementOverlap(const std::unique_ptr<MeshBase> & 
                        Moose::stringify(num_elem_overlaps),
                    _check_element_overlap,
                    num_elem_overlaps);
+    if (num_elem_overlaps)
+      _console << "Subdomain ID : number of overlaps\n" << Moose::stringify(num_overlaps_per_block) << std::endl;
   }
 }
 
