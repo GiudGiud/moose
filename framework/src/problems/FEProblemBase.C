@@ -7206,6 +7206,7 @@ FEProblemBase::computeResidualSys(NonlinearImplicitSystem & sys,
   parallel_object_only();
 
   TIME_SECTION("computeResidualSys", 5);
+  _app.solutionInvalidity().resetSolutionInvalidCurrentIteration();
 
   computeResidual(soln, residual, sys.number());
 }
@@ -7612,6 +7613,7 @@ FEProblemBase::computeJacobianSys(NonlinearImplicitSystem & sys,
                                   const NumericVector<Number> & soln,
                                   SparseMatrix<Number> & jacobian)
 {
+  _app.solutionInvalidity().resetSolutionInvalidCurrentIteration();
   computeJacobian(soln, jacobian, sys.number());
 }
 
