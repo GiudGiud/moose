@@ -6918,6 +6918,14 @@ FEProblemBase::copySolutionsBackwards()
 }
 
 void
+FEProblemBase::skipNextForwardSolutionCopyToOld()
+{
+  for (auto & sys : _solver_systems)
+    sys->skipNextSolutionToOldCopy();
+  _aux->skipNextSolutionToOldCopy();
+}
+
+void
 FEProblemBase::advanceState()
 {
   TIME_SECTION("advanceState", 5, "Advancing State");
