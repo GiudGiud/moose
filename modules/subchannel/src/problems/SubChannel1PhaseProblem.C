@@ -1684,8 +1684,6 @@ SubChannel1PhaseProblem::computeWijResidual(int iblock)
       LibmeshPetscCall(createPetscVector(sol_holder_W, _block_size * _n_gaps));
       LibmeshPetscCall(populateVectorFromHandle<SolutionHandle>(
           _prodp, *_P_soln, first_node - 1, last_node - 1, _n_channels));
-      LibmeshPetscCall(populateVectorFromDense<libMesh::DenseMatrix<Real>>(
-          _Wij_vec, _Wij, first_node, last_node, _n_gaps));
       LibmeshPetscCall(MatMult(_cmc_sys_Wij_mat, _Wij_vec, sol_holder_W));
       LibmeshPetscCall(VecAXPY(sol_holder_W, -1.0, _cmc_sys_Wij_rhs));
       LibmeshPetscCall(MatMult(_cmc_pressure_force_mat, _prodp, sol_holder_P));
