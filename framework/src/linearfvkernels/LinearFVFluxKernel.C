@@ -79,33 +79,36 @@ LinearFVFluxKernel::addMatrixContribution()
             Moose::stringify(_current_face_info->faceCentroid()) +
             " boundaries specified: " + Moose::stringify(_current_face_info->boundaryIDs()));
 
-    LinearFVBoundaryCondition * bc_pointer =
-        _var.getBoundaryCondition(*_current_face_info->boundaryIDs().begin());
+    std::vector LinearFVBoundaryCondition * bc_pointers =
+        _var.getBoundaryConditions(*_current_face_info->boundaryIDs().begin());
 
-    if (bc_pointer || _force_boundary_execution)
+    for (bc in bc_pointers)
     {
-      if (bc_pointer)
-        bc_pointer->setupFaceData(_current_face_info, _current_face_type);
-      const auto matrix_contribution = computeBoundaryMatrixContribution(*bc_pointer);
-
-      // We allow internal (for the mesh) boundaries too, so we have to check on which side we
-      // are on (assuming that this is a boundary for the variable)
-      if (_current_face_type == FaceInfo::VarFaceNeighbors::ELEM)
+      if (bc_pointer || _force_boundary_execution)
       {
-        const auto dof_id_elem = _current_face_info->elemInfo()->dofIndices()[_sys_num][_var_num];
+        if (bc_pointer)
+          bc_pointer->setupFaceData(_current_face_info, _current_face_type);
+        const auto matrix_contribution = computeBoundaryMatrixContribution(*bc_pointer);
 
-        // We add the contributions to every tagged matrix
-        for (auto & matrix : _matrices)
-          (*matrix).add(dof_id_elem, dof_id_elem, matrix_contribution);
-      }
-      else if (_current_face_type == FaceInfo::VarFaceNeighbors::NEIGHBOR)
-      {
-        const auto dof_id_neighbor =
-            _current_face_info->neighborInfo()->dofIndices()[_sys_num][_var_num];
+        // We allow internal (for the mesh) boundaries too, so we have to check on which side we
+        // are on (assuming that this is a boundary for the variable)
+        if (_current_face_type == FaceInfo::VarFaceNeighbors::ELEM)
+        {
+          const auto dof_id_elem = _current_face_info->elemInfo()->dofIndices()[_sys_num][_var_num];
 
-        // We add the contributions to every tagged matrix
-        for (auto & matrix : _matrices)
-          (*matrix).add(dof_id_neighbor, dof_id_neighbor, matrix_contribution);
+          // We add the contributions to every tagged matrix
+          for (auto & matrix : _matrices)
+            (*matrix).add(dof_id_elem, dof_id_elem, matrix_contribution);
+        }
+        else if (_current_face_type == FaceInfo::VarFaceNeighbors::NEIGHBOR)
+        {
+          const auto dof_id_neighbor =
+              _current_face_info->neighborInfo()->dofIndices()[_sys_num][_var_num];
+
+          // We add the contributions to every tagged matrix
+          for (auto & matrix : _matrices)
+            (*matrix).add(dof_id_neighbor, dof_id_neighbor, matrix_contribution);
+        }
       }
     }
   }

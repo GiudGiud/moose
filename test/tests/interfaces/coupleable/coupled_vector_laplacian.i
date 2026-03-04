@@ -28,39 +28,39 @@
   []
 
   [var_xx_lapl]
-    order = FIRST
+    order = CONSTANT
     family = MONOMIAL_VEC
   []
   [var_xy_lapl]
-    order = FIRST
+    order = CONSTANT
     family = MONOMIAL_VEC
   []
   [var_xz_lapl]
-    order = FIRST
+    order = CONSTANT
     family = MONOMIAL_VEC
   []
   [var_yx_lapl]
-    order = FIRST
+    order = CONSTANT
     family = MONOMIAL_VEC
   []
   [var_yy_lapl]
-    order = FIRST
+    order = CONSTANT
     family = MONOMIAL_VEC
   []
   [var_yz_lapl]
-    order = FIRST
+    order = CONSTANT
     family = MONOMIAL_VEC
   []
   [var_zx_lapl]
-    order = FIRST
+    order = CONSTANT
     family = MONOMIAL_VEC
   []
   [var_zy_lapl]
-    order = FIRST
+    order = CONSTANT
     family = MONOMIAL_VEC
   []
   [var_zz_lapl]
-    order = FIRST
+    order = CONSTANT
     family = MONOMIAL_VEC
   []
 []
