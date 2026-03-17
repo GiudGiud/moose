@@ -115,7 +115,7 @@ protected:
   /// The variable names
   std::vector<std::string> _variable_names;
 
-  /// The index for what to sort by: x=0, y=1, z=2, then sampled variables in ordered specified in the parameter
+  /// The index for what to sort by: x=0, y=1, z=2, then sampled variables in the order specified in the derived class' 'what to sample' parameter
   unsigned int _sort_by_index;
 
   /// x coordinate of the points
