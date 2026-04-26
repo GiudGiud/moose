@@ -2046,7 +2046,9 @@ private:
   /// system into the canonical/reference coordinate system
   std::unique_ptr<MooseAppCoordTransform> _coord_transform;
 
-  /// Whether the coordinate system has been set
+  /// Whether the coordinate system has been set (at least once). This prevents selecting a unique
+  /// coordinate system when it has been cleared previously because two or more different coordinate
+  /// systems are already in use on different subdomains.
   bool & _coord_system_set;
 
   /// Set for holding user-provided coordinate system type block names

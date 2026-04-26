@@ -4240,6 +4240,7 @@ MooseMesh::setCoordSystem(const std::vector<SubdomainName> & blocks,
       mooseError(
           "You cannot set the coordinate system for ANY_BLOCK_ID before the mesh is prepared. "
           "Please call this method after the mesh is prepared.");
+    mooseAssert(!_coord_system_set, "We should not be overwriting the global coordinate system");
     const auto coord_type = coord_sys.size() == 0
                                 ? Moose::COORD_XYZ
                                 : Moose::stringToEnum<Moose::CoordinateSystemType>(coord_sys[0]);
@@ -4273,7 +4274,11 @@ MooseMesh::setCoordSystem(const std::vector<SubdomainName> & blocks,
                                 : Moose::stringToEnum<Moose::CoordinateSystemType>(coord_sys[0]);
     for (const auto sid : subdomains)
       _coord_sys[sid] = coord_type;
-    _unique_coord_system = coord_type;
+    if (_unique_coord_system.has_value() && coord_type != _unique_coord_system.value())
+      _unique_coord_system.reset();
+    // we need to avoid setting the unique coord system on a "3rd" call, after a set and a reset
+    else if (!_coord_system_set)
+      _unique_coord_system = coord_type;
   }
   else
   {
@@ -4296,7 +4301,7 @@ MooseMesh::setCoordSystem(const std::vector<SubdomainName> & blocks,
           _unique_coord_system.reset();
           found_different_coord_type = true;
         }
-        else if (i == 0)
+        else if (i == 0 && !_coord_system_set)
           _unique_coord_system = coord_type;
       }
     }
