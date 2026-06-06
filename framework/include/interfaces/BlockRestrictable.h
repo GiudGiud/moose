@@ -305,6 +305,11 @@ private:
   /// Set of block ids supplied by the user via the input file (for error checking)
   std::set<SubdomainID> _blk_ids;
 
+  /// Cached value of whether this object is defined on all blocks (either not block restricted or
+  /// containing ANY_BLOCK_ID). When true, hasBlocks() can short-circuit without a set lookup. This
+  /// is computed once in initializeBlockRestrictable() since _blk_ids is immutable thereafter.
+  bool _blk_covers_all_subdomains = true;
+
   /// Vector of block ids supplied by the user via the input file (for error reporting)
   std::vector<SubdomainID> _vec_ids;
 

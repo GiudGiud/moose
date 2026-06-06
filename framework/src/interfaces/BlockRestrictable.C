@@ -140,6 +140,11 @@ BlockRestrictable::initializeBlockRestrictable(const MooseObject * moose_object)
     _blocks = {"ANY_BLOCK_ID"};
   }
 
+  // _blk_ids is finalized at this point and is immutable afterwards, so cache whether this object
+  // covers all blocks. This lets the heavily-called hasBlocks() short-circuit without a set lookup.
+  _blk_covers_all_subdomains =
+      _blk_ids.empty() || _blk_ids.find(Moose::ANY_BLOCK_ID) != _blk_ids.end();
+
   // If this object is block restricted, check that defined blocks exist on the mesh
   if (_blk_ids.find(Moose::ANY_BLOCK_ID) == _blk_ids.end())
   {
@@ -245,7 +250,7 @@ BlockRestrictable::hasBlocks(const std::set<SubdomainName> & names) const
 bool
 BlockRestrictable::hasBlocks(const SubdomainID id) const
 {
-  if (_blk_ids.empty() || _blk_ids.find(Moose::ANY_BLOCK_ID) != _blk_ids.end())
+  if (_blk_covers_all_subdomains)
     return true;
   else
     return _blk_ids.find(id) != _blk_ids.end();
@@ -261,7 +266,7 @@ BlockRestrictable::hasBlocks(const std::vector<SubdomainID> & ids) const
 bool
 BlockRestrictable::hasBlocks(const std::set<SubdomainID> & ids) const
 {
-  if (_blk_ids.empty() || _blk_ids.find(Moose::ANY_BLOCK_ID) != _blk_ids.end())
+  if (_blk_covers_all_subdomains)
     return true;
   else
     return std::includes(_blk_ids.begin(), _blk_ids.end(), ids.begin(), ids.end());
