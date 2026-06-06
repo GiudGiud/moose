@@ -14,6 +14,10 @@ parameter of the [SolutionAux.md], as they both rely on the source file mesh hav
 The current implementation only guarantees contiguous numbering of elements in each subdomain if all subdomains are being
 renumbered.
 
+The [!param](/Mesh/RenumberBySubdomainGenerator/boundary_ordering) parameter adds an inner ordering on top of the
+per-subdomain ordering. Within each subdomain, the elements and nodes that lie on the listed boundaries are numbered first,
+in the order the boundaries are listed, and the remaining interior elements and nodes are numbered afterwards.
+
 !syntax parameters /Mesh/RenumberBySubdomainGenerator
 
 !syntax inputs /Mesh/RenumberBySubdomainGenerator
