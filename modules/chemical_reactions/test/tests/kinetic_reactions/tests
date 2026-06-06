@@ -1,0 +1,13 @@
+[Tests]
+  design = 'KineticReactionsPhysics.md'
+  issues = '#0'
+  [burns1984_spherical_spur]
+    type = CSVDiff
+    input = burns1984_spherical_spur.i
+    cli_args = 'Executioner/end_time=1e-9'
+    csvdiff = burns1984_spherical_spur_out.csv
+    requirement = 'The system shall assemble and solve a kinetic diffusion-reaction network, defined '
+                  'by a reaction list and per-species diffusivities, reproducing the Burns et al. '
+                  '(1984) spherical-spur water-radiolysis G values.'
+  []
+[]

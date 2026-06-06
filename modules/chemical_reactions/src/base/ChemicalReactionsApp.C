@@ -52,6 +52,7 @@ ChemicalReactionsApp::registerAll(Factory & f, ActionFactory & af, Syntax & synt
 
   // Physics syntax
   registerSyntax("AqueousReactionsEquilibriumPhysics", "Physics/AqueousReactionsEquilibrium/*");
+  registerSyntax("KineticReactionsPhysics", "Physics/KineticReactions/*");
 }
 
 void
