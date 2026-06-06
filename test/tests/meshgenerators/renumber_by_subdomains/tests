@@ -10,4 +10,13 @@
     mesh_mode = 'replicated'
     recover = false
   []
+  [boundary_ordering]
+    type = Exodiff
+    input = 'boundary_ordering.i'
+    cli_args = '--mesh-only boundary_ordering_in.e'
+    exodiff = 'boundary_ordering_in.e'
+    requirement = "The system shall be able to renumber elements and nodes within each subdomain so that the entities lying on a specified list of boundaries are numbered first, in the order the boundaries are listed."
+    mesh_mode = 'replicated'
+    recover = false
+  []
 []
