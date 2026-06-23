@@ -865,6 +865,22 @@ public:
    */
   void rotate(const RankTwoTensorTempl<T> & R);
 
+  /**
+   * @brief Optimized in-place rotation for the case where the rotation matrix R has a different
+   * (non-AD) scalar type. Computes \f$ A'_{ij} = R_{ik} A_{kl} R_{jl} \f$ where R carries no
+   * derivatives.
+   *
+   * When T is an AD type (e.g. ADReal) and T2 is plain Real, the naive expression
+   * `R * A * R.transpose()` triggers sparsity_union inside every AD addition during the tensor
+   * contractions. This overload pre-establishes the output sparsity once per component and then
+   * accumulates with plain scalar weights, reducing sparsity_union calls from O(N^3) to O(N^2).
+   */
+  template <typename T2>
+  void
+  rotate(const RankTwoTensorTempl<T2> & R,
+         typename std::enable_if<!std::is_same<T, T2>::value && libMesh::ScalarTraits<T2>::value,
+                                 int>::type = 0);
+
   /// @}
 
   /// @{
@@ -906,6 +922,17 @@ public:
    * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    */
   RankTwoTensorTempl<T> rotated(const RankTwoTensorTempl<T> & R) const;
+
+  /**
+   * @brief Optimized rotated() for the case where R has a different (non-AD) scalar type.
+   * Returns \f$ R A R^T \f$ where R carries no derivatives.
+   * See rotate(const RankTwoTensorTempl<T2>&) for full documentation.
+   */
+  template <typename T2>
+  RankTwoTensorTempl<T>
+  rotated(const RankTwoTensorTempl<T2> & R,
+          typename std::enable_if<!std::is_same<T, T2>::value && libMesh::ScalarTraits<T2>::value,
+                                  int>::type = 0) const;
 
   /**
    * Rotate the tensor about the z-axis

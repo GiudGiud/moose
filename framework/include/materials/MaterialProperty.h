@@ -212,8 +212,7 @@ namespace moose
 namespace internal
 {
 template <typename T1, typename T2>
-void
-rawValueEqualityHelper(T1 & out, const T2 & in)
+void inline rawValueEqualityHelper(T1 & out, const T2 & in)
 {
   out = MetaPhysicL::raw_value(in);
 }
@@ -223,7 +222,7 @@ void
 rawValueEqualityHelper(std::vector<T1> & out, const std::vector<T2> & in)
 {
   out.resize(in.size());
-  for (MooseIndex(in) i = 0; i < in.size(); ++i)
+  for (const auto i : index_range(in))
     rawValueEqualityHelper(out[i], in[i]);
 }
 
@@ -231,7 +230,7 @@ template <typename T1, typename T2, std::size_t N>
 void
 rawValueEqualityHelper(std::array<T1, N> & out, const std::array<T2, N> & in)
 {
-  for (MooseIndex(in) i = 0; i < in.size(); ++i)
+  for (const auto i : make_range(N))
     rawValueEqualityHelper(out[i], in[i]);
 }
 }
