@@ -344,6 +344,84 @@ RankTwoTensorTempl<T>::rotate(const RankTwoTensorTempl<T> & R)
 }
 
 template <typename T>
+template <typename T2>
+void
+RankTwoTensorTempl<T>::rotate(
+    const RankTwoTensorTempl<T2> & R,
+    typename std::enable_if<!std::is_same<T, T2>::value && libMesh::ScalarTraits<T2>::value,
+                            int>::type)
+{
+  // Optimized similarity transform R * (*this) * R^T for the case where R has a different
+  // scalar type (typically plain Real) and *this has AD entries.
+  //
+  // The naive expression  R * A * R^T  triggers sparsity_union inside every AD addition
+  // across the two tensor contractions — O(N^3) = 54 calls for 3x3 tensors.
+  //
+  // This implementation:
+  //   1. Pre-computes all scalar weights w_ij_kl = R(i,k) * R(j,l)  (plain Real arithmetic)
+  //   2. Pre-establishes the sparsity of each output component by unioning the sparsity
+  //      of each contributing input component — O(N^2) = 9 sparsity_union calls total
+  //   3. Accumulates the weighted sum into already-sized storage, hitting the cheap
+  //      early-return path in sparsity_union for all subsequent calls
+  //
+  // Net result: 9 sparsity_union calls instead of 54, and zero temporary allocations.
+
+  RankTwoTensorTempl<T> temp;
+
+  for (const auto i : make_range(N))
+  {
+    const auto i1 = i * N;
+    for (const auto j : make_range(N))
+    {
+      const auto j1 = j * N;
+
+      // Phase 1: pre-compute scalar weights and pre-establish sparsity.
+      // We union the sparsity of every A(k,l) whose weight is non-zero into temp(i,j)
+      // so that all subsequent multiply_union_add calls hit the cheap path.
+      T2 weights[N][N];
+      for (const auto k : make_range(N))
+        for (const auto l : make_range(N))
+        {
+          weights[k][l] = R._coords[i1 + k] * R._coords[j1 + l];
+          if (weights[k][l] != T2(0))
+            temp._coords[i1 + j].derivatives().sparsity_union(
+                (*this)(k, l).derivatives().nude_indices());
+        }
+
+      // Phase 2: accumulate weighted contributions.
+      // temp(i,j) = sum_kl R(i,k) * R(j,l) * A(k,l)
+      // Since sparsity is already established, no further sparsity_union calls occur.
+      temp._coords[i1 + j] = T(0);
+      for (const auto k : make_range(N))
+        for (const auto l : make_range(N))
+        {
+          if (weights[k][l] == T2(0))
+            continue;
+          // scalar * AD: no sparsity_union, no alloc
+          // AD +=: hits cheap early-return since sparsity already covers all indices
+          temp._coords[i1 + j] += weights[k][l] * (*this)(k, l);
+        }
+    }
+  }
+
+  for (unsigned int i = 0; i < N2; i++)
+    _coords[i] = temp._coords[i];
+}
+
+template <typename T>
+template <typename T2>
+RankTwoTensorTempl<T>
+RankTwoTensorTempl<T>::rotated(
+    const RankTwoTensorTempl<T2> & R,
+    typename std::enable_if<!std::is_same<T, T2>::value && libMesh::ScalarTraits<T2>::value,
+                            int>::type) const
+{
+  RankTwoTensorTempl<T> result(*this);
+  result.rotate(R);
+  return result;
+}
+
+template <typename T>
 RankTwoTensorTempl<T>
 RankTwoTensorTempl<T>::rotateXyPlane(T a)
 {
