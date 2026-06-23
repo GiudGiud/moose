@@ -54,8 +54,7 @@ ComputeMultipleInelasticCosseratStress::computeQpStress()
 
   if (_perform_finite_strain_rotations)
   {
-    _couple_stress[_qp] =
-        _rotation_increment[_qp] * _couple_stress[_qp] * _rotation_increment[_qp].transpose();
+    _couple_stress[_qp].rotate(_rotation_increment[_qp]);
     _Jacobian_mult_couple[_qp].rotate(_rotation_increment[_qp]);
   }
 }

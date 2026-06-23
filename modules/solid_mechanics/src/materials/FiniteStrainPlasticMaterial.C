@@ -72,11 +72,10 @@ FiniteStrainPlasticMaterial::computeQpStress()
             _plastic_strain[_qp]);
 
   // Rotate the stress tensor to the current configuration
-  _stress[_qp] = _rotation_increment[_qp] * _stress[_qp] * _rotation_increment[_qp].transpose();
+  _stress[_qp].rotate(_rotation_increment[_qp]);
 
   // Rotate plastic strain tensor to the current configuration
-  _plastic_strain[_qp] =
-      _rotation_increment[_qp] * _plastic_strain[_qp] * _rotation_increment[_qp].transpose();
+  _plastic_strain[_qp].rotate(_rotation_increment[_qp]);
 
   // Calculate the elastic strain_increment
   _elastic_strain[_qp] = _mechanical_strain[_qp] - _plastic_strain[_qp];

@@ -207,11 +207,9 @@ ADComputeMultipleInelasticStress::computeQpStressIntermediateConfiguration()
 void
 ADComputeMultipleInelasticStress::finiteStrainRotation()
 {
-  _elastic_strain[_qp] =
-      _rotation_increment[_qp] * _elastic_strain[_qp] * _rotation_increment[_qp].transpose();
-  _stress[_qp] = _rotation_increment[_qp] * _stress[_qp] * _rotation_increment[_qp].transpose();
-  _inelastic_strain[_qp] =
-      _rotation_increment[_qp] * _inelastic_strain[_qp] * _rotation_increment[_qp].transpose();
+  _elastic_strain[_qp].rotate(_rotation_increment[_qp]);
+  _stress[_qp].rotate(_rotation_increment[_qp]);
+  _inelastic_strain[_qp].rotate(_rotation_increment[_qp]);
 }
 
 void

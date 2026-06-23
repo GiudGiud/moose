@@ -83,8 +83,7 @@ ComputeFiniteStrainElasticStress::computeQpStress()
   }
 
   // Rotate the stress state to the current configuration
-  _stress[_qp] =
-      _rotation_increment[_qp] * intermediate_stress * _rotation_increment[_qp].transpose();
+  _stress[_qp] = intermediate_stress.rotated(_rotation_increment[_qp]);
 
   // Assign value for elastic strain, which is equal to the mechanical strain
   _elastic_strain[_qp] = _mechanical_strain[_qp];

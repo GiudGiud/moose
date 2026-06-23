@@ -298,11 +298,9 @@ ComputeMultiPlasticityStress::computeQpStress()
   // Rotate the tensors to the current configuration
   if (_perform_finite_strain_rotations)
   {
-    _stress[_qp] = _rotation_increment[_qp] * _stress[_qp] * _rotation_increment[_qp].transpose();
-    _elastic_strain[_qp] =
-        _rotation_increment[_qp] * _elastic_strain[_qp] * _rotation_increment[_qp].transpose();
-    _plastic_strain[_qp] =
-        _rotation_increment[_qp] * _plastic_strain[_qp] * _rotation_increment[_qp].transpose();
+    _stress[_qp].rotate(_rotation_increment[_qp]);
+    _elastic_strain[_qp].rotate(_rotation_increment[_qp]);
+    _plastic_strain[_qp].rotate(_rotation_increment[_qp]);
   }
 }
 
