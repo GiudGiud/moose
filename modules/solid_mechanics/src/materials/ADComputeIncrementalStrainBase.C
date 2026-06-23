@@ -66,7 +66,7 @@ template <typename R2>
 void
 ADComputeIncrementalStrainBaseTempl<R2>::subtractEigenstrainIncrementFromStrain(ADR2 & strain)
 {
-  for (unsigned int i = 0; i < _eigenstrains.size(); ++i)
+  for (const auto i : index_range(_eigenstrains))
   {
     strain -= (*_eigenstrains[i])[_qp];
     strain += (*_eigenstrains_old[i])[_qp];

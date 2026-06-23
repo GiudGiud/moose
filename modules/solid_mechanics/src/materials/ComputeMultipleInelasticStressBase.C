@@ -266,11 +266,9 @@ ComputeMultipleInelasticStressBase::computeQpStressIntermediateConfiguration()
 void
 ComputeMultipleInelasticStressBase::finiteStrainRotation(const bool force_elasticity_rotation)
 {
-  _elastic_strain[_qp] =
-      _rotation_increment[_qp] * _elastic_strain[_qp] * _rotation_increment[_qp].transpose();
-  _stress[_qp] = _rotation_increment[_qp] * _stress[_qp] * _rotation_increment[_qp].transpose();
-  _inelastic_strain[_qp] =
-      _rotation_increment[_qp] * _inelastic_strain[_qp] * _rotation_increment[_qp].transpose();
+  _elastic_strain[_qp].rotate(_rotation_increment[_qp]);
+  _stress[_qp].rotate(_rotation_increment[_qp]);
+  _inelastic_strain[_qp].rotate(_rotation_increment[_qp]);
 
   if (force_elasticity_rotation ||
       !(_is_elasticity_tensor_guaranteed_isotropic &&

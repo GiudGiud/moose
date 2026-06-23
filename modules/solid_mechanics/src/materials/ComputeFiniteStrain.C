@@ -138,10 +138,8 @@ ComputeFiniteStrain::computeQpStrain()
   RankTwoTensor total_strain_old = _total_strain_old[_qp];
   if (_use_hw)
   {
-    mechanical_strain_old = _rotation_increment[_qp] * _mechanical_strain_old[_qp] *
-                            _rotation_increment[_qp].transpose();
-    total_strain_old =
-        _rotation_increment[_qp] * _total_strain_old[_qp] * _rotation_increment[_qp].transpose();
+    mechanical_strain_old = _mechanical_strain_old[_qp].rotated(_rotation_increment[_qp]);
+    total_strain_old = _total_strain_old[_qp].rotated(_rotation_increment[_qp]);
   }
 
   // Update strain in intermediate configuration
@@ -151,10 +149,8 @@ ComputeFiniteStrain::computeQpStrain()
   // Rotate strain to current configuration, unless HughesWinget
   if (!_use_hw)
   {
-    _mechanical_strain[_qp] =
-        _rotation_increment[_qp] * _mechanical_strain[_qp] * _rotation_increment[_qp].transpose();
-    _total_strain[_qp] =
-        _rotation_increment[_qp] * _total_strain[_qp] * _rotation_increment[_qp].transpose();
+    _mechanical_strain[_qp].rotate(_rotation_increment[_qp]);
+    _total_strain[_qp].rotate(_rotation_increment[_qp]);
   }
 
   if (_global_strain)
