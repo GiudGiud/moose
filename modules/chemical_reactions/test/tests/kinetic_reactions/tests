@@ -10,4 +10,13 @@
                   'by a reaction list and per-species diffusivities, reproducing the Burns et al. '
                   '(1984) spherical-spur water-radiolysis G values.'
   []
+  [burns1984_spherical_spur_scavengers]
+    type = CSVDiff
+    input = burns1984_spherical_spur_scavengers.i
+    cli_args = 'Executioner/end_time=1e-9'
+    csvdiff = burns1984_spherical_spur_scavengers_out.csv
+    requirement = 'The system shall assemble and solve a kinetic diffusion-reaction network that '
+                  'includes pseudo-first-order scavenging sinks, reproducing the Burns et al. (1984) '
+                  'spherical-spur water-radiolysis G values under scavenging conditions.'
+  []
 []
