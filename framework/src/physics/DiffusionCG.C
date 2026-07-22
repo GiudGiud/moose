@@ -104,7 +104,7 @@ DiffusionCG::addFEKernels()
     else if (getProblem().hasVariable(source))
       kernel_type = _use_ad ? "ADCoupledForce" : "CoupledForce";
     else if (getProblem().hasFunctor(source, 0))
-      kernel_type = _use_ad ? "ADFunctorKernel" : "FunctorKernel";
+      kernel_type = "FunctorKernel";
     else if (getProblem().getMaterialPropertyRegistry().hasProperty(source))
       kernel_type = _use_ad ? "ADMatBodyForce" : "MatBodyForce";
     else
@@ -116,6 +116,8 @@ DiffusionCG::addFEKernels()
     InputParameters params = getFactory().getValidParams(kernel_type);
     params.set<NonlinearVariableName>("variable") = _var_name;
     assignBlocks(params, _blocks);
+    if (getProblem().hasFunctor(source, 0))
+      params.set<bool>("functor_on_rhs") = true;
 
     // Transfer the source and coefficient parameter from the Physics to the kernel
     const auto coef = getParam<Real>("source_coef");
