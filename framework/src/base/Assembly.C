@@ -280,7 +280,9 @@ Assembly::buildFE(FEType type) const
       _fe[dim][type] = FEGenericBase<Real>::build(dim, type).release();
 
     _fe[dim][type]->get_phi();
-    _fe[dim][type]->get_dphi();
+    // Optimization for finite volume
+    if (type.order > CONSTANT)
+      _fe[dim][type]->get_dphi();
     // Pre-request xyz.  We have always computed xyz, but due to
     // recent optimizations in libmesh, we now need to explicity
     // request it, since apps (Yak) may rely on it being computed.
@@ -775,8 +777,9 @@ Assembly::reinitFE(const Elem * elem)
     fe.reinit(elem);
 
     fesd._phi.shallowCopy(const_cast<std::vector<std::vector<Real>> &>(fe.get_phi()));
-    fesd._grad_phi.shallowCopy(
-        const_cast<std::vector<std::vector<VectorValue<Real>>> &>(fe.get_dphi()));
+    if (fe_type.order > CONSTANT)
+      fesd._grad_phi.shallowCopy(
+          const_cast<std::vector<std::vector<VectorValue<Real>>> &>(fe.get_dphi()));
     if (_need_second_derivative.count(fe_type))
       fesd._second_phi.shallowCopy(
           const_cast<std::vector<std::vector<TensorValue<Real>>> &>(fe.get_d2phi()));
@@ -1280,8 +1283,9 @@ Assembly::reinitFEFace(const Elem * elem, unsigned int side)
     _current_fe_face[fe_type] = &fe_face;
 
     fesd._phi.shallowCopy(const_cast<std::vector<std::vector<Real>> &>(fe_face.get_phi()));
-    fesd._grad_phi.shallowCopy(
-        const_cast<std::vector<std::vector<VectorValue<Real>>> &>(fe_face.get_dphi()));
+    if (fe_type.order > CONSTANT)
+      fesd._grad_phi.shallowCopy(
+          const_cast<std::vector<std::vector<VectorValue<Real>>> &>(fe_face.get_dphi()));
     if (_need_second_derivative.count(fe_type))
       fesd._second_phi.shallowCopy(
           const_cast<std::vector<std::vector<TensorValue<Real>>> &>(fe_face.get_d2phi()));
@@ -1588,8 +1592,9 @@ Assembly::reinitFEFaceNeighbor(const Elem * neighbor, const std::vector<Point> &
     _current_fe_face_neighbor[fe_type] = &fe_face_neighbor;
 
     fesd._phi.shallowCopy(const_cast<std::vector<std::vector<Real>> &>(fe_face_neighbor.get_phi()));
-    fesd._grad_phi.shallowCopy(
-        const_cast<std::vector<std::vector<RealGradient>> &>(fe_face_neighbor.get_dphi()));
+    if (fe_type.order > CONSTANT)
+      fesd._grad_phi.shallowCopy(
+          const_cast<std::vector<std::vector<RealGradient>> &>(fe_face_neighbor.get_dphi()));
     if (_need_second_derivative_neighbor.count(fe_type))
       fesd._second_phi.shallowCopy(
           const_cast<std::vector<std::vector<TensorValue<Real>>> &>(fe_face_neighbor.get_d2phi()));
