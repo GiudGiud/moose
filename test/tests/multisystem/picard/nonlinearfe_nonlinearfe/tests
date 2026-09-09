@@ -12,12 +12,29 @@
     [multi_system]
       type = Exodiff
       input = multi_system.i
-      # The same gold file is used for both tests because the fully converged multi-system
-      # solution should give an equivalent solution.
+      # The same gold file is used for the relaxation and secant tests because the fully converged
+      # multi-system solution is independent of the fixed point acceleration algorithm.
       cli_args = 'Outputs/file_base=single_system'
       exodiff = 'single_system.e'
       prereq = 'tests/single_system'
-      detail = 'using the multi-system fixed point solve approach with a custom convergence criteria.'
+      # Relaxation (Picard) takes 11 fixed point sweeps here, so it reaches fixed point iteration 8;
+      # the secant test below converges before that, demonstrating faster convergence.
+      expect_out = 'Multi-system fixed point iteration 8:'
+      detail = 'using the multi-system fixed point solve approach with a custom convergence criteria,'
+    []
+    [multi_system_secant]
+      type = Exodiff
+      input = multi_system.i
+      # The secant algorithm converges to the same fixed point, so the same gold file is reused.
+      cli_args = 'Outputs/file_base=single_system '
+                 'Executioner/multi_system_fixed_point_algorithm=secant'
+      exodiff = 'single_system.e'
+      prereq = 'tests/multi_system'
+      # The secant acceleration converges in 7 sweeps (vs 11 for relaxation), so it never reaches
+      # fixed point iteration 8. This encodes the "fewer iterations than Picard" comparison.
+      absent_out = 'Multi-system fixed point iteration 8:'
+      detail = 'and using the multi-system fixed point solve approach with the secant acceleration '
+               'algorithm, which converges in fewer fixed point iterations.'
     []
   []
 []
