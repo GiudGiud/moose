@@ -195,7 +195,8 @@ FEProblemSolve::validParams()
 
 FEProblemSolve::FEProblemSolve(Executioner & ex)
   : MultiSystemSolveObject(ex),
-    _num_grid_steps(cast_int<unsigned int>(getParam<unsigned int>("num_grids") - 1))
+    _num_grid_steps(cast_int<unsigned int>(getParam<unsigned int>("num_grids") - 1)),
+    _multi_sys_fp_secant_eval_tag(Moose::INVALID_TAG_ID)
 {
   if (_moose_line_searches.find(getParam<MooseEnum>("line_search").operator std::string()) !=
       _moose_line_searches.end())
@@ -403,9 +404,24 @@ FEProblemSolve::initialSetup()
 
     if (_problem.needsPreviousMultiSystemFixedPointIterationSolution(sys_num))
     {
-      _systems[i]->needSolutionState(
-          1, Moose::SolutionIterationType::MultiSystemFixedPoint, _systems[i]->solution().type());
+      // The secant algorithm needs two previous iterates (x_n and x_{n-1}); relaxation needs one
+      const bool secant_transform =
+          _perform_multi_sys_fp_relaxation[i] && (_multi_sys_fp_algorithm == "secant");
+      _systems[i]->needSolutionState(secant_transform ? 2 : 1,
+                                     Moose::SolutionIterationType::MultiSystemFixedPoint,
+                                     _systems[i]->solution().type());
       _systems_to_copy_back_multi_sys_fp.insert(_systems[i]);
+
+      // The secant algorithm also stores the previous raw system evaluation f(x_{n-1})
+      if (secant_transform)
+      {
+        if (_multi_sys_fp_secant_eval_tag == Moose::INVALID_TAG_ID)
+          _multi_sys_fp_secant_eval_tag =
+              _problem.addVectorTag("multisystem_fp_secant_eval", Moose::VECTOR_TAG_SOLUTION);
+        if (!_systems[i]->hasVector(_multi_sys_fp_secant_eval_tag))
+          _systems[i]->addVector(
+              _multi_sys_fp_secant_eval_tag, false, _systems[i]->solution().type());
+      }
     }
   }
   if (_problem.needsPreviousMultiSystemFixedPointIterationAuxiliary())
@@ -455,8 +471,7 @@ FEProblemSolve::solve()
   bool converged = false;
   unsigned int fp_iter = 0;
 
-  for (MooseIndex(_num_grid_steps) grid_step = 0; grid_step <= _num_grid_steps; ++grid_step)
-  {
+
     // Multi-system fixed point loop
     fp_iter = 0;
     converged = false;
@@ -494,7 +509,11 @@ FEProblemSolve::solve()
         {
           if (_problem.converged(sys->number()))
           {
-            if (_perform_multi_sys_fp_relaxation[sys_i])
+            // Per-system relaxation of the fixed point iteration if requested. The secant
+            // algorithm instead accelerates the whole coupled state once the sweep is complete
+            // (see applyMultiSystemSecant below), because each system's map depends on the other
+            // systems rather than on itself.
+            if (_perform_multi_sys_fp_relaxation[sys_i] && _multi_sys_fp_algorithm != "secant")
               sys->applyFixedPointRelaxation(_multi_sys_fp_relax_factors[sys_i],
                                              Moose::SolutionIterationType::MultiSystemFixedPoint);
             _console << COLOR_GREEN << solve_name << " Converged!" << COLOR_DEFAULT << "\n"
@@ -524,6 +543,13 @@ FEProblemSolve::solve()
         }
       }
 
+      // Secant acceleration of the coupled multi-system fixed point. This is applied once per
+      // completed sweep, to the whole state at once, so the secant slope captures the coupling
+      // between systems (a per-system secant would model each system as a self-map and diverge).
+      if (_using_multi_sys_fp_iterations && _multi_sys_fp_algorithm == "secant" &&
+          _problem.shouldSolve())
+        applyMultiSystemSecant(fp_iter);
+
       _problem.execute(EXEC_MULTISYSTEM_FIXED_POINT_ITERATION_END);
       _problem.outputStep(EXEC_MULTISYSTEM_FIXED_POINT_ITERATION_END);
 
@@ -542,9 +568,44 @@ FEProblemSolve::solve()
       fp_iter++;
     }
 
-    if (grid_step != _num_grid_steps)
-      _problem.uniformRefine();
+  return converged;
+}
+
+void
+FEProblemSolve::applyMultiSystemSecant(const unsigned int fp_iter)
+{
+  const auto iteration_type = Moose::SolutionIterationType::MultiSystemFixedPoint;
+
+  // Compute a single secant step size shared by all systems from the coupled residual
+  // g(x) = F(x) - x, where F is one fixed point sweep over the systems:
+  //   mu = sum_s (dx_s . dg_s) / sum_s (dg_s . dg_s)
+  // The first sweep has no history, so no secant step is taken (each system just records its
+  // evaluation and takes the usual relaxed Picard step).
+  bool use_secant = false;
+  Real mu = 0;
+  if (fp_iter > 0)
+  {
+    Real numerator = 0;
+    Real denominator = 0;
+    for (const auto i : index_range(_systems))
+      if (_perform_multi_sys_fp_relaxation[i])
+        _systems[i]->secantSlopeContribution(
+            _multi_sys_fp_secant_eval_tag, iteration_type, numerator, denominator);
+
+    // A (near-)zero total residual change means the iterate has effectively stopped moving; take
+    // the relaxed Picard step rather than dividing by ~0.
+    if (!MooseUtils::absoluteFuzzyEqual(denominator, 0))
+    {
+      mu = numerator / denominator;
+      use_secant = true;
+    }
   }
 
-  return converged;
+  for (const auto i : index_range(_systems))
+    if (_perform_multi_sys_fp_relaxation[i])
+      _systems[i]->applyFixedPointSecant(use_secant,
+                                         mu,
+                                         _multi_sys_fp_relax_factors[i],
+                                         _multi_sys_fp_secant_eval_tag,
+                                         iteration_type);
 }

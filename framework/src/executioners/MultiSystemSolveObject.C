@@ -36,10 +36,18 @@ MultiSystemSolveObject::validParams()
   params.addParam<ConvergenceName>(
       "multi_system_fixed_point_convergence",
       "Convergence object to determine the convergence of the multi-system fixed point iteration.");
+  MooseEnum multi_sys_fp_algorithm("relaxation secant", "relaxation");
+  params.addParam<MooseEnum>(
+      "multi_system_fixed_point_algorithm",
+      multi_sys_fp_algorithm,
+      "Algorithm used to accelerate the multi-system fixed point iterations. 'relaxation' applies "
+      "simple solution under/over-relaxation to each system; 'secant' applies a projected secant "
+      "acceleration to the coupled system solutions once per fixed point sweep. "
+      "'multi_system_fixed_point_relaxation_factor' under/over-relaxes the update in both cases.");
 
   params.addParamNamesToGroup(
       "system_names multi_system_fixed_point multi_system_fixed_point_convergence "
-      "multi_system_fixed_point_relaxation_factor",
+      "multi_system_fixed_point_relaxation_factor multi_system_fixed_point_algorithm",
       "Multiple solver system");
   return params;
 }
@@ -47,6 +55,7 @@ MultiSystemSolveObject::validParams()
 MultiSystemSolveObject::MultiSystemSolveObject(Executioner & ex)
   : SolveObject(ex),
     _using_multi_sys_fp_iterations(getParam<bool>("multi_system_fixed_point")),
+    _multi_sys_fp_algorithm(getParam<MooseEnum>("multi_system_fixed_point_algorithm")),
     _multi_sys_fp_convergence(nullptr) // has not been created yet
 
 {
@@ -87,6 +96,11 @@ MultiSystemSolveObject::MultiSystemSolveObject(Executioner & ex)
       !_using_multi_sys_fp_iterations)
     paramError("Can't use relaxation factors because multisystem fixed point iteration hasn't been "
                "enabled!");
+  if (_pars.isParamSetByUser("multi_system_fixed_point_algorithm") &&
+      !_using_multi_sys_fp_iterations)
+    paramError("multi_system_fixed_point_algorithm",
+               "Can't select a multi-system fixed point acceleration algorithm because "
+               "multi-system fixed point iterations haven't been enabled!");
 
   setupMultiSystemFixedPointRelaxationFactors();
 }
@@ -103,10 +117,13 @@ MultiSystemSolveObject::setupMultiSystemFixedPointRelaxationFactors()
                "Must provide either 1 value or " + Moose::stringify(_systems.size()) +
                    " values (one per system in the solve order).");
 
-  // For each solver system; record whether to perform relaxation (relaxation_factor != 1)
+  // For each solver system; record whether to perform a fixed point transformation. Relaxation is
+  // only needed when the factor differs from 1; the secant algorithm transforms every system's
+  // solution (the factor then under/over-relaxes the secant update).
+  const bool secant = _multi_sys_fp_algorithm == "secant";
   _perform_multi_sys_fp_relaxation.resize(_systems.size(), false);
   for (const auto i : make_range(_systems.size()))
     if (_using_multi_sys_fp_iterations &&
-        !MooseUtils::absoluteFuzzyEqual(_multi_sys_fp_relax_factors[i], 1.0))
+        (secant || !MooseUtils::absoluteFuzzyEqual(_multi_sys_fp_relax_factors[i], 1.0)))
       _perform_multi_sys_fp_relaxation[i] = true;
 }

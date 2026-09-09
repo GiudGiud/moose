@@ -39,6 +39,8 @@ protected:
 
   /// Whether we are using fixed point iterations for multi-system
   const bool _using_multi_sys_fp_iterations;
+  /// Algorithm used to transform each system solution during multi-system fixed point iterations
+  const MooseEnum _multi_sys_fp_algorithm;
   /// Convergence object to assess the convergence of the multi-system fixed point iteration
   Convergence * _multi_sys_fp_convergence;
   /// Per-system relaxation factors for multi-system fixed point iterations (expanded to

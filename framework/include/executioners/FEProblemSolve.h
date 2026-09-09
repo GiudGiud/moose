@@ -63,6 +63,15 @@ protected:
   /// as opposed to if (_num_grids)
   const unsigned int _num_grid_steps;
 
+  /// Vector tag holding the previous system evaluation f(x_{n-1}) used by the secant
+  /// multi-system fixed point algorithm. Invalid unless the secant algorithm is selected.
+  TagID _multi_sys_fp_secant_eval_tag;
+
   /// Performs setup related to Convergence objects
   void convergenceSetup();
+
+  /// Apply a single secant acceleration step to the whole coupled multi-system state, using the
+  /// residual of one complete fixed point sweep. Called once per completed sweep.
+  /// @param fp_iter the current multi-system fixed point iteration index (0 for the first sweep)
+  void applyMultiSystemSecant(const unsigned int fp_iter);
 };
