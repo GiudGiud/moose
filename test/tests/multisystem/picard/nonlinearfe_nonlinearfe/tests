@@ -20,4 +20,10 @@
       detail = 'using the multi-system fixed point solve approach with a custom convergence criteria.'
     []
   []
+  [execute_on_end]
+    type = CSVDiff
+    input = multi_system_end.i
+    csvdiff = 'multi_system_end_csv.csv'
+    requirement = 'The system shall be able to execute objects at the end of each multi-system fixed point iteration and once at the end of a converged multi-system fixed point solve.'
+  []
 []
