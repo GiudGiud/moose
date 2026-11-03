@@ -48,6 +48,8 @@ KineticReactionsPhysics::validParams()
   params.setDocString("reactions",
                       "The list of kinetic reactions, one per line. Each reaction must carry its "
                       "forward rate constant in its metadata, e.g. 'e_aq + Hp -> H [k=1.7e10]'. "
+                      "The rate constant may also be the name of a functor, e.g. "
+                      "'A -> B [k=k1]', so that it can be controlled by another object. "
                       "Use species names matching 'species' (no +/- charge notation).");
 
   params.addRequiredParam<std::vector<Real>>(
@@ -59,9 +61,9 @@ KineticReactionsPhysics::validParams()
 KineticReactionsPhysics::KineticReactionsPhysics(const InputParameters & parameters)
   : ReactionNetworkPhysicsBase(parameters),
     _diffusivities(getParam<std::vector<Real>>("diffusivities")),
-    _rate_constants(_num_reactions, 0.0),
     _rate_expression(_num_solver_species),
-    _rate_coupled_species(_num_solver_species)
+    _rate_coupled_species(_num_solver_species),
+    _rate_functors(_num_solver_species)
 {
   if (_diffusivities.size() != _num_solver_species)
     paramError("diffusivities",
@@ -76,19 +78,27 @@ KineticReactionsPhysics::KineticReactionsPhysics(const InputParameters & paramet
   std::vector<std::string> reaction_rate_expr(_num_reactions);
   std::vector<std::vector<VariableName>> reaction_reactants(_num_reactions);
   std::vector<std::map<VariableName, Real>> net_stoich(_num_reactions);
+  // Functor providing the rate constant of each reaction, empty if the constant is numeric
+  std::vector<MooseFunctorName> reaction_rate_functor(_num_reactions);
 
   for (const auto j : index_range(_reactions))
   {
     const auto & reaction = _reactions[j];
 
-    if (!reaction.hasMetaData<Real>("k"))
+    if (!reaction.hasMetaData("k"))
       paramError("reactions",
                  "Reaction: '" + _reactions_input[j] +
                      "'\n is missing a forward rate constant [k=...] in its metadata");
-    _rate_constants[j] = std::stod(reaction.getMetaData("k"));
 
     // rate = k * product over reactant terms of (species ^ stoichiometry)
-    std::string rexpr = fp(_rate_constants[j]);
+    std::string rexpr;
+    if (reaction.hasMetaData<Real>("k"))
+      rexpr = fp(std::stod(reaction.getMetaData("k")));
+    else
+    {
+      reaction_rate_functor[j] = reaction.getMetaData("k");
+      rexpr = reaction_rate_functor[j];
+    }
     for (const auto & term : reaction.reactants)
     {
       if (!known.count(term.species))
@@ -113,6 +123,7 @@ KineticReactionsPhysics::KineticReactionsPhysics(const InputParameters & paramet
   {
     const auto & species = _solver_species[i];
     std::set<VariableName> coupled;
+    std::set<MooseFunctorName> functors;
 
     for (const auto j : make_range(_num_reactions))
     {
@@ -130,8 +141,11 @@ KineticReactionsPhysics::KineticReactionsPhysics(const InputParameters & paramet
 
       for (const auto & r : reaction_reactants[j])
         coupled.insert(r);
+      if (!reaction_rate_functor[j].empty())
+        functors.insert(reaction_rate_functor[j]);
     }
     _rate_coupled_species[i].assign(coupled.begin(), coupled.end());
+    _rate_functors[i].assign(functors.begin(), functors.end());
   }
 }
 
@@ -159,6 +173,9 @@ KineticReactionsPhysics::addMaterials()
     assignBlocks(params, _blocks);
     params.set<std::string>("property_name") = rateName(_solver_species[i]);
     params.set<std::vector<VariableName>>("coupled_variables") = _rate_coupled_species[i];
+    params.set<std::vector<MooseFunctorName>>("functor_names") = _rate_functors[i];
+    params.set<std::vector<std::string>>("functor_symbols") = {_rate_functors[i].begin(),
+                                                               _rate_functors[i].end()};
     params.set<std::string>("expression") = _rate_expression[i];
     getProblem().addMaterial("ADParsedMaterial", prefix() + rateName(_solver_species[i]), params);
   }

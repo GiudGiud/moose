@@ -20,10 +20,10 @@
  *   nu_{s,j} * k_j * prod_r C_r^{a_{r,j}}
  * with nu_{s,j} the net stoichiometry of s in reaction j (products minus
  * reactants), k_j the forward rate constant, and a_{r,j} the stoichiometry of
- * reactant r. Because the reactant stoichiometry appears both as the rate-law
- * exponent and (for a reactant) as the net-stoichiometry multiplier, the
- * factor-of-2 convention for like-species reactions (e.g. 2A -> P giving
- * dA/dt = -2 k [A]^2) is handled automatically.
+ * reactant r. k_j is either a number or the name of a functor. Because the
+ * reactant stoichiometry appears both as the rate-law exponent and (for a
+ * reactant) as the net-stoichiometry multiplier, the factor-of-2 convention
+ * for like-species reactions (e.g. 2A -> P giving dA/dt = -2 k [A]^2) is handled automatically.
  *
  * The equations are assembled entirely from existing framework objects:
  *   - ADTimeDerivative           (time derivative)
@@ -45,14 +45,14 @@ private:
 
   /// Per-species diffusion coefficients, ordered as the 'species' parameter
   const std::vector<Real> _diffusivities;
-  /// Forward rate constant of each reaction (from the [k=...] metadata)
-  std::vector<Real> _rate_constants;
   /// Net stoichiometry of each species in each reaction (products - reactants)
   std::vector<std::vector<Real>> _net_stoichiometry;
   /// FParser expression for the net reaction rate S_s of each species
   std::vector<std::string> _rate_expression;
   /// Species coupled into the rate expression S_s of each species
   std::vector<std::vector<VariableName>> _rate_coupled_species;
+  /// Functors providing rate constants used in the rate expression S_s of each species
+  std::vector<std::vector<MooseFunctorName>> _rate_functors;
 
   /// Material property name holding the diffusivity of a species
   std::string diffusivityName(const VariableName & species) const { return "D_" + species; }
